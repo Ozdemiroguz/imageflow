@@ -1,0 +1,10 @@
+# Only include imageflow/
+/*
+!/imageflow/
+!/README.md
+!/docs/
+!/docs/**
+!/.gitignore
+
+# macOS
+.DS_Store

@@ -1,0 +1,1 @@
+enum AppShimmerStyle { subtle, normal }

@@ -1,0 +1,76 @@
+<svg width="1400" height="420" viewBox="0 0 1400 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1400" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0E1224"/>
+      <stop offset="1" stop-color="#162046"/>
+    </linearGradient>
+    <linearGradient id="step" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#71A0FF"/>
+      <stop offset="1" stop-color="#A9C5FF"/>
+    </linearGradient>
+    <linearGradient id="step2" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#4FD5A9"/>
+      <stop offset="1" stop-color="#98ECCF"/>
+    </linearGradient>
+    <linearGradient id="step3" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FF9C6A"/>
+      <stop offset="1" stop-color="#FFD0B5"/>
+    </linearGradient>
+    <marker id="arr" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#F2F5FF"/>
+    </marker>
+    <style>
+      .t { font: 700 31px Arial, sans-serif; fill: #F4F7FF; }
+      .s { font: 500 15px Arial, sans-serif; fill: #C7CFEF; }
+      .k { font: 700 17px Arial, sans-serif; fill: #0D1225; }
+      .n { font: 500 14px Arial, sans-serif; fill: #0F142A; }
+      .legend { font: 600 13px Arial, sans-serif; fill: #0F142A; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="420" rx="26" fill="url(#bg2)"/>
+  <text x="52" y="62" class="t">Runtime Flow (Capture -&gt; Process -&gt; Save -&gt; History)</text>
+  <text x="52" y="88" class="s">End-to-end path for face/document processing</text>
+
+  <rect x="48" y="130" width="180" height="110" rx="14" fill="url(#step)"/>
+  <text x="66" y="168" class="k">Capture</text>
+  <text x="66" y="194" class="n">Camera / Gallery</text>
+
+  <rect x="276" y="130" width="190" height="110" rx="14" fill="url(#step)"/>
+  <text x="294" y="168" class="k">Controller</text>
+  <text x="294" y="194" class="n">ProcessingController</text>
+
+  <rect x="514" y="130" width="210" height="110" rx="14" fill="url(#step2)"/>
+  <text x="532" y="168" class="k">Use Case</text>
+  <text x="532" y="194" class="n">ProcessImage</text>
+
+  <rect x="772" y="130" width="240" height="110" rx="14" fill="url(#step2)"/>
+  <text x="790" y="168" class="k">Domain Contract</text>
+  <text x="790" y="194" class="n">ProcessingRepository</text>
+
+  <rect x="1060" y="130" width="292" height="110" rx="14" fill="url(#step3)"/>
+  <text x="1078" y="168" class="k">Data Implementation</text>
+  <text x="1078" y="194" class="n">ProcessingRepositoryImpl</text>
+
+  <line x1="228" y1="185" x2="276" y2="185" stroke="#F2F5FF" stroke-width="4" marker-end="url(#arr)"/>
+  <line x1="466" y1="185" x2="514" y2="185" stroke="#F2F5FF" stroke-width="4" marker-end="url(#arr)"/>
+  <line x1="724" y1="185" x2="772" y2="185" stroke="#F2F5FF" stroke-width="4" marker-end="url(#arr)"/>
+  <line x1="1012" y1="185" x2="1060" y2="185" stroke="#F2F5FF" stroke-width="4" marker-end="url(#arr)"/>
+
+  <rect x="320" y="278" width="760" height="96" rx="14" fill="#EAF0FF"/>
+  <text x="344" y="311" class="k">Processing branches inside data layer</text>
+  <text x="344" y="336" class="n">Face: detect -&gt; grayscale composite -&gt; thumbnail -&gt; history</text>
+  <text x="344" y="358" class="n">Document: OCR -&gt; corner detect -&gt; perspective -&gt; PDF -&gt; history</text>
+
+  <line x1="1206" y1="240" x2="1040" y2="278" stroke="#FFDCCF" stroke-width="3" marker-end="url(#arr)"/>
+
+  <rect x="48" y="284" width="230" height="82" rx="12" fill="#D9F8EC"/>
+  <text x="66" y="315" class="k">Output</text>
+  <text x="66" y="340" class="n">Result + History Detail</text>
+
+  <line x1="320" y1="326" x2="278" y2="326" stroke="#F2F5FF" stroke-width="3" marker-end="url(#arr)"/>
+
+  <rect x="1120" y="286" width="230" height="82" rx="12" fill="#FFE7DE"/>
+  <text x="1138" y="315" class="k">Storage</text>
+  <text x="1138" y="340" class="n">Files + Hive metadata</text>
+</svg>

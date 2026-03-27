@@ -1,0 +1,81 @@
+<svg width="1400" height="520" viewBox="0 0 1400 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="1400" y2="520" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#12162B"/>
+      <stop offset="1" stop-color="#1E1A3C"/>
+    </linearGradient>
+    <linearGradient id="card1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7DA6FF"/><stop offset="1" stop-color="#AFC8FF"/></linearGradient>
+    <linearGradient id="card2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#64D2AA"/><stop offset="1" stop-color="#A7EDD6"/></linearGradient>
+    <linearGradient id="card3" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFB169"/><stop offset="1" stop-color="#FFD7B3"/></linearGradient>
+    <linearGradient id="card4" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9E8DFF"/><stop offset="1" stop-color="#CFC5FF"/></linearGradient>
+    <linearGradient id="card5" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FF88A8"/><stop offset="1" stop-color="#FFC4D5"/></linearGradient>
+    <style>
+      .h { font: 700 32px Arial, sans-serif; fill: #F6F7FF; }
+      .sub { font: 500 15px Arial, sans-serif; fill: #CDD2F0; }
+      .cardT { font: 800 30px Arial, sans-serif; fill: #0E1225; }
+      .cardH { font: 700 18px Arial, sans-serif; fill: #0E1225; }
+      .cardB { font: 500 14px Arial, sans-serif; fill: #11182F; }
+      .eg { font: 600 13px Arial, sans-serif; fill: #121A34; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="520" rx="26" fill="url(#bg3)"/>
+
+  <text x="48" y="64" class="h">SOLID in this project</text>
+  <text x="48" y="92" class="sub">Quick visual mapping from principle to concrete implementation</text>
+
+  <g transform="translate(42,130)">
+    <rect width="252" height="332" rx="16" fill="url(#card1)"/>
+    <text x="20" y="66" class="cardT">S</text>
+    <text x="70" y="62" class="cardH">Single Responsibility</text>
+    <text x="20" y="102" class="cardB">Controllers delegate lifecycle,</text>
+    <text x="20" y="124" class="cardB">stream, and detection work to</text>
+    <text x="20" y="146" class="cardB">focused collaborators.</text>
+    <rect x="16" y="184" width="220" height="44" rx="10" fill="#E9F0FF"/>
+    <text x="26" y="211" class="eg">e.g. Realtime*Coordinator classes</text>
+  </g>
+
+  <g transform="translate(314,130)">
+    <rect width="252" height="332" rx="16" fill="url(#card2)"/>
+    <text x="20" y="66" class="cardT">O</text>
+    <text x="70" y="62" class="cardH">Open / Closed</text>
+    <text x="20" y="102" class="cardB">New failures/results can be</text>
+    <text x="20" y="124" class="cardB">added via sealed types without</text>
+    <text x="20" y="146" class="cardB">rewriting caller logic.</text>
+    <rect x="16" y="184" width="220" height="44" rx="10" fill="#E6FFF4"/>
+    <text x="26" y="211" class="eg">e.g. sealed Result&lt;T&gt;, Failure</text>
+  </g>
+
+  <g transform="translate(586,130)">
+    <rect width="252" height="332" rx="16" fill="url(#card3)"/>
+    <text x="20" y="66" class="cardT">L</text>
+    <text x="70" y="62" class="cardH">Liskov Substitution</text>
+    <text x="20" y="102" class="cardB">Data implementation is usable</text>
+    <text x="20" y="124" class="cardB">wherever domain repository</text>
+    <text x="20" y="146" class="cardB">contract is expected.</text>
+    <rect x="16" y="184" width="220" height="44" rx="10" fill="#FFF2E8"/>
+    <text x="26" y="211" class="eg">e.g. ProcessingRepositoryImpl</text>
+  </g>
+
+  <g transform="translate(858,130)">
+    <rect width="252" height="332" rx="16" fill="url(#card4)"/>
+    <text x="20" y="66" class="cardT">I</text>
+    <text x="70" y="62" class="cardH">Interface Segregation</text>
+    <text x="20" y="102" class="cardB">Repositories are feature-scoped</text>
+    <text x="20" y="124" class="cardB">instead of a monolithic</text>
+    <text x="20" y="146" class="cardB">application interface.</text>
+    <rect x="16" y="184" width="220" height="44" rx="10" fill="#F2EEFF"/>
+    <text x="26" y="211" class="eg">e.g. HistoryRepo / ProcessingRepo</text>
+  </g>
+
+  <g transform="translate(1130,130)">
+    <rect width="228" height="332" rx="16" fill="url(#card5)"/>
+    <text x="20" y="66" class="cardT">D</text>
+    <text x="70" y="62" class="cardH">Dependency Inversion</text>
+    <text x="20" y="102" class="cardB">Controllers depend on use cases</text>
+    <text x="20" y="124" class="cardB">and contracts; concrete wiring</text>
+    <text x="20" y="146" class="cardB">happens in bindings.</text>
+    <rect x="16" y="184" width="196" height="44" rx="10" fill="#FFEAF0"/>
+    <text x="26" y="211" class="eg">e.g. Get.lazyPut in bindings</text>
+  </g>
+</svg>

@@ -1,0 +1,4 @@
+enum RealtimeNativeRotationStrategy {
+  sensorAndDeviceByLens,
+  sensorOnly,
+}

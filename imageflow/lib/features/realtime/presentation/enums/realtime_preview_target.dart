@@ -1,0 +1,1 @@
+enum RealtimePreviewTarget { face, document }

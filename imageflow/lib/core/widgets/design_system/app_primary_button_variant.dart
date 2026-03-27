@@ -1,0 +1,1 @@
+enum AppPrimaryButtonVariant { filled, outlined }
