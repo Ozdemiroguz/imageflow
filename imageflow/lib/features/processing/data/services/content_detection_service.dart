@@ -5,7 +5,7 @@ import '../../../../core/enums/processing_type.dart';
 import '../../../../core/models/detected_face.dart';
 import '../../../../core/models/detection_result.dart';
 import '../../../../core/models/recognized_text_data.dart';
-import '../../../../core/utils/image_utils.dart';
+import '../utils/image_utils.dart';
 import '../../../../core/utils/log.dart';
 import '../../domain/services/content_detector.dart';
 

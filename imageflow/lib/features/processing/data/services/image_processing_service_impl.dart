@@ -11,7 +11,7 @@ import '../../../../core/error/result.dart';
 import '../../../../core/models/face_geometry.dart';
 import '../../../../core/models/recognized_text_data.dart';
 import '../../../../core/services/file_service.dart';
-import '../../../../core/utils/image_utils.dart';
+import '../utils/image_utils.dart';
 import '../../../../core/utils/log.dart';
 import '../../domain/entities/processing_result.dart';
 import '../../domain/entities/processing_step.dart';
