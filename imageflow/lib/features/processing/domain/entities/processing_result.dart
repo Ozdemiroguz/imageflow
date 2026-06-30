@@ -1,4 +1,5 @@
 import '../../../../core/enums/processing_type.dart';
+import '../../../../core/models/face_geometry.dart';
 
 class ProcessingResult {
   const ProcessingResult({
@@ -26,8 +27,8 @@ class ProcessingResult {
 
   // Face-specific
   final int facesDetected;
-  final List<({int left, int top, int width, int height})> faceRects;
-  final List<List<({int x, int y})>> faceContours;
+  final List<FaceRect> faceRects;
+  final List<List<ContourPoint>> faceContours;
 
   // Document-specific
   final String? extractedText;

@@ -1,4 +1,5 @@
 import '../../../../core/enums/processing_type.dart';
+import '../../../../core/models/face_geometry.dart';
 
 class ProcessingHistory {
   const ProcessingHistory({
@@ -26,6 +27,6 @@ class ProcessingHistory {
   final String? pdfPath;
   final String? extractedText;
   final int facesDetected;
-  final List<({int left, int top, int width, int height})> faceRects;
-  final List<List<({int x, int y})>> faceContours;
+  final List<FaceRect> faceRects;
+  final List<List<ContourPoint>> faceContours;
 }
