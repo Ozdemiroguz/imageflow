@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
-import '../../../../core/utils/realtime_input_image_factory.dart';
+import '../converters/realtime_input_image_factory.dart';
 
 /// Lightweight face detection service for camera stream frames.
 class RealtimeFaceDetectionService {
