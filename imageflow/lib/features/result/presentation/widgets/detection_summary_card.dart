@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/enums/processing_type.dart';
-import '../../../../core/widgets/design_system/app_icon_info_card.dart';
+import 'app_icon_info_card.dart';
 
 class DetectionSummaryCard extends StatelessWidget {
   const DetectionSummaryCard({

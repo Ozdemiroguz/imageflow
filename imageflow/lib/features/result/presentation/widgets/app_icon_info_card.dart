@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_tokens.dart';
-import '../../theme/context_theme_extensions.dart';
+import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/theme/context_theme_extensions.dart';
 
 class AppIconInfoCard extends StatelessWidget {
   const AppIconInfoCard({
