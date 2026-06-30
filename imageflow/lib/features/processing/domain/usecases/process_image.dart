@@ -1,11 +1,11 @@
 import '../../../../core/enums/processing_type.dart';
 import '../../../../core/error/result.dart';
 import '../entities/processing_result.dart';
-import '../repositories/processing_repository.dart';
+import '../services/image_processing_service.dart';
 
 class ProcessImage {
-  const ProcessImage(this._repository);
-  final ProcessingRepository _repository;
+  const ProcessImage(this._service);
+  final ImageProcessingService _service;
 
   Future<Result<ProcessingResult>> call({
     required String imagePath,
@@ -13,7 +13,7 @@ class ProcessImage {
     ProgressCallback? onProgress,
     bool? capturedWithFrontCamera,
   }) {
-    return _repository.processImage(
+    return _service.processImage(
       imagePath: imagePath,
       preferredType: preferredType,
       onProgress: onProgress,

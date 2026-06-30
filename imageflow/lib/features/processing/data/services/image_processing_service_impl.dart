@@ -16,12 +16,12 @@ import '../../../../core/utils/image_utils.dart';
 import '../../../../core/utils/log.dart';
 import '../../domain/entities/processing_result.dart';
 import '../../domain/entities/processing_step.dart';
-import '../../domain/repositories/processing_repository.dart';
 import '../../domain/services/content_detector.dart';
 import '../../domain/services/document_cropper.dart';
+import '../../domain/services/image_processing_service.dart';
 
-class ProcessingRepositoryImpl implements ProcessingRepository {
-  const ProcessingRepositoryImpl({
+class ImageProcessingServiceImpl implements ImageProcessingService {
+  const ImageProcessingServiceImpl({
     required FileService fileService,
     required ContentDetector contentDetector,
     required DocumentCropper documentCropper,

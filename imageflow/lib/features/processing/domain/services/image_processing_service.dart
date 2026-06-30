@@ -3,9 +3,15 @@ import '../../../../core/error/result.dart';
 import '../entities/processing_result.dart';
 import '../entities/processing_step.dart';
 
-part 'processing_repository_progress_callback_typedef.dart';
+part 'image_processing_service_progress_callback_typedef.dart';
 
-abstract class ProcessingRepository {
+/// Runs the image-processing pipeline (detect → annotate/crop → PDF →
+/// thumbnail) and returns a [ProcessingResult].
+///
+/// This is a domain **service / interactor**, not a repository: it orchestrates
+/// detection and cropping collaborators and performs no data persistence of its
+/// own. Implementations live in the data layer.
+abstract interface class ImageProcessingService {
   Future<Result<ProcessingResult>> processImage({
     required String imagePath,
     ProcessingType? preferredType,

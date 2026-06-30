@@ -4,11 +4,11 @@ import 'package:imageflow/core/error/failures.dart';
 import 'package:imageflow/core/error/result.dart';
 import 'package:imageflow/features/processing/domain/entities/processing_result.dart';
 import 'package:imageflow/features/processing/domain/entities/processing_step.dart';
-import 'package:imageflow/features/processing/domain/repositories/processing_repository.dart';
+import 'package:imageflow/features/processing/domain/services/image_processing_service.dart';
 import 'package:imageflow/features/processing/domain/usecases/process_image.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _MockProcessingRepository extends Mock implements ProcessingRepository {}
+class _MockImageProcessingService extends Mock implements ImageProcessingService {}
 
 ProcessingResult _fakeResult() => ProcessingResult(
   id: 'test-id',
@@ -21,20 +21,20 @@ ProcessingResult _fakeResult() => ProcessingResult(
 );
 
 void main() {
-  late _MockProcessingRepository repository;
+  late _MockImageProcessingService service;
   late ProcessImage useCase;
 
   setUp(() {
-    repository = _MockProcessingRepository();
-    useCase = ProcessImage(repository);
+    service = _MockImageProcessingService();
+    useCase = ProcessImage(service);
   });
 
   group('ProcessImage', () {
     test(
-      'delegates to repository.processImage with required imagePath',
+      'delegates to service.processImage with required imagePath',
       () async {
         when(
-          () => repository.processImage(
+          () => service.processImage(
             imagePath: '/test.jpg',
             preferredType: null,
             onProgress: null,
@@ -45,7 +45,7 @@ void main() {
         await useCase(imagePath: '/test.jpg');
 
         verify(
-          () => repository.processImage(
+          () => service.processImage(
             imagePath: '/test.jpg',
             preferredType: null,
             onProgress: null,
@@ -55,9 +55,9 @@ void main() {
       },
     );
 
-    test('passes preferredType: document to repository', () async {
+    test('passes preferredType: document to service', () async {
       when(
-        () => repository.processImage(
+        () => service.processImage(
           imagePath: '/test.jpg',
           preferredType: ProcessingType.document,
           onProgress: null,
@@ -71,7 +71,7 @@ void main() {
       );
 
       verify(
-        () => repository.processImage(
+        () => service.processImage(
           imagePath: '/test.jpg',
           preferredType: ProcessingType.document,
           onProgress: null,
@@ -80,9 +80,9 @@ void main() {
       ).called(1);
     });
 
-    test('passes capturedWithFrontCamera to repository', () async {
+    test('passes capturedWithFrontCamera to service', () async {
       when(
-        () => repository.processImage(
+        () => service.processImage(
           imagePath: '/test.jpg',
           preferredType: null,
           onProgress: null,
@@ -93,7 +93,7 @@ void main() {
       await useCase(imagePath: '/test.jpg', capturedWithFrontCamera: true);
 
       verify(
-        () => repository.processImage(
+        () => service.processImage(
           imagePath: '/test.jpg',
           preferredType: null,
           onProgress: null,
@@ -102,12 +102,12 @@ void main() {
       ).called(1);
     });
 
-    test('passes onProgress callback through to repository', () async {
+    test('passes onProgress callback through to service', () async {
       ProcessingStep? capturedStep;
       void onProgress(ProcessingStep step) => capturedStep = step;
 
       when(
-        () => repository.processImage(
+        () => service.processImage(
           imagePath: '/test.jpg',
           preferredType: null,
           onProgress: onProgress,
@@ -128,7 +128,7 @@ void main() {
       final expected = _fakeResult();
 
       when(
-        () => repository.processImage(
+        () => service.processImage(
           imagePath: '/test.jpg',
           preferredType: null,
           onProgress: null,
@@ -142,9 +142,9 @@ void main() {
       expect((result as Ok<ProcessingResult>).value, same(expected));
     });
 
-    test('returns Error when repository returns DetectionFailure', () async {
+    test('returns Error when service returns DetectionFailure', () async {
       when(
-        () => repository.processImage(
+        () => service.processImage(
           imagePath: '/test.jpg',
           preferredType: null,
           onProgress: null,
@@ -165,7 +165,7 @@ void main() {
       'null preferredType triggers auto-detection mode (no type passed)',
       () async {
         when(
-          () => repository.processImage(
+          () => service.processImage(
             imagePath: any(named: 'imagePath'),
             preferredType: null,
             onProgress: null,
@@ -177,7 +177,7 @@ void main() {
 
         expect(result.isOk, isTrue);
         verify(
-          () => repository.processImage(
+          () => service.processImage(
             imagePath: '/auto.jpg',
             preferredType: null,
             onProgress: null,
