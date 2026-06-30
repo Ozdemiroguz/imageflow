@@ -3,9 +3,9 @@ import 'dart:isolate';
 import 'dart:math' show sqrt;
 import 'dart:typed_data';
 
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image/image.dart' as img;
 
+import '../../../../core/models/recognized_text_data.dart';
 import '../../../../core/platform/corner_detector.dart';
 import '../../../../core/utils/log.dart';
 import '../../domain/services/document_cropper.dart';
@@ -31,7 +31,7 @@ class DocumentCropService implements DocumentCropper {
   Future<void> processDocument({
     required String sourcePath,
     required String targetPath,
-    RecognizedText? recognizedText,
+    RecognizedTextData? recognizedText,
   }) async {
     // Try native corner detection first
     final corners = await _cornerDetection.detectCorners(imagePath: sourcePath);
@@ -58,7 +58,7 @@ class DocumentCropService implements DocumentCropper {
     Log.info('No native corners. Using text block crop fallback.', tag: _tag);
     final sourceBytes = await File(sourcePath).readAsBytes();
 
-    if (recognizedText == null || recognizedText.blocks.isEmpty) {
+    if (recognizedText == null || recognizedText.blockBoxes.isEmpty) {
       // No text blocks either — just apply eco filter to whole image
       await Isolate.run(() {
         _filterOnly(sourceBytes, targetPath);
@@ -67,28 +67,27 @@ class DocumentCropService implements DocumentCropper {
     }
 
     // Estimate document bounds from text blocks
-    final crop = _estimateCropFromTextBlocks(recognizedText.blocks);
+    final crop = _estimateCropFromTextBlocks(recognizedText.blockBoxes);
 
     await Isolate.run(() {
       _cropAndFilter(sourceBytes, crop, targetPath);
     });
   }
 
-  /// Estimate crop region from ML Kit text blocks with 10% margin.
+  /// Estimate crop region from text block bounding boxes with a 10% margin.
   static ({int left, int top, int right, int bottom}) _estimateCropFromTextBlocks(
-    List<TextBlock> blocks,
+    List<TextBlockBox> blocks,
   ) {
     var minLeft = double.infinity;
     var minTop = double.infinity;
     var maxRight = double.negativeInfinity;
     var maxBottom = double.negativeInfinity;
 
-    for (final block in blocks) {
-      final r = block.boundingBox;
-      if (r.left < minLeft) minLeft = r.left;
-      if (r.top < minTop) minTop = r.top;
-      if (r.right > maxRight) maxRight = r.right;
-      if (r.bottom > maxBottom) maxBottom = r.bottom;
+    for (final box in blocks) {
+      if (box.left < minLeft) minLeft = box.left.toDouble();
+      if (box.top < minTop) minTop = box.top.toDouble();
+      if (box.right > maxRight) maxRight = box.right.toDouble();
+      if (box.bottom > maxBottom) maxBottom = box.bottom.toDouble();
     }
 
     final textWidth = maxRight - minLeft;

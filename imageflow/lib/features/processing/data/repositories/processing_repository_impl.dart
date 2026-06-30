@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:math' as math;
 
-import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image/image.dart' as img;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -115,28 +114,14 @@ class ProcessingRepositoryImpl implements ProcessingRepository {
           final contours = <List<({int x, int y})>>[];
 
           for (final face in detection.faces!) {
-            final r = face.boundingBox;
-            final left = r.left.floor();
-            final top = r.top.floor();
-            final right = r.right.ceil();
-            final bottom = r.bottom.ceil();
+            final box = face.boundingBox;
             rects.add((
-              left: left,
-              top: top,
-              width: math.max(1, right - left),
-              height: math.max(1, bottom - top),
+              left: box.left,
+              top: box.top,
+              width: math.max(1, box.right - box.left),
+              height: math.max(1, box.bottom - box.top),
             ));
-
-            final faceContour = face.contours[FaceContourType.face];
-            if (faceContour != null) {
-              contours.add(
-                faceContour.points
-                    .map((p) => (x: p.x.round(), y: p.y.round()))
-                    .toList(),
-              );
-            } else {
-              contours.add(const []);
-            }
+            contours.add(face.contour);
           }
 
           faceRects.addAll(rects);

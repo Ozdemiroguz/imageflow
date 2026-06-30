@@ -1,9 +1,11 @@
-import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-
 import '../enums/processing_type.dart';
+import 'detected_face.dart';
+import 'recognized_text_data.dart';
 
 /// Result of content detection — what was found and at which rotation.
+///
+/// Holds only plugin-free domain types; ML Kit `Face`/`RecognizedText` are
+/// mapped to [DetectedFace]/[RecognizedTextData] inside the detection service.
 class DetectionResult {
   const DetectionResult({
     required this.type,
@@ -13,8 +15,8 @@ class DetectionResult {
   });
 
   final ProcessingType? type;
-  final List<Face>? faces;
-  final RecognizedText? recognizedText;
+  final List<DetectedFace>? faces;
+  final RecognizedTextData? recognizedText;
 
   /// The clockwise rotation (0, 90, 180, 270) that was applied to get a match.
   /// 0 means original orientation worked.

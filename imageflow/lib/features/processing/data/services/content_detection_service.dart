@@ -2,7 +2,9 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 import '../../../../core/enums/processing_type.dart';
+import '../../../../core/models/detected_face.dart';
 import '../../../../core/models/detection_result.dart';
+import '../../../../core/models/recognized_text_data.dart';
 import '../../../../core/utils/image_utils.dart';
 import '../../../../core/utils/log.dart';
 import '../../domain/services/content_detector.dart';
@@ -166,7 +168,10 @@ class ContentDetectionService implements ContentDetector {
         final faces = await faceDetector.processImage(fullInputImage);
         if (faces.isNotEmpty) {
           Log.debug('Found ${faces.length} face(s)', tag: _tag);
-          return DetectionResult(type: ProcessingType.face, faces: faces);
+          return DetectionResult(
+            type: ProcessingType.face,
+            faces: faces.map(_toDetectedFace).toList(),
+          );
         }
         return const DetectionResult(type: null);
       case ProcessingType.document:
@@ -180,10 +185,47 @@ class ContentDetectionService implements ContentDetector {
           );
           return DetectionResult(
             type: ProcessingType.document,
-            recognizedText: text,
+            recognizedText: _toRecognizedTextData(text),
           );
         }
         return const DetectionResult(type: null);
     }
+  }
+
+  /// Maps an ML Kit [Face] to the plugin-free [DetectedFace], expanding the
+  /// bounding box to integer pixels and copying the face-outline contour.
+  static DetectedFace _toDetectedFace(Face face) {
+    final box = face.boundingBox;
+    final contour = face.contours[FaceContourType.face];
+    return DetectedFace(
+      boundingBox: (
+        left: box.left.floor(),
+        top: box.top.floor(),
+        right: box.right.ceil(),
+        bottom: box.bottom.ceil(),
+      ),
+      contour:
+          contour?.points
+              .map((p) => (x: p.x.round(), y: p.y.round()))
+              .toList() ??
+          const [],
+    );
+  }
+
+  /// Maps an ML Kit [RecognizedText] to the plugin-free [RecognizedTextData],
+  /// keeping the full text and each block's pixel-space bounding box.
+  static RecognizedTextData _toRecognizedTextData(RecognizedText text) {
+    return RecognizedTextData(
+      text: text.text,
+      blockBoxes: text.blocks.map((b) {
+        final r = b.boundingBox;
+        return (
+          left: r.left.toInt(),
+          top: r.top.toInt(),
+          right: r.right.toInt(),
+          bottom: r.bottom.toInt(),
+        );
+      }).toList(),
+    );
   }
 }
