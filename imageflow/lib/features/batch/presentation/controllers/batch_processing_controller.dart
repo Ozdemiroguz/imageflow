@@ -1,8 +1,8 @@
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
+import '../../../../core/platform/image_picker_gateway.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/services/file_service.dart';
 import '../../../../core/models/snack_data.dart';
@@ -25,11 +25,13 @@ class BatchProcessingController extends GetxController {
     required SaveHistory saveHistory,
     required FileService fileService,
     required ModalService modalService,
+    required ImagePickerGateway imagePicker,
     BatchQueueInitializer queueInitializer = const BatchQueueInitializer(),
     BatchHistoryMapper? historyMapper,
   }) : _processImage = processImage,
        _saveHistory = saveHistory,
        _modalService = modalService,
+       _imagePicker = imagePicker,
        _queueInitializer = queueInitializer,
        _historyMapper =
            historyMapper ?? BatchHistoryMapper(fileService: fileService);
@@ -37,13 +39,13 @@ class BatchProcessingController extends GetxController {
   final ProcessImage _processImage;
   final SaveHistory _saveHistory;
   final ModalService _modalService;
+  final ImagePickerGateway _imagePicker;
   final BatchQueueInitializer _queueInitializer;
   final BatchHistoryMapper _historyMapper;
   final BatchItemStateMutator _itemMutator = const BatchItemStateMutator();
   final BatchItemStateTransitions _itemTransitions =
       const BatchItemStateTransitions();
   final BatchRunMetricsTracker _runMetrics = BatchRunMetricsTracker();
-  final _picker = ImagePicker();
 
   final items = <BatchItemState>[].obs;
   final failure = Rxn<Failure>();
@@ -143,17 +145,14 @@ class BatchProcessingController extends GetxController {
   Future<void> reselectItemFromGallery(int index) async {
     if (isRunning.value || index < 0 || index >= items.length) return;
 
-    final image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 90,
-    );
-    if (image == null) return;
+    final imagePath = await _imagePicker.pickImageFromGallery();
+    if (imagePath == null) return;
 
     final item = items[index];
     _itemMutator.set(
       items,
       index: index,
-      next: _itemTransitions.toPending(item, imagePath: image.path),
+      next: _itemTransitions.toPending(item, imagePath: imagePath),
     );
 
     await _runSinglePending(index);

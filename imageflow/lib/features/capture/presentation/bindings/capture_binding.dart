@@ -12,6 +12,7 @@ class CaptureBinding implements Bindings {
         () => CaptureController(
           permissionService: Get.find(),
           modalService: Get.find(),
+          imagePicker: Get.find(),
         ),
         fenix: true,
       );

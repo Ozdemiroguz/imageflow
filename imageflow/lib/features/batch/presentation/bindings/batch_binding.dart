@@ -16,6 +16,7 @@ class BatchBinding implements Bindings {
         saveHistory: Get.find(),
         fileService: Get.find<FileService>(),
         modalService: Get.find<ModalService>(),
+        imagePicker: Get.find(),
       ),
     );
   }

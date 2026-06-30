@@ -1,31 +1,28 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:imageflow/core/platform/image_picker_gateway.dart';
 import 'package:imageflow/core/services/modal_service.dart';
 import 'package:imageflow/core/services/permission_service.dart';
 import 'package:imageflow/features/capture/presentation/controllers/capture_controller.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockPermissionService extends Mock implements PermissionService {}
 
 class _MockModalService extends Mock implements ModalService {}
 
-class _MockImagePicker extends Mock implements ImagePicker {}
+class _MockImagePickerGateway extends Mock implements ImagePickerGateway {}
 
 void main() {
   late _MockPermissionService permissionService;
   late _MockModalService modalService;
-  late _MockImagePicker picker;
+  late _MockImagePickerGateway imagePicker;
 
-  setUpAll(() {
-    TestWidgetsFlutterBinding.ensureInitialized();
-    registerFallbackValue(ImageSource.gallery);
-  });
+  setUpAll(TestWidgetsFlutterBinding.ensureInitialized);
 
   setUp(() {
     permissionService = _MockPermissionService();
     modalService = _MockModalService();
-    picker = _MockImagePicker();
+    imagePicker = _MockImagePickerGateway();
     Get.testMode = true;
 
     when(
@@ -36,14 +33,15 @@ void main() {
     ).thenReturn(null);
     when(() => modalService.hideLoadingOverlay()).thenReturn(null);
     when(
-      () => picker.pickImage(
-        source: any(named: 'source'),
+      () => imagePicker.pickImageFromGallery(
         imageQuality: any(named: 'imageQuality'),
       ),
     ).thenAnswer((_) async => null);
     when(
-      () => picker.pickMultiImage(imageQuality: any(named: 'imageQuality')),
-    ).thenAnswer((_) async => <XFile>[]);
+      () => imagePicker.pickMultipleFromGallery(
+        imageQuality: any(named: 'imageQuality'),
+      ),
+    ).thenAnswer((_) async => <String>[]);
   });
 
   tearDown(Get.reset);
@@ -51,7 +49,7 @@ void main() {
   CaptureController make() => CaptureController(
     permissionService: permissionService,
     modalService: modalService,
-    picker: picker,
+    imagePicker: imagePicker,
   );
 
   group('CaptureController', () {
@@ -139,15 +137,12 @@ void main() {
     });
 
     group('gallery paths', () {
-      test('pickFromGallery uses ImagePicker.gallery with quality 90', () async {
+      test('pickFromGallery delegates to the image picker gateway', () async {
         final controller = make();
 
         await controller.pickFromGallery();
 
-        verify(
-          () =>
-              picker.pickImage(source: ImageSource.gallery, imageQuality: 90),
-        ).called(1);
+        verify(() => imagePicker.pickImageFromGallery()).called(1);
         verify(
           () => modalService.showLoadingOverlay(message: any(named: 'message')),
         ).called(1);
@@ -155,12 +150,12 @@ void main() {
         controller.onClose();
       });
 
-      test('pickBatchFromGallery uses multi image picker with quality 90', () async {
+      test('pickBatchFromGallery delegates to the multi-image gateway', () async {
         final controller = make();
 
         await controller.pickBatchFromGallery();
 
-        verify(() => picker.pickMultiImage(imageQuality: 90)).called(1);
+        verify(() => imagePicker.pickMultipleFromGallery()).called(1);
         verify(
           () => modalService.showLoadingOverlay(message: any(named: 'message')),
         ).called(1);

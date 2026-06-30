@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/platform/image_picker_gateway.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/services/modal_service.dart';
 import '../../../../core/services/permission_service.dart';
@@ -11,12 +11,12 @@ class CaptureController extends GetxController {
   CaptureController({
     required PermissionService permissionService,
     required ModalService modalService,
-    ImagePicker? picker,
+    required ImagePickerGateway imagePicker,
   }) : _permissionService = permissionService,
        _modalService = modalService,
-       _picker = picker ?? ImagePicker();
+       _imagePicker = imagePicker;
 
-  final ImagePicker _picker;
+  final ImagePickerGateway _imagePicker;
   final PermissionService _permissionService;
   final ModalService _modalService;
   static const _sourceTransitionDelay = Duration(milliseconds: 140);
@@ -50,29 +50,25 @@ class CaptureController extends GetxController {
   Future<void> pickFromGallery() async {
     _closeSourceDialogIfOpen();
     await _waitForSourceTransition();
-    final image = await _runOpeningOverlay<XFile?>(
+    final imagePath = await _runOpeningOverlay<String?>(
       message: _genericLoadingMessage,
-      action: () =>
-          _picker.pickImage(source: ImageSource.gallery, imageQuality: 90),
+      action: _imagePicker.pickImageFromGallery,
     );
-    if (image != null) {
-      await _navigateToProcessing(image.path);
+    if (imagePath != null) {
+      await _navigateToProcessing(imagePath);
     }
   }
 
   Future<void> pickBatchFromGallery() async {
     _closeSourceDialogIfOpen();
     await _waitForSourceTransition();
-    final images = await _runOpeningOverlay<List<XFile>>(
+    final imagePaths = await _runOpeningOverlay<List<String>>(
       message: _genericLoadingMessage,
-      action: () => _picker.pickMultiImage(imageQuality: 90),
+      action: _imagePicker.pickMultipleFromGallery,
     );
-    if (images.isEmpty) return;
+    if (imagePaths.isEmpty) return;
 
-    await Get.toNamed(
-      AppRoutes.batch,
-      arguments: images.map((image) => image.path).toList(growable: false),
-    );
+    await Get.toNamed(AppRoutes.batch, arguments: imagePaths);
   }
 
   Future<void> _navigateToProcessing(String imagePath) async {
