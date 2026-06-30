@@ -12,8 +12,7 @@ import '../../../history/domain/usecases/save_history.dart';
 import '../../../processing/domain/entities/processing_result.dart';
 import '../../../processing/domain/usecases/process_image.dart';
 import '../../services/batch_history_mapper.dart';
-import '../../services/batch_item_state_mutator.dart';
-import '../../services/batch_item_state_transitions.dart';
+import '../../services/batch_item_state_manager.dart';
 import '../../services/batch_queue_initializer.dart';
 import '../../services/batch_run_metrics_tracker.dart';
 import '../models/batch_item_state.dart';
@@ -42,9 +41,7 @@ class BatchProcessingController extends GetxController {
   final ImagePickerGateway _imagePicker;
   final BatchQueueInitializer _queueInitializer;
   final BatchHistoryMapper _historyMapper;
-  final BatchItemStateMutator _itemMutator = const BatchItemStateMutator();
-  final BatchItemStateTransitions _itemTransitions =
-      const BatchItemStateTransitions();
+  final BatchItemStateManager _itemState = const BatchItemStateManager();
   final BatchRunMetricsTracker _runMetrics = BatchRunMetricsTracker();
 
   final items = <BatchItemState>[].obs;
@@ -115,13 +112,8 @@ class BatchProcessingController extends GetxController {
     if (isRunning.value || failedCount == 0) return;
 
     for (var i = 0; i < items.length; i++) {
-      final item = items[i];
-      if (item.status == BatchItemStatus.failed) {
-        _itemMutator.set(
-          items,
-          index: i,
-          next: _itemTransitions.toPending(item),
-        );
+      if (items[i].status == BatchItemStatus.failed) {
+        _itemState.toPending(items, i);
       }
     }
 
@@ -130,14 +122,9 @@ class BatchProcessingController extends GetxController {
 
   Future<void> retryItem(int index) async {
     if (isRunning.value || index < 0 || index >= items.length) return;
-    final item = items[index];
-    if (item.status != BatchItemStatus.failed) return;
+    if (items[index].status != BatchItemStatus.failed) return;
 
-    _itemMutator.set(
-      items,
-      index: index,
-      next: _itemTransitions.toPending(item),
-    );
+    _itemState.toPending(items, index);
 
     await _runSinglePending(index);
   }
@@ -148,12 +135,7 @@ class BatchProcessingController extends GetxController {
     final imagePath = await _imagePicker.pickImageFromGallery();
     if (imagePath == null) return;
 
-    final item = items[index];
-    _itemMutator.set(
-      items,
-      index: index,
-      next: _itemTransitions.toPending(item, imagePath: imagePath),
-    );
+    _itemState.toPending(items, index, imagePath: imagePath);
 
     await _runSinglePending(index);
   }
@@ -229,23 +211,14 @@ class BatchProcessingController extends GetxController {
       return;
     }
 
-    _itemMutator.set(
-      items,
-      index: itemIndex,
-      next: _itemTransitions.toRunning(current),
-    );
+    _itemState.toRunning(items, itemIndex);
 
     final outcome = await _processImage(
       imagePath: current.imagePath,
       onProgress: (step) {
         if (isClosed || itemIndex < 0 || itemIndex >= items.length) return;
-        final latest = items[itemIndex];
-        if (latest.status != BatchItemStatus.running) return;
-        _itemMutator.set(
-          items,
-          index: itemIndex,
-          next: _itemTransitions.withProgress(latest, step),
-        );
+        if (items[itemIndex].status != BatchItemStatus.running) return;
+        _itemState.withProgress(items, itemIndex, step);
       },
     );
     if (isClosed || itemIndex < 0 || itemIndex >= items.length) {
@@ -278,12 +251,7 @@ class BatchProcessingController extends GetxController {
 
     switch (saveResult) {
       case Ok():
-        final latest = items[itemIndex];
-        _itemMutator.set(
-          items,
-          index: itemIndex,
-          next: _itemTransitions.toSuccess(latest, result),
-        );
+        _itemState.toSuccess(items, itemIndex, result);
       case Error(:final failure):
         _markFailed(itemIndex, failure);
     }
@@ -291,12 +259,7 @@ class BatchProcessingController extends GetxController {
 
   void _markFailed(int itemIndex, Failure failure) {
     if (itemIndex < 0 || itemIndex >= items.length) return;
-    final latest = items[itemIndex];
-    _itemMutator.set(
-      items,
-      index: itemIndex,
-      next: _itemTransitions.toFailure(latest, failure),
-    );
+    _itemState.toFailure(items, itemIndex, failure);
   }
 
   void _initializeQueue() {
