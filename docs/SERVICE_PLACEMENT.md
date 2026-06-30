@@ -6,7 +6,12 @@
 
 **Date:** 2026-06-30 · Companion to [ENGINEERING_STANDARDS.md](./ENGINEERING_STANDARDS.md), [LAYERING_REVIEW.md](./LAYERING_REVIEW.md), [FOLDER_CONVENTIONS.md](./FOLDER_CONVENTIONS.md), [REALTIME_NATIVE_BOUNDARY.md](./REALTIME_NATIVE_BOUNDARY.md).
 
-> **Update (resolution in progress):** the flat-`services/` inconsistency flagged below has been **fixed for `realtime`** — it is now layered into `data/datasources/`, `data/services/`, and `presentation/coordinators/` (see [REALTIME_NATIVE_BOUNDARY.md](./REALTIME_NATIVE_BOUNDARY.md)). **`capture` and `batch` still have a flat `services/`** and remain to be reclassified by the same import litmus: `capture/services/camera_capture_session_lifecycle_helper.dart` → `presentation/coordinators/` (GetX+camera); the `batch/services/*` files are pure application coordinators → `batch/application/` (or `presentation/`). The §4 table below is the original audit snapshot.
+> **Update — RESOLVED:** the flat-`services/` inconsistency flagged below has been **fully fixed across all features.** No feature has a bare `services/` folder anymore — every service now sits in a proper layer by the import litmus (§1):
+> - **realtime** → `data/datasources/` (ML-Kit wrappers), `data/services/` (detection/preview/compute), `presentation/coordinators/` (GetX session/stream).
+> - **capture** → `presentation/coordinators/` (the camera-lifecycle helper).
+> - **batch** → `presentation/coordinators/` (state manager, queue fn, metrics — all operate on presentation models).
+>
+> Only `core/services`, `core/platform`, `core/presentation`, and each feature's `domain/services` (abstract) + `data/services` (impl) remain — all canonical. The §4 table below is the **original** audit snapshot kept for the reasoning trail.
 
 ---
 

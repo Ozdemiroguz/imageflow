@@ -66,8 +66,8 @@ Two principles decide every sub-folder:
 | | presentation | `bindings, controllers, pages, widgets` | ✅ Clean minimal set. |
 | **realtime** | data | `datasources, services` | 🟡 **Both present** — justified *only if* the distinction holds: `datasources/` = thin ML-Kit wrappers (face, ocr), `services/` = orchestration/compute (pipeline, preview, normalizer, perf). That distinction *is* real here, so it's defensible — but document it (done below). |
 | | presentation | `bindings, controllers, coordinators, enums, models, state, widgets` (+pages) | ✅ All accepted roles. The richest set, justified by realtime's complexity (live overlay state, frame coordinators, native-rotation enums). |
-| **capture** | presentation | `actions, bindings, controllers, models, pages, widgets` | ✅ Legit; `actions/` (one command object) is borderline-but-fine. |
-| **batch** | presentation | `bindings, controllers, models, pages, widgets` | ✅ Clean. |
+| **capture** | presentation | `actions, bindings, controllers, coordinators, models, pages, widgets` | ✅ Legit; `coordinators/` holds the camera-lifecycle helper; `actions/` (one command object) is borderline-but-fine. |
+| **batch** | presentation | `bindings, controllers, coordinators, models, pages, widgets` | ✅ Clean; `coordinators/` holds the state-manager / queue / metrics helpers. |
 | **result** | presentation | `bindings, controllers, pages, widgets` | ✅ Minimal, correct. |
 
 **Cleanups done as part of this review:** removed the now-empty `processing/domain/repositories/` and `processing/data/repositories/` left behind by the Step A rename (a renamed-concept artifact — empty dirs read as "half-finished refactor").
