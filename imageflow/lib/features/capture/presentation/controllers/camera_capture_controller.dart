@@ -8,7 +8,6 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/services/camera_route_lifecycle_controller.dart';
 import '../../../../core/services/camera_session_service.dart';
 import '../../../../core/services/permission_service.dart';
-import '../../services/camera_capture_actions_helper.dart';
 import '../../services/camera_capture_session_lifecycle_helper.dart';
 import '../models/camera_capture_config.dart';
 
@@ -20,7 +19,6 @@ class CameraCaptureController extends GetxController
     CameraCaptureConfig config = CameraCaptureConfig.defaults,
     CameraCaptureSessionLifecycleHelper? sessionLifecycleHelper,
     CameraRouteLifecycleController? routeLifecycleHelper,
-    CameraCaptureActionsHelper? actionsHelper,
   }) : _permissionService = permissionService,
        _cameraSessionService = cameraSessionService,
        _config = config {
@@ -50,17 +48,6 @@ class CameraCaptureController extends GetxController
               AppConstants.enableCaptureRouteAwareLifecycle,
           enableInactiveDebounce: AppConstants.enableCameraInactiveDebounce,
         );
-
-    _actionsHelper =
-        actionsHelper ??
-        CameraCaptureActionsHelper(
-          cameraController: () => cameraController,
-          flashMode: flashMode,
-          isCapturing: isCapturing,
-          failure: failure,
-          isClosed: () => isClosed,
-          isFrontCamera: () => isFrontCamera,
-        );
   }
 
   final PermissionService _permissionService;
@@ -69,7 +56,6 @@ class CameraCaptureController extends GetxController
 
   late final CameraCaptureSessionLifecycleHelper _sessionLifecycleHelper;
   late final CameraRouteLifecycleController _routeLifecycleHelper;
-  late final CameraCaptureActionsHelper _actionsHelper;
 
   CameraController? get cameraController => _cameraSessionService.controller;
 
@@ -104,8 +90,25 @@ class CameraCaptureController extends GetxController
     await _permissionService.openSettings();
   }
 
-  Future<void> toggleFlashMode() {
-    return _actionsHelper.toggleFlashMode();
+  Future<void> toggleFlashMode() async {
+    final cam = cameraController;
+    if (cam == null || !cam.value.isInitialized) return;
+
+    final next = switch (flashMode.value) {
+      FlashMode.off => FlashMode.auto,
+      FlashMode.auto => FlashMode.always,
+      FlashMode.always => FlashMode.off,
+      FlashMode.torch => FlashMode.off,
+    };
+
+    try {
+      await cam.setFlashMode(next);
+      flashMode.value = next;
+    } on CameraException catch (e) {
+      failure.value = CameraFailure('Flash mode failed: ${e.description}');
+    } catch (e) {
+      failure.value = CameraFailure('Flash mode failed: $e');
+    }
   }
 
   Future<void> pauseForRoute() {
@@ -120,8 +123,31 @@ class CameraCaptureController extends GetxController
     return _sessionLifecycleHelper.switchCamera();
   }
 
-  Future<void> capture() {
-    return _actionsHelper.capture();
+  Future<void> capture() async {
+    if (isCapturing.value) return;
+    final cam = cameraController;
+    if (cam == null || !cam.value.isInitialized) return;
+
+    isCapturing.value = true;
+    try {
+      final file = await cam.takePicture();
+      if (isClosed) return;
+      await Get.offNamed(
+        AppRoutes.processing,
+        arguments: <String, dynamic>{
+          'imagePath': file.path,
+          'capturedWithFrontCamera': isFrontCamera,
+        },
+      );
+    } on CameraException catch (e) {
+      if (isClosed) return;
+      failure.value = CameraFailure('Capture failed: ${e.description}');
+    } catch (e) {
+      if (isClosed) return;
+      failure.value = CameraFailure('Capture failed: $e');
+    } finally {
+      if (!isClosed) isCapturing.value = false;
+    }
   }
 
   @override
