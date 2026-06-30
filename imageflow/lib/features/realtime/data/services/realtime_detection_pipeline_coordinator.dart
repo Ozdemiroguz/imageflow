@@ -4,19 +4,19 @@ import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
-import '../../../core/models/normalized_corners.dart';
-import '../../../core/platform/corner_detector.dart';
-import '../../../core/utils/android_nv21.dart';
-import '../../../core/utils/log.dart';
-import '../../../core/utils/perf_trace.dart';
-import '../../../core/utils/realtime_input_image_factory.dart';
-import '../presentation/models/capture_realtime_config.dart';
-import '../presentation/models/realtime_pipeline_coordinator.dart';
-import '../presentation/state/realtime_overlay_state_store.dart';
-import 'realtime_face_detection_service.dart';
+import '../../../../core/models/normalized_corners.dart';
+import '../../../../core/platform/corner_detector.dart';
+import '../../../../core/utils/android_nv21.dart';
+import '../../../../core/utils/log.dart';
+import '../../../../core/utils/perf_trace.dart';
+import '../../../../core/utils/realtime_input_image_factory.dart';
+import '../../presentation/models/capture_realtime_config.dart';
+import '../../presentation/models/realtime_pipeline_coordinator.dart';
+import '../../presentation/state/realtime_overlay_state_store.dart';
+import '../datasources/realtime_face_detection_service.dart';
 import 'realtime_face_geometry_normalizer.dart';
 import 'realtime_frame_perf_tracker.dart';
-import 'realtime_ocr_gate_service.dart';
+import '../datasources/realtime_ocr_gate_service.dart';
 import 'realtime_preview_builder.dart';
 
 /// Presentation helper for coordinating OCR, face, and document detection.

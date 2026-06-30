@@ -5,10 +5,10 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
-import '../../../core/error/failures.dart';
-import '../../../core/services/camera_session_service.dart';
-import '../presentation/models/capture_realtime_config.dart';
-import 'realtime_detection_pipeline_coordinator.dart';
+import '../../../../core/error/failures.dart';
+import '../../../../core/services/camera_session_service.dart';
+import '../models/capture_realtime_config.dart';
+import '../../data/services/realtime_detection_pipeline_coordinator.dart';
 
 /// Presentation helper for camera stream start/stop and frame pipeline trigger.
 /// This is a plain class, not a GetxService.

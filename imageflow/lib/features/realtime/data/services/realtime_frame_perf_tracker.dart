@@ -1,4 +1,4 @@
-import '../../../core/utils/perf_trace.dart';
+import '../../../../core/utils/perf_trace.dart';
 
 class RealtimeFramePerfTracker {
   RealtimeFramePerfTracker({this.tag = 'PerfRealtime', this.windowMs = 3000});

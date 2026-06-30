@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
-import '../../../core/utils/realtime_input_image_factory.dart';
+import '../../../../core/utils/realtime_input_image_factory.dart';
 
 typedef OcrGateResult = ({bool hasText});
 
