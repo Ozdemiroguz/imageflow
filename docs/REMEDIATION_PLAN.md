@@ -26,10 +26,20 @@ Every commit below kept `flutter analyze` clean and all 188 tests green.
 | **E1 + M2 (5a)** — log storage errors (`onLog`) + justify every `// ignore` | ✅ Done | `7d7ab00` |
 | **M1 (5b)** — named `FaceRect`/`ContourPoint` for entity geometry | ✅ Done | `046cbc2` |
 | **M3 (5b)** — rename realtime controller fields to match coordinator types | ✅ Done | `44a0fcc` |
+| **Step A** — rename `ProcessingRepository` → `ImageProcessingService` (mislabeled concept; → `domain/services` + `data/services`) | ✅ Done | `df445a9` |
+| **Step B (A3)** — DRY-merge `processImage`/`processImageExternal` (`_runDocumentPipeline`/`_buildResult`) | ✅ Done | `e2b20c1` |
+| **Step C (A2)** — extract `FaceAnnotator` (the 117-line god-method); service 513→395 LOC | ✅ Done | `cb2a864` |
+| **Step D** — unify history mappers (one `FileService`-backed `ProcessingHistoryMapper`); document why the two entities stay separate | ✅ Done | `6420e10` |
+| **Step E** — fold `RealtimeFrameProcessor` into `RealtimeDetectionPipelineCoordinator` | ✅ Done | `72c47fa` |
+| **Step F-1** — demote `BatchQueueInitializer` to a top-level function | ✅ Done | `8437503` |
+| **Step F-2** — keep all use cases (uniform layer); decision recorded in standards §2.2 | ✅ Done (decision) | `03039e1` |
+| **Step F-3** — inline `CameraCaptureActionsHelper` for symmetry with realtime | ✅ Done | `8c0f35e` |
 | **N1** — contain `camera` type leakage (19 files) | ⏸️ Deferred | — |
-| **E2/E3/M5 (5b)** — corner `null`→`Result`, capture IO→service, `onInit` throw→state (behavior-touching) | ⬜ Pending (needs approval) | — |
-| **4d** — split `ProcessingRepositoryImpl` + DRY document pipeline (A1/A2/A3) | ⬜ Pending (highest risk — needs approval) | — |
+| **E2/E3/M5 (5b)** — corner `null`→`Result`, realtime capture IO logging, `onInit` throw→state (behavior-touching) | ⬜ Pending (needs approval) | — |
+| **4d (rejected)** — full 3-service split of the processing service | ❌ Not done (LAYERING_REVIEW judged it ~60% overengineering — only `FaceAnnotator`/DRY were justified, both done in B/C) | — |
 | **Phase 3** — tests (realtime/batch/repo) + widget tests + CI | ⬜ Pending (LAST, by request) | — |
+
+> **Companion reviews produced along the way:** [LAYERING_REVIEW.md](./LAYERING_REVIEW.md) (per-abstraction classification + the honest repo-split verdict), [SERVICE_PLACEMENT.md](./SERVICE_PLACEMENT.md) (the four "service" meanings + import litmus), [FEATURE_REVIEW.md](./FEATURE_REVIEW.md) (no feature is redundant/missing).
 
 > **N1 deferred (decision):** `camera` usage is concentrated in the realtime live-frame pipeline (`CameraImage`, `ResolutionPreset`, frame rotation), which is inherently plugin-adjacent infrastructure rather than a single shared-model leak like N2. Fully wrapping it is a large realtime refactor with higher behavior risk and lower payoff than N2/N3, so it is parked as future work. The high-value boundary leaks (the shared `core` model — N2 — and the unwrapped `image_picker` — N3) are closed.
 
