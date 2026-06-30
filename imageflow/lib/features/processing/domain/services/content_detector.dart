@@ -1,5 +1,5 @@
 import '../../../../core/enums/processing_type.dart';
-import '../../../../core/models/detection_result.dart';
+import '../entities/detection_result.dart';
 
 /// Detects the dominant content (face vs. text/document) in an image.
 ///

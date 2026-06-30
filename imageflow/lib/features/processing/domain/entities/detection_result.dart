@@ -1,5 +1,5 @@
-import '../enums/processing_type.dart';
-import 'detected_face.dart';
+import '../../../../core/enums/processing_type.dart';
+import '../../../../core/models/detected_face.dart';
 import 'recognized_text_data.dart';
 
 /// Result of content detection — what was found and at which rotation.

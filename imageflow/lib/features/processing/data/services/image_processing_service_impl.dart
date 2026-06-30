@@ -9,7 +9,7 @@ import '../../../../core/enums/processing_type.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/models/face_geometry.dart';
-import '../../../../core/models/recognized_text_data.dart';
+import '../../domain/entities/recognized_text_data.dart';
 import '../../../../core/services/file_service.dart';
 import '../utils/image_utils.dart';
 import '../../../../core/utils/log.dart';

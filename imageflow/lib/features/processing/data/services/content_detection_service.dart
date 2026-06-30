@@ -3,8 +3,8 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 
 import '../../../../core/enums/processing_type.dart';
 import '../../../../core/models/detected_face.dart';
-import '../../../../core/models/detection_result.dart';
-import '../../../../core/models/recognized_text_data.dart';
+import '../../domain/entities/detection_result.dart';
+import '../../domain/entities/recognized_text_data.dart';
 import '../utils/image_utils.dart';
 import '../../../../core/utils/log.dart';
 import '../../domain/services/content_detector.dart';

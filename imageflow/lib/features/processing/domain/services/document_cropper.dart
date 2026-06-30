@@ -1,4 +1,4 @@
-import '../../../../core/models/recognized_text_data.dart';
+import '../entities/recognized_text_data.dart';
 
 /// Crops, rectifies, and enhances a document image, writing the result to disk.
 ///

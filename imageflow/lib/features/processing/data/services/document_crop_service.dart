@@ -5,7 +5,7 @@ import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
 
-import '../../../../core/models/recognized_text_data.dart';
+import '../../domain/entities/recognized_text_data.dart';
 import '../../../../core/platform/corner_detector.dart';
 import '../../../../core/utils/log.dart';
 import '../../domain/services/document_cropper.dart';
