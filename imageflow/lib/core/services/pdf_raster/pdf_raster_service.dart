@@ -10,9 +10,10 @@ import '../../error/result.dart';
 import '../../utils/log.dart';
 import '../../utils/perf_trace.dart';
 
-part 'pdf_raster_service_rasterizer_typedef.dart';
-part 'pdf_raster_service_byte_loader_typedef.dart';
-part 'pdf_raster_service_dpi_resolver_typedef.dart';
+typedef PdfRasterizer =
+    Future<List<Uint8List>> Function(Uint8List pdfBytes, double dpi);
+typedef PdfByteLoader = Future<Uint8List> Function(String pdfPath);
+typedef PdfDpiResolver = double Function();
 
 /// App-wide PDF rasterization service with in-flight dedupe and small LRU cache.
 class PdfRasterService extends GetxService {
