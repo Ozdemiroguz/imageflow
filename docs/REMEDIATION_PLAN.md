@@ -9,6 +9,28 @@
 
 ---
 
+## Progress (branch `refactor/showcase-hardening`)
+
+Every commit below kept `flutter analyze` clean and all 188 tests green.
+
+| Item | Status | Commit |
+|---|---|---|
+| **D1** — extract `ContentDetector`/`DocumentCropper`/`CornerDetector` interfaces, bind interface→impl | ✅ Done | `6e586c6` |
+| **G1** — inject `CaptureController` into `OpenCaptureDialogAction` | ✅ Done | `f3aa2c7` |
+| **N2** — make `DetectionResult` plugin-free (`DetectedFace`/`RecognizedTextData`; translate ML Kit at the boundary) | ✅ Done | `c5e7fcf` |
+| **N3** — wrap `image_picker` behind `ImagePickerGateway` | ✅ Done | `f4002a7` |
+| **§8** — consolidate duplicate route-lifecycle coordinators → `CameraRouteLifecycleController` | ✅ Done | `9af2a59` |
+| **§8** — merge batch transitions + mutator → `BatchItemStateManager` | ✅ Done | `d5e7d3e` |
+| **N1** — contain `camera` type leakage (19 files) | ⏸️ Deferred | — |
+| **4c** — relabel mis-filed view-models (`RealtimeOverlayStateStore`, `DocumentActionsPresenter`) | ⬜ Pending | — |
+| **4d** — split `ProcessingRepositoryImpl` + DRY document pipeline (A1/A2/A3) | ⬜ Pending | — |
+| **Phase 5** — consistency quick-wins (onLog, named types, `// ignore` justifications, naming) | ⬜ Pending | — |
+| **Phase 3** — tests (realtime/batch/repo) + widget tests + CI | ⬜ Pending (LAST, by request) | — |
+
+> **N1 deferred (decision):** `camera` usage is concentrated in the realtime live-frame pipeline (`CameraImage`, `ResolutionPreset`, frame rotation), which is inherently plugin-adjacent infrastructure rather than a single shared-model leak like N2. Fully wrapping it is a large realtime refactor with higher behavior risk and lower payoff than N2/N3, so it is parked as future work. The high-value boundary leaks (the shared `core` model — N2 — and the unwrapped `image_picker` — N3) are closed.
+
+---
+
 ## Phase 0 — Baseline (do once, ~10 min)
 
 Lock in a green starting point so every later change is measurable.
