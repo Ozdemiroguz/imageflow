@@ -6,8 +6,9 @@ import 'dart:typed_data';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image/image.dart' as img;
 
+import '../../../../core/platform/corner_detector.dart';
 import '../../../../core/utils/log.dart';
-import '../../../../core/services/native_corner_detection_service.dart';
+import '../../domain/services/document_cropper.dart';
 
 /// Document crop & enhancement service.
 ///
@@ -15,18 +16,18 @@ import '../../../../core/services/native_corner_detection_service.dart';
 /// 1. Try native corner detection → perspective correction (copyRectify)
 /// 2. Fallback: ML Kit text block bounding boxes → axis-aligned crop
 /// 3. Apply eco filter (grayscale + contrast + normalize)
-class DocumentCropService {
-  const DocumentCropService({
-    required NativeCornerDetectionService cornerDetection,
-  }) : _cornerDetection = cornerDetection;
+class DocumentCropService implements DocumentCropper {
+  const DocumentCropService({required CornerDetector cornerDetection})
+    : _cornerDetection = cornerDetection;
 
-  final NativeCornerDetectionService _cornerDetection;
+  final CornerDetector _cornerDetection;
 
   static const _tag = 'DocumentCrop';
 
   static const _debugCorners = false;
 
   /// Process a document image: detect corners → crop/rectify → filter → save.
+  @override
   Future<void> processDocument({
     required String sourcePath,
     required String targetPath,

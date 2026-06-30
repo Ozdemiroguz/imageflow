@@ -11,8 +11,6 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/enums/processing_type.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
-import '../services/content_detection_service.dart';
-import '../services/document_crop_service.dart';
 import '../../../../core/services/file_service.dart';
 import '../../../../core/utils/face_mask_utils.dart';
 import '../../../../core/utils/image_utils.dart';
@@ -20,19 +18,21 @@ import '../../../../core/utils/log.dart';
 import '../../domain/entities/processing_result.dart';
 import '../../domain/entities/processing_step.dart';
 import '../../domain/repositories/processing_repository.dart';
+import '../../domain/services/content_detector.dart';
+import '../../domain/services/document_cropper.dart';
 
 class ProcessingRepositoryImpl implements ProcessingRepository {
   const ProcessingRepositoryImpl({
     required FileService fileService,
-    required ContentDetectionService contentDetectionService,
-    required DocumentCropService documentCropService,
+    required ContentDetector contentDetector,
+    required DocumentCropper documentCropper,
   }) : _fileService = fileService,
-       _contentDetection = contentDetectionService,
-       _documentCrop = documentCropService;
+       _contentDetection = contentDetector,
+       _documentCrop = documentCropper;
 
   final FileService _fileService;
-  final ContentDetectionService _contentDetection;
-  final DocumentCropService _documentCrop;
+  final ContentDetector _contentDetection;
+  final DocumentCropper _documentCrop;
 
   static const _uuid = Uuid();
 

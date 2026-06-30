@@ -5,6 +5,7 @@ import '../../../../core/enums/processing_type.dart';
 import '../../../../core/models/detection_result.dart';
 import '../../../../core/utils/image_utils.dart';
 import '../../../../core/utils/log.dart';
+import '../../domain/services/content_detector.dart';
 
 /// Handles EXIF orientation fix, face/text detection, and rotation fallback.
 ///
@@ -14,7 +15,7 @@ import '../../../../core/utils/log.dart';
 /// 3. Try text detection → if found, return
 /// 4. If nothing found, rotate 90°/180°/270° and retry detection
 /// 5. If still nothing, return empty result with document type
-class ContentDetectionService {
+class ContentDetectionService implements ContentDetector {
   const ContentDetectionService({this.routingMaxDimension = 1600});
 
   static const _tag = 'ContentDetection';
@@ -24,6 +25,7 @@ class ContentDetectionService {
   ///
   /// [imagePath] is modified in-place (EXIF baked, possibly rotated).
   /// [preferredType] skips the other detection if set.
+  @override
   Future<DetectionResult> detect({
     required String imagePath,
     ProcessingType? preferredType,

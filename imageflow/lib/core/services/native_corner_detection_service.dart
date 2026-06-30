@@ -2,13 +2,14 @@ import 'package:flutter/services.dart';
 
 import '../models/document_corners.dart';
 import '../models/normalized_corners.dart';
+import '../platform/corner_detector.dart';
 import '../utils/log.dart';
 
 /// Native document corner detection via Method Channel.
 ///
 /// iOS: Vision Framework (VNDetectRectanglesRequest)
 /// Android: native corner detection handler (frame/file based)
-class NativeCornerDetectionService {
+class NativeCornerDetectionService implements CornerDetector {
   NativeCornerDetectionService({MethodChannel? channel})
     : _channel =
           channel ??
@@ -22,6 +23,7 @@ class NativeCornerDetectionService {
   ///
   /// Returns null if no document rectangle is found.
   /// Coordinates are in pixel space of the image.
+  @override
   Future<DocumentCorners?> detectCorners({required String imagePath}) async {
     try {
       final result = await _channel.invokeMapMethod<String, dynamic>(
@@ -94,6 +96,7 @@ class NativeCornerDetectionService {
   ///
   /// Returns [NormalizedCorners] with 0-1 coordinates (caller maps to preview).
   /// Returns null if no rectangle found, detection is busy, or on error.
+  @override
   Future<NormalizedCorners?> detectCornersFromFrame({
     required int width,
     required int height,

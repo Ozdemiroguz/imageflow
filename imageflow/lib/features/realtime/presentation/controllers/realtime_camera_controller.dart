@@ -9,9 +9,9 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/models/normalized_corners.dart';
+import '../../../../core/platform/corner_detector.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/services/camera_session_service.dart';
-import '../../../../core/services/native_corner_detection_service.dart';
 import '../../../../core/services/permission_service.dart';
 import '../../services/realtime_face_detection_service.dart';
 import '../../services/realtime_ocr_gate_service.dart';
@@ -33,7 +33,7 @@ class RealtimeCameraController extends GetxController
   RealtimeCameraController({
     required PermissionService permissionService,
     required CameraSessionService cameraSessionService,
-    required NativeCornerDetectionService cornerDetectionService,
+    required CornerDetector cornerDetectionService,
     required RealtimeFaceDetectionService faceDetectionService,
     required RealtimeOcrGateService ocrGateService,
     required RealtimePreviewBuilder previewBuilder,

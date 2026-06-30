@@ -5,7 +5,7 @@ import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 import '../../../core/models/normalized_corners.dart';
-import '../../../core/services/native_corner_detection_service.dart';
+import '../../../core/platform/corner_detector.dart';
 import 'realtime_face_detection_service.dart';
 import 'realtime_ocr_gate_service.dart';
 import 'realtime_preview_builder.dart';
@@ -22,7 +22,7 @@ class RealtimeDetectionPipelineCoordinator {
     required CaptureRealtimeConfig config,
     required RealtimePipelineCoordinator pipelineCoordinator,
     required RealtimeOverlayStateStore overlayStateManager,
-    required NativeCornerDetectionService cornerDetectionService,
+    required CornerDetector cornerDetectionService,
     required RealtimeFaceDetectionService faceDetectionService,
     required RealtimeOcrGateService ocrGateService,
     required RealtimePreviewBuilder previewBuilder,
@@ -42,7 +42,7 @@ class RealtimeDetectionPipelineCoordinator {
   final CaptureRealtimeConfig _config;
   final RealtimePipelineCoordinator _pipelineCoordinator;
   final RealtimeOverlayStateStore _overlayStateManager;
-  final NativeCornerDetectionService _cornerDetectionService;
+  final CornerDetector _cornerDetectionService;
   final RealtimeFaceDetectionService _faceDetectionService;
   final RealtimeOcrGateService _ocrGateService;
   final RealtimePreviewBuilder _previewBuilder;
