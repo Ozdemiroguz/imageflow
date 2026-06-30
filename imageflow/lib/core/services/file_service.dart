@@ -59,8 +59,10 @@ class FileService extends GetxService {
     ];
 
     for (final file in files) {
+      // Best-effort async cleanup; files may legitimately be absent.
       // ignore: avoid_slow_async_io
       if (await file.exists()) {
+        // Async delete keeps cleanup off the UI isolate.
         // ignore: avoid_slow_async_io
         await file.delete();
       }

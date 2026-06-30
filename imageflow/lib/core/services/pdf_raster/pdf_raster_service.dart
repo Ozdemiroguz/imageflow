@@ -77,6 +77,7 @@ class PdfRasterService extends GetxService {
         }
 
         final file = File(pdfPath);
+        // Async existence check avoids blocking the UI isolate before raster.
         // ignore: avoid_slow_async_io
         if (!await file.exists()) {
           throw const FileFailure('PDF file not found.');

@@ -306,8 +306,10 @@ class ProcessingRepositoryImpl implements ProcessingRepository {
   Future<void> _safeDeleteFile(String path) async {
     final file = File(path);
     try {
+      // Best-effort temp cleanup; the working copy may already be gone.
       // ignore: avoid_slow_async_io
       if (await file.exists()) {
+        // Async delete keeps cleanup off the UI isolate.
         // ignore: avoid_slow_async_io
         await file.delete();
       }
