@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import '../../../../core/enums/processing_type.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/routes/app_routes.dart';
-import '../../../../core/services/document_actions_presenter.dart';
+import '../../../../core/presentation/document_actions_presenter.dart';
 import '../../../../core/services/pdf_raster/pdf_raster_service.dart';
 import '../../../../core/widgets/pdf/pdf_viewer_controller.dart';
 import '../../../history/domain/entities/processing_history.dart';

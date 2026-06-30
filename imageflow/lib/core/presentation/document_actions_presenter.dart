@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/scheduler.dart';
 
-import '../../../../core/error/failure_ui_mapper.dart';
-import '../../../../core/error/failures.dart';
-import '../../../../core/error/result.dart';
-import '../../../../core/models/snack_data.dart';
-import '../../../../core/services/modal_service.dart';
-import '../../../../core/services/pdf_external_open_service.dart';
+import '../error/failure_ui_mapper.dart';
+import '../error/failures.dart';
+import '../error/result.dart';
+import '../models/snack_data.dart';
+import '../services/modal_service.dart';
+import '../services/pdf_external_open_service.dart';
 
 /// Presentation-level orchestrator for document-specific UI actions.
 class DocumentActionsPresenter {
