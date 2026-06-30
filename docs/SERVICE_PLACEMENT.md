@@ -4,7 +4,9 @@
 >
 > Written because the codebase currently has "services" in **four** locations, and that looked arbitrary. It mostly isn't — but one location (`features/<f>/services/`) is genuinely inconsistent, and this doc says exactly why and what to do.
 
-**Date:** 2026-06-30 · Companion to [ENGINEERING_STANDARDS.md](./ENGINEERING_STANDARDS.md) and [LAYERING_REVIEW.md](./LAYERING_REVIEW.md).
+**Date:** 2026-06-30 · Companion to [ENGINEERING_STANDARDS.md](./ENGINEERING_STANDARDS.md), [LAYERING_REVIEW.md](./LAYERING_REVIEW.md), [FOLDER_CONVENTIONS.md](./FOLDER_CONVENTIONS.md), [REALTIME_NATIVE_BOUNDARY.md](./REALTIME_NATIVE_BOUNDARY.md).
+
+> **Update (resolution in progress):** the flat-`services/` inconsistency flagged below has been **fixed for `realtime`** — it is now layered into `data/datasources/`, `data/services/`, and `presentation/coordinators/` (see [REALTIME_NATIVE_BOUNDARY.md](./REALTIME_NATIVE_BOUNDARY.md)). **`capture` and `batch` still have a flat `services/`** and remain to be reclassified by the same import litmus: `capture/services/camera_capture_session_lifecycle_helper.dart` → `presentation/coordinators/` (GetX+camera); the `batch/services/*` files are pure application coordinators → `batch/application/` (or `presentation/`). The §4 table below is the original audit snapshot.
 
 ---
 
