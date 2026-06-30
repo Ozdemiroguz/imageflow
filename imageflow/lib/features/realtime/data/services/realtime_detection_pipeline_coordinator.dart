@@ -30,6 +30,8 @@ class RealtimeDetectionPipelineCoordinator {
     required RealtimeFaceDetectionService faceDetectionService,
     required RealtimeOcrGateService ocrGateService,
     required RealtimePreviewBuilder previewBuilder,
+    RealtimeFaceGeometryNormalizer? faceGeometryNormalizer,
+    RealtimeFramePerfTracker? perfTracker,
   }) : _config = config,
        _pipelineCoordinator = pipelineCoordinator,
        _overlayStateManager = overlayStateManager,
@@ -37,9 +39,12 @@ class RealtimeDetectionPipelineCoordinator {
        _faceDetectionService = faceDetectionService,
        _ocrGateService = ocrGateService,
        _previewBuilder = previewBuilder,
-       _faceGeometryNormalizer = RealtimeFaceGeometryNormalizer(
-         frameImageUsesNativeRotation: config.frameImageUsesNativeRotation,
-       );
+       _faceGeometryNormalizer =
+           faceGeometryNormalizer ??
+           RealtimeFaceGeometryNormalizer(
+             frameImageUsesNativeRotation: config.frameImageUsesNativeRotation,
+           ),
+       _perfTracker = perfTracker ?? RealtimeFramePerfTracker();
 
   static const _tag = 'RealtimeCamera';
 
@@ -51,7 +56,7 @@ class RealtimeDetectionPipelineCoordinator {
   final RealtimeOcrGateService _ocrGateService;
   final RealtimePreviewBuilder _previewBuilder;
   final RealtimeFaceGeometryNormalizer _faceGeometryNormalizer;
-  final RealtimeFramePerfTracker _perfTracker = RealtimeFramePerfTracker();
+  final RealtimeFramePerfTracker _perfTracker;
 
   Future<void> runOcrGate(
     CameraImage frame, {
