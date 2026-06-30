@@ -11,19 +11,19 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/models/normalized_corners.dart';
 import '../../../../core/platform/corner_detector.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/services/camera_route_lifecycle_controller.dart';
 import '../../../../core/services/camera_session_service.dart';
 import '../../../../core/services/permission_service.dart';
+import '../../services/realtime_camera_session_coordinator.dart';
+import '../../services/realtime_detection_pipeline_coordinator.dart';
 import '../../services/realtime_face_detection_service.dart';
+import '../../services/realtime_frame_processor.dart';
 import '../../services/realtime_ocr_gate_service.dart';
+import '../../services/realtime_overlay_state_store.dart';
 import '../../services/realtime_preview_builder.dart';
+import '../../services/realtime_stream_coordinator.dart';
 import '../enums/realtime_native_rotation_strategy.dart';
 import '../enums/realtime_preview_target.dart';
-import '../../services/realtime_detection_pipeline_coordinator.dart';
-import '../../services/realtime_stream_coordinator.dart';
-import '../../services/realtime_frame_processor.dart';
-import '../../services/realtime_overlay_state_store.dart';
-import '../../services/realtime_route_lifecycle_coordinator.dart';
-import '../../services/realtime_camera_session_coordinator.dart';
 import '../models/capture_realtime_config.dart';
 import '../models/realtime_overlay_state.dart';
 import '../models/realtime_pipeline_coordinator.dart';
@@ -45,7 +45,7 @@ class RealtimeCameraController extends GetxController
     RealtimeFrameProcessor? frameProcessor,
     RealtimeStreamCoordinator? framePipelineTrigger,
     RealtimeCameraSessionCoordinator? sessionLifecycleHelper,
-    RealtimeRouteLifecycleCoordinator? routeLifecycleHelper,
+    CameraRouteLifecycleController? routeLifecycleHelper,
   }) : _permissionService = permissionService,
        _cameraSessionService = cameraSessionService,
        _faceDetectionService = faceDetectionService,
@@ -133,7 +133,7 @@ class RealtimeCameraController extends GetxController
 
     _routeLifecycleHelper =
         routeLifecycleHelper ??
-        RealtimeRouteLifecycleCoordinator(
+        CameraRouteLifecycleController(
           onPauseForLifecycle: _sessionLifecycleHelper.pauseForLifecycle,
           onResumeCameraSession: _sessionLifecycleHelper.resumeCameraSession,
           enableRouteAwareLifecycle:
@@ -155,7 +155,7 @@ class RealtimeCameraController extends GetxController
   late final RealtimeFrameProcessor _frameProcessor;
   late final RealtimeStreamCoordinator _framePipelineTrigger;
   late final RealtimeCameraSessionCoordinator _sessionLifecycleHelper;
-  late final RealtimeRouteLifecycleCoordinator _routeLifecycleHelper;
+  late final CameraRouteLifecycleController _routeLifecycleHelper;
 
   CameraController? get cameraController => _cameraSessionService.controller;
 

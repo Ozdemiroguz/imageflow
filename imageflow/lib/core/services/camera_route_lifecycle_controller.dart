@@ -2,10 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
-/// Presentation helper for route/app lifecycle handling in capture flow.
-/// This is a plain class, not a GetxService.
-class CameraCaptureRouteLifecycleHelper {
-  CameraCaptureRouteLifecycleHelper({
+/// Coordinates route/app-lifecycle pause & resume for any camera-backed screen.
+///
+/// Shared by the capture and realtime flows: it pauses the camera when the
+/// route is covered or the app goes inactive/background, and resumes it when
+/// the route returns and the app is resumed. This is a plain class, not a
+/// GetxService — callers wire its [pauseForRoute]/[resumeFromRoute]/
+/// [handleAppLifecycleState] hooks and pass pause/resume callbacks.
+class CameraRouteLifecycleController {
+  CameraRouteLifecycleController({
     required Future<void> Function() onPauseForLifecycle,
     required Future<void> Function() onResumeCameraSession,
     this.enableRouteAwareLifecycle = true,

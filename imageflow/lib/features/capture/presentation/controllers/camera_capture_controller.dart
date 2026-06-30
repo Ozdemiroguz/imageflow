@@ -5,10 +5,10 @@ import 'package:get/get.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/services/camera_route_lifecycle_controller.dart';
 import '../../../../core/services/camera_session_service.dart';
 import '../../../../core/services/permission_service.dart';
 import '../../services/camera_capture_actions_helper.dart';
-import '../../services/camera_capture_route_lifecycle_helper.dart';
 import '../../services/camera_capture_session_lifecycle_helper.dart';
 import '../models/camera_capture_config.dart';
 
@@ -19,7 +19,7 @@ class CameraCaptureController extends GetxController
     required CameraSessionService cameraSessionService,
     CameraCaptureConfig config = CameraCaptureConfig.defaults,
     CameraCaptureSessionLifecycleHelper? sessionLifecycleHelper,
-    CameraCaptureRouteLifecycleHelper? routeLifecycleHelper,
+    CameraRouteLifecycleController? routeLifecycleHelper,
     CameraCaptureActionsHelper? actionsHelper,
   }) : _permissionService = permissionService,
        _cameraSessionService = cameraSessionService,
@@ -43,7 +43,7 @@ class CameraCaptureController extends GetxController
 
     _routeLifecycleHelper =
         routeLifecycleHelper ??
-        CameraCaptureRouteLifecycleHelper(
+        CameraRouteLifecycleController(
           onPauseForLifecycle: _sessionLifecycleHelper.pauseForLifecycle,
           onResumeCameraSession: _sessionLifecycleHelper.resumeCameraSession,
           enableRouteAwareLifecycle:
@@ -68,7 +68,7 @@ class CameraCaptureController extends GetxController
   final CameraCaptureConfig _config;
 
   late final CameraCaptureSessionLifecycleHelper _sessionLifecycleHelper;
-  late final CameraCaptureRouteLifecycleHelper _routeLifecycleHelper;
+  late final CameraRouteLifecycleController _routeLifecycleHelper;
   late final CameraCaptureActionsHelper _actionsHelper;
 
   CameraController? get cameraController => _cameraSessionService.controller;
