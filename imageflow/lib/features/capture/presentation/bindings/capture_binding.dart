@@ -19,7 +19,10 @@ class CaptureBinding implements Bindings {
 
     if (!Get.isRegistered<OpenCaptureDialogAction>()) {
       Get.lazyPut<OpenCaptureDialogAction>(
-        () => OpenCaptureDialogAction(modalService: Get.find<ModalService>()),
+        () => OpenCaptureDialogAction(
+          modalService: Get.find<ModalService>(),
+          captureController: Get.find<CaptureController>(),
+        ),
         fenix: true,
       );
     }
