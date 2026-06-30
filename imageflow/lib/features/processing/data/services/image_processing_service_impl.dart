@@ -10,6 +10,8 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/enums/processing_type.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
+import '../../../../core/models/face_geometry.dart';
+import '../../../../core/models/recognized_text_data.dart';
 import '../../../../core/services/file_service.dart';
 import '../../../../core/utils/face_mask_utils.dart';
 import '../../../../core/utils/image_utils.dart';
@@ -103,85 +105,58 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
         }
 
         final processedPath = _fileService.processedFilePath(id);
-        final faceRects = <({int left, int top, int width, int height})>[];
-        final faceContours = <List<({int x, int y})>>[];
+        final faceRects = <FaceRect>[];
+        final faceContours = <List<ContourPoint>>[];
         String? pdfPath;
 
         if (detection.hasFaces) {
           // --- Face flow ---
           onProgress?.call(ProcessingStep.annotating);
-          final rects = <({int left, int top, int width, int height})>[];
-          final contours = <List<({int x, int y})>>[];
-
           for (final face in detection.faces!) {
             final box = face.boundingBox;
-            rects.add((
+            faceRects.add((
               left: box.left,
               top: box.top,
               width: math.max(1, box.right - box.left),
               height: math.max(1, box.bottom - box.top),
             ));
-            contours.add(face.contour);
+            faceContours.add(face.contour);
           }
-
-          faceRects.addAll(rects);
-          faceContours.addAll(contours);
-          await _annotateFaces(workingPath, processedPath, rects, contours);
+          await _annotateFaces(
+            workingPath,
+            processedPath,
+            faceRects,
+            faceContours,
+          );
         } else if (detection.type == ProcessingType.document) {
-          // --- Document flow: text-block crop + eco filter ---
-          onProgress?.call(ProcessingStep.correctingPerspective);
-          await _documentCrop.processDocument(
-            sourcePath: workingPath,
-            targetPath: processedPath,
+          // --- Document flow: crop + eco filter + PDF (only if text found) ---
+          pdfPath = await _runDocumentPipeline(
+            id: id,
+            workingPath: workingPath,
+            processedPath: processedPath,
             recognizedText: detection.recognizedText,
+            appliedRotation: detection.appliedRotation,
+            generatePdf: (detection.recognizedText?.text ?? '').isNotEmpty,
+            onProgress: onProgress,
           );
-
-          await _restoreDocumentOrientation(
-            imagePath: processedPath,
-            appliedRotationDegrees: detection.appliedRotation,
-          );
-
-          // Generate PDF (only if text was found)
-          final extractedText = detection.recognizedText?.text ?? '';
-          if (extractedText.isNotEmpty) {
-            onProgress?.call(ProcessingStep.generatingPdf);
-            pdfPath = _fileService.pdfFilePath(id);
-            await _generatePdf(imagePath: processedPath, pdfPath: pdfPath);
-          }
         } else {
           // --- Fallback: no face, no text — just copy working copy ---
           await File(workingPath).copy(processedPath);
         }
 
-        // Generate thumbnail
-        onProgress?.call(ProcessingStep.generatingThumbnail);
-        final thumbnailPath = _fileService.thumbnailFilePath(id);
-        await ImageUtils.generateThumbnail(
-          sourcePath: processedPath,
-          targetPath: thumbnailPath,
-        );
-
-        // Save to history (relative paths for persistence)
-        onProgress?.call(ProcessingStep.saving);
-        final fileSizeBytes = await File(processedPath).length();
-
         final type = detection.type ?? ProcessingType.document;
-
-        final result = ProcessingResult(
+        final result = await _buildResult(
           id: id,
           type: type,
-          originalImagePath: originalPath,
-          processedImagePath: processedPath,
-          thumbnailPath: thumbnailPath,
-          fileSizeBytes: fileSizeBytes,
-          createdAt: DateTime.now(),
-          facesDetected: faceRects.length,
-          faceRects: faceRects,
-          faceContours: faceContours,
+          originalPath: originalPath,
+          processedPath: processedPath,
+          pdfPath: pdfPath,
           extractedText: type == ProcessingType.document
               ? detection.recognizedText?.text
               : null,
-          pdfPath: pdfPath,
+          faceRects: faceRects,
+          faceContours: faceContours,
+          onProgress: onProgress,
         );
 
         onProgress?.call(ProcessingStep.complete);
@@ -232,47 +207,26 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
           );
         }
 
-        // Step 3+4: Text-block crop + eco filter
-        onProgress?.call(ProcessingStep.correctingPerspective);
+        // Document pipeline: crop + eco filter + orientation + PDF.
         final processedPath = _fileService.processedFilePath(id);
-        await _documentCrop.processDocument(
-          sourcePath: workingPath,
-          targetPath: processedPath,
+        final pdfPath = await _runDocumentPipeline(
+          id: id,
+          workingPath: workingPath,
+          processedPath: processedPath,
           recognizedText: detection.recognizedText,
+          appliedRotation: detection.appliedRotation,
+          generatePdf: true,
+          onProgress: onProgress,
         );
 
-        await _restoreDocumentOrientation(
-          imagePath: processedPath,
-          appliedRotationDegrees: detection.appliedRotation,
-        );
-
-        // Step 5: Generate PDF
-        onProgress?.call(ProcessingStep.generatingPdf);
-        final pdfPath = _fileService.pdfFilePath(id);
-        await _generatePdf(imagePath: processedPath, pdfPath: pdfPath);
-
-        // Thumbnail
-        onProgress?.call(ProcessingStep.generatingThumbnail);
-        final thumbnailPath = _fileService.thumbnailFilePath(id);
-        await ImageUtils.generateThumbnail(
-          sourcePath: processedPath,
-          targetPath: thumbnailPath,
-        );
-
-        // Save to history
-        onProgress?.call(ProcessingStep.saving);
-        final fileSizeBytes = await File(processedPath).length();
-
-        final result = ProcessingResult(
+        final result = await _buildResult(
           id: id,
           type: ProcessingType.document,
-          originalImagePath: originalPath,
-          processedImagePath: processedPath,
-          thumbnailPath: thumbnailPath,
-          fileSizeBytes: fileSizeBytes,
-          createdAt: DateTime.now(),
-          extractedText: extractedText,
+          originalPath: originalPath,
+          processedPath: processedPath,
           pdfPath: pdfPath,
+          extractedText: extractedText,
+          onProgress: onProgress,
         );
 
         onProgress?.call(ProcessingStep.complete);
@@ -292,6 +246,77 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
       tag: 'Processing',
     ),
   );
+
+  /// Runs the document pipeline shared by both entry points: text-block crop +
+  /// eco filter, orientation restore, then PDF generation when [generatePdf] is
+  /// requested. Returns the generated PDF path, or null when none was produced.
+  Future<String?> _runDocumentPipeline({
+    required String id,
+    required String workingPath,
+    required String processedPath,
+    required RecognizedTextData? recognizedText,
+    required int appliedRotation,
+    required bool generatePdf,
+    ProgressCallback? onProgress,
+  }) async {
+    onProgress?.call(ProcessingStep.correctingPerspective);
+    await _documentCrop.processDocument(
+      sourcePath: workingPath,
+      targetPath: processedPath,
+      recognizedText: recognizedText,
+    );
+
+    await _restoreDocumentOrientation(
+      imagePath: processedPath,
+      appliedRotationDegrees: appliedRotation,
+    );
+
+    if (!generatePdf) return null;
+
+    onProgress?.call(ProcessingStep.generatingPdf);
+    final pdfPath = _fileService.pdfFilePath(id);
+    await _generatePdf(imagePath: processedPath, pdfPath: pdfPath);
+    return pdfPath;
+  }
+
+  /// Generates the thumbnail, reads the final file size, and assembles the
+  /// [ProcessingResult] — the tail shared by both entry points.
+  Future<ProcessingResult> _buildResult({
+    required String id,
+    required ProcessingType type,
+    required String originalPath,
+    required String processedPath,
+    required String? pdfPath,
+    required String? extractedText,
+    ProgressCallback? onProgress,
+    List<FaceRect> faceRects = const [],
+    List<List<ContourPoint>> faceContours = const [],
+  }) async {
+    onProgress?.call(ProcessingStep.generatingThumbnail);
+    final thumbnailPath = _fileService.thumbnailFilePath(id);
+    await ImageUtils.generateThumbnail(
+      sourcePath: processedPath,
+      targetPath: thumbnailPath,
+    );
+
+    onProgress?.call(ProcessingStep.saving);
+    final fileSizeBytes = await File(processedPath).length();
+
+    return ProcessingResult(
+      id: id,
+      type: type,
+      originalImagePath: originalPath,
+      processedImagePath: processedPath,
+      thumbnailPath: thumbnailPath,
+      fileSizeBytes: fileSizeBytes,
+      createdAt: DateTime.now(),
+      facesDetected: faceRects.length,
+      faceRects: faceRects,
+      faceContours: faceContours,
+      extractedText: extractedText,
+      pdfPath: pdfPath,
+    );
+  }
 
   /// Preserves domain-specific failures (e.g. [DetectionFailure]) so
   /// presentation can render the correct UI state.
