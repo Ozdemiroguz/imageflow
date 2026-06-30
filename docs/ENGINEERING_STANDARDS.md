@@ -118,7 +118,7 @@ From R.C. Martin's [Principles of OOD](http://butunclebob.com/ArticleS.UncleBob.
   - Heuristic: a class >~250 lines or a method >~40 lines is a review flag, not an automatic failure.
 - **O — Open/Closed.** Open for extension, closed for modification ([Uncle Bob](https://blog.cleancoder.com/uncle-bob/2013/03/08/AnOpenAndClosedCase.html)).
   - **PREFER** adding a new `sealed` subtype / new use case over editing a `switch` in many places. Exhaustive `switch` over a sealed type makes the extension points explicit.
-- **L — Liskov Substitution.** A `ProcessingRepositoryImpl` must honor the full contract of `ProcessingRepository` — same error semantics, no surprise exceptions. 🔵 [test]
+- **L — Liskov Substitution.** An `ImageProcessingServiceImpl` must honor the full contract of `ImageProcessingService` — same error semantics, no surprise exceptions. 🔵 [test]
 - **I — Interface Segregation.** Keep repository interfaces focused. Don't force a consumer to depend on methods it never calls; split fat interfaces. 🟡 [review]
 - **D — Dependency Inversion.** *High-level modules depend on abstractions, not on low-level modules* ([DIP](https://en.wikipedia.org/wiki/Dependency_inversion_principle)).
   - **DO** inject dependencies through constructors as **abstract types**; register the concrete type once in a Binding. 🟡 [review]
@@ -134,6 +134,20 @@ From R.C. Martin's [Principles of OOD](http://butunclebob.com/ArticleS.UncleBob.
 - **DO** make a file name mirror its primary type: `processing_controller.dart` → `ProcessingController`. 🟡 [review]
 - **PREFER** one public class per file. Split helpers into sibling files (`*_typedef.dart`, `*_state.dart`) rather than growing one file. 🟡 [review]
 - **DO** mirror `lib/` under `test/` exactly ([Flutter cookbook](https://docs.flutter.dev/cookbook/testing/unit/introduction)). 🔵 [test]
+
+### 5.1 "Service" placement — classify by imports
+
+The word **"service"** is overloaded; a class's **imports** decide its layer (the Dependency Rule). See [SERVICE_PLACEMENT.md](./SERVICE_PLACEMENT.md) for the full sourced rationale. The rule:
+
+| The class imports / does | It is | It goes in |
+|---|---|---|
+| an SDK/plugin/IO (`camera`, `google_mlkit_*`, `hive`, `path_provider`, `dart:io`, `MethodChannel`) | infrastructure service (data source) | `data/services/` (one feature) or `core/services/` (≥2 features) |
+| only Dart + domain models; framework-free business logic | **domain service** (interface) | `domain/services/` (impl in `data/` via Separated Interface) |
+| `flutter`/widgets/`BuildContext`/GetX, manages UI lifecycle | presentation coordinator | `presentation/` |
+| multiple repositories, no Flutter/SDK, stateless coordinator | application service | a feature `application/` or a `domain/usecases` interactor |
+
+- **DON'T** place an SDK-wrapping service in `domain/` — `domain/services/` is for **framework-free interfaces only** (grep-checkable: no `package:flutter|get|hive|google_mlkit|camera|image|pdf` import). 🟡 [review] / 🟢 [grep]
+- **Recorded project convention (deliberate deviation):** the older features `realtime`, `capture`, and `batch` keep a flat **`features/<f>/services/`** folder that mixes SDK wrappers, GetX coordinators, and pure helpers. No authoritative source defines a bare feature-level `services/` folder; the canonical layering (as done in `processing`: `domain/services` + `data/services`) is preferred. This flat folder is an **accepted legacy simplification, documented rather than silent** — new features and any refactor of these three SHOULD follow the import-classification table above instead. 🟡 [review]
 
 ---
 
@@ -186,7 +200,7 @@ GetX provides three pillars: **state management**, **dependency injection**, and
 ## 9. Dependency Injection (Bindings)
 
 - **DO** wire DI through GetX **Bindings**, one per feature/route. 🟡 [review]
-- **DO** bind interfaces to implementations: `Get.lazyPut<ProcessingRepository>(() => ProcessingRepositoryImpl(...))`. The rest of the app depends on `ProcessingRepository`. 🟡 [review]
+- **DO** bind interfaces to implementations: `Get.lazyPut<HistoryRepository>(() => HistoryRepositoryImpl(...))`. The rest of the app depends on `HistoryRepository`. 🟡 [review]
 - **PREFER** `Get.lazyPut` (created on first use) for feature-scoped dependencies; reserve `Get.put` for eager/app-level singletons and `Get.putAsync` for async init ([GetX DI docs](https://github.com/jonataslaw/getx/blob/master/documentation/en_US/dependency_management.md)). 🟡 [review]
 - **DO** guard re-registration where bindings can run more than once (`if (!Get.isRegistered<T>())`). 🟡 [review]
 - **DON'T** construct dependencies with `new`/direct instantiation inside a consumer when they should be injected. 🟡 [review]
