@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 
-import '../../../../core/presentation/document_actions_presenter.dart';
+import '../../../../core/coordinators/document_actions_presenter.dart';
 import '../../../../core/services/modal_service.dart';
 import '../../../../core/services/pdf_external_open_service.dart';
 import '../../../../core/services/pdf_raster/pdf_raster_service.dart';
