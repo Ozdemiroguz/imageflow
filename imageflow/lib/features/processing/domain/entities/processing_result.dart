@@ -1,6 +1,15 @@
 import '../../../../core/enums/processing_type.dart';
 import '../../../../core/models/face_geometry.dart';
 
+/// The immediate output of the processing pipeline.
+///
+/// Deliberately distinct from `ProcessingHistory` (which it shares most fields
+/// with): a [ProcessingResult] carries **absolute** file paths for immediate UI
+/// rendering and is owned by the `processing` feature, whereas
+/// `ProcessingHistory` carries **relative** paths for persistence and is owned
+/// by the `history` feature. Keeping them separate preserves the feature
+/// boundary; `ProcessingHistoryMapper` performs the absolute→relative
+/// translation between them.
 class ProcessingResult {
   const ProcessingResult({
     required this.id,

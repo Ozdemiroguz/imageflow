@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:imageflow/core/enums/processing_type.dart';
 import 'package:imageflow/core/error/failures.dart';
 import 'package:imageflow/core/error/result.dart';
+import 'package:imageflow/core/services/file_service.dart';
 import 'package:imageflow/features/history/domain/entities/processing_history.dart';
 import 'package:imageflow/features/history/domain/usecases/save_history.dart';
 import 'package:imageflow/features/processing/domain/entities/processing_result.dart';
@@ -15,6 +16,8 @@ import 'package:mocktail/mocktail.dart';
 class _MockProcessImage extends Mock implements ProcessImage {}
 
 class _MockSaveHistory extends Mock implements SaveHistory {}
+
+class _MockFileService extends Mock implements FileService {}
 
 ProcessingResult _fakeResult() => ProcessingResult(
       id: 'result-id',
@@ -29,7 +32,8 @@ ProcessingResult _fakeResult() => ProcessingResult(
 void main() {
   late _MockProcessImage processImage;
   late _MockSaveHistory saveHistory;
-  const mapper = ProcessingHistoryMapper();
+  late _MockFileService fileService;
+  late ProcessingHistoryMapper mapper;
 
   setUpAll(() {
     registerFallbackValue(
@@ -47,7 +51,16 @@ void main() {
   setUp(() {
     processImage = _MockProcessImage();
     saveHistory = _MockSaveHistory();
+    fileService = _MockFileService();
+    mapper = ProcessingHistoryMapper(fileService: fileService);
     Get.testMode = true;
+
+    when(() => fileService.relativeOriginalPath(any())).thenReturn('o/x.jpg');
+    when(() => fileService.relativeProcessedPath(any())).thenReturn('p/x.jpg');
+    when(
+      () => fileService.relativeThumbnailPath(any()),
+    ).thenReturn('t/x_thumb.jpg');
+    when(() => fileService.relativePdfPath(any())).thenReturn('d/x.pdf');
   });
 
   tearDown(Get.reset);

@@ -70,7 +70,9 @@ class ProcessingController extends GetxController {
 
     switch (outcome) {
       case Ok(:final value):
-        final saveResult = await _saveHistory(_historyMapper.toHistory(value));
+        final saveResult = await _saveHistory(
+          _historyMapper.toPersisted(value),
+        );
         if (isClosed) return;
 
         switch (saveResult) {
