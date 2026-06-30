@@ -3,10 +3,10 @@ import 'dart:ui';
 
 import 'package:get/get.dart';
 
-import '../../../core/models/normalized_corners.dart';
-import '../presentation/enums/realtime_preview_target.dart';
-import '../presentation/models/capture_realtime_config.dart';
-import '../presentation/models/realtime_overlay_state.dart';
+import '../../../../core/models/normalized_corners.dart';
+import '../enums/realtime_preview_target.dart';
+import '../models/capture_realtime_config.dart';
+import '../models/realtime_overlay_state.dart';
 
 /// Presentation helper for realtime overlay state.
 /// This is a plain class, not a GetxService.

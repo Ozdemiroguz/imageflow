@@ -8,9 +8,9 @@ import '../../../core/utils/perf_trace.dart';
 import '../../../core/utils/realtime_input_image_factory.dart';
 import '../presentation/models/capture_realtime_config.dart';
 import '../presentation/models/realtime_pipeline_coordinator.dart';
+import '../presentation/state/realtime_overlay_state_store.dart';
 import 'realtime_detection_pipeline_coordinator.dart';
 import 'realtime_frame_perf_tracker.dart';
-import 'realtime_overlay_state_store.dart';
 
 /// Presentation helper that runs the realtime frame pipeline.
 /// This is a plain class, not a GetxService.

@@ -12,8 +12,8 @@ import 'realtime_preview_builder.dart';
 import '../../../core/utils/log.dart';
 import '../presentation/models/capture_realtime_config.dart';
 import '../presentation/models/realtime_pipeline_coordinator.dart';
+import '../presentation/state/realtime_overlay_state_store.dart';
 import 'realtime_face_geometry_normalizer.dart';
-import 'realtime_overlay_state_store.dart';
 
 /// Presentation helper for coordinating OCR, face, and document detection.
 /// This is a plain class, not a GetxService.

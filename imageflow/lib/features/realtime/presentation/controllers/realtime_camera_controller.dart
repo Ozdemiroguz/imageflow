@@ -19,7 +19,7 @@ import '../../services/realtime_detection_pipeline_coordinator.dart';
 import '../../services/realtime_face_detection_service.dart';
 import '../../services/realtime_frame_processor.dart';
 import '../../services/realtime_ocr_gate_service.dart';
-import '../../services/realtime_overlay_state_store.dart';
+import '../state/realtime_overlay_state_store.dart';
 import '../../services/realtime_preview_builder.dart';
 import '../../services/realtime_stream_coordinator.dart';
 import '../enums/realtime_native_rotation_strategy.dart';
