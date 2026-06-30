@@ -81,7 +81,7 @@ Cross-cutting code that is not owned by a single feature lives under `lib/core/`
 | Topic | Community split | **Our decision** |
 |---|---|---|
 | Is the **domain layer** mandatory? | Official Flutter docs call it *optional*; Reso Coder/Uncle Bob make it the core. | **Mandatory.** As a showcase of Clean Architecture, every feature with business logic has `domain/`. Trivial UI-only features may omit `usecases/`. |
-| Are **use cases** required, or can controllers call repositories? | VGV's 4-layer model lets Blocs call repositories directly; Reso Coder mandates use cases. | **Required for business operations.** A use case = one action. Controllers never call repositories directly. |
+| Are **use cases** required, or can controllers call repositories? | VGV's 4-layer model lets Blocs call repositories directly; Reso Coder mandates use cases. Official Flutter docs call a *pass-through* use case ceremony. | **Required for business operations — uniformly, even single-caller pass-throughs** (e.g. `GetAllHistory`, `DeleteHistory`). A use case = one action; controllers never call repositories directly. We accept the extra indirection deliberately: a *uniform* use-case layer is part of what this repo demonstrates, and it keeps every feature's controllers identical in shape. (`ProcessImage`/`SaveHistory` are additionally justified by multi-feature fan-out.) |
 | **Entity vs Model** separation | Some apps reuse one class. | **Separated.** `domain` has entities; `data` has models (Hive/JSON). Models map to entities. Never the reverse. |
 | **Feature-first vs layer-first** | Both exist. | **Feature-first**, per [Code With Andrea](https://codewithandrea.com/articles/flutter-project-structure/) — deleting a feature = deleting one folder. |
 
