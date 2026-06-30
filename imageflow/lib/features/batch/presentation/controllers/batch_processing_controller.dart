@@ -25,13 +25,11 @@ class BatchProcessingController extends GetxController {
     required FileService fileService,
     required ModalService modalService,
     required ImagePickerGateway imagePicker,
-    BatchQueueInitializer queueInitializer = const BatchQueueInitializer(),
     ProcessingHistoryMapper? historyMapper,
   }) : _processImage = processImage,
        _saveHistory = saveHistory,
        _modalService = modalService,
        _imagePicker = imagePicker,
-       _queueInitializer = queueInitializer,
        _historyMapper =
            historyMapper ??
            ProcessingHistoryMapper(fileService: fileService);
@@ -40,7 +38,6 @@ class BatchProcessingController extends GetxController {
   final SaveHistory _saveHistory;
   final ModalService _modalService;
   final ImagePickerGateway _imagePicker;
-  final BatchQueueInitializer _queueInitializer;
   final ProcessingHistoryMapper _historyMapper;
   final BatchItemStateManager _itemState = const BatchItemStateManager();
   final BatchRunMetricsTracker _runMetrics = BatchRunMetricsTracker();
@@ -264,7 +261,7 @@ class BatchProcessingController extends GetxController {
   }
 
   void _initializeQueue() {
-    final queueResult = _queueInitializer.build(Get.arguments);
+    final queueResult = buildBatchQueue(Get.arguments);
     switch (queueResult) {
       case Ok(:final value):
         items.assignAll(value);
