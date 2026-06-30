@@ -17,7 +17,6 @@ import '../../../../core/services/permission_service.dart';
 import '../../services/realtime_camera_session_coordinator.dart';
 import '../../services/realtime_detection_pipeline_coordinator.dart';
 import '../../services/realtime_face_detection_service.dart';
-import '../../services/realtime_frame_processor.dart';
 import '../../services/realtime_ocr_gate_service.dart';
 import '../state/realtime_overlay_state_store.dart';
 import '../../services/realtime_preview_builder.dart';
@@ -42,7 +41,6 @@ class RealtimeCameraController extends GetxController
     RealtimePipelineCoordinator? pipelineCoordinator,
     RealtimeOverlayStateStore? overlayStateManager,
     RealtimeDetectionPipelineCoordinator? detectionOrchestrator,
-    RealtimeFrameProcessor? frameProcessor,
     RealtimeStreamCoordinator? streamCoordinator,
     RealtimeCameraSessionCoordinator? sessionCoordinator,
     CameraRouteLifecycleController? routeLifecycleController,
@@ -71,21 +69,12 @@ class RealtimeCameraController extends GetxController
           ocrGateService: ocrGateService,
           previewBuilder: previewBuilder,
         );
-    _frameProcessor =
-        frameProcessor ??
-        RealtimeFrameProcessor(
-          config: _config,
-          pipelineCoordinator: _pipelineCoordinator,
-          overlayStateManager: _overlayStateManager,
-          detectionOrchestrator: _detectionOrchestrator,
-        );
-
     _streamCoordinator =
         streamCoordinator ??
         RealtimeStreamCoordinator(
           config: _config,
           cameraSessionService: _cameraSessionService,
-          frameProcessor: _frameProcessor,
+          frameProcessor: _detectionOrchestrator,
           hasCameraPermission: hasCameraPermission,
           isStreaming: isStreaming,
           failure: failure,
@@ -152,7 +141,6 @@ class RealtimeCameraController extends GetxController
   late final RealtimePipelineCoordinator _pipelineCoordinator;
   late final RealtimeOverlayStateStore _overlayStateManager;
   late final RealtimeDetectionPipelineCoordinator _detectionOrchestrator;
-  late final RealtimeFrameProcessor _frameProcessor;
   late final RealtimeStreamCoordinator _streamCoordinator;
   late final RealtimeCameraSessionCoordinator _sessionCoordinator;
   late final CameraRouteLifecycleController _routeLifecycleController;

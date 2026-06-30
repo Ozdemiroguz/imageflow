@@ -8,7 +8,7 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import '../../../core/error/failures.dart';
 import '../../../core/services/camera_session_service.dart';
 import '../presentation/models/capture_realtime_config.dart';
-import 'realtime_frame_processor.dart';
+import 'realtime_detection_pipeline_coordinator.dart';
 
 /// Presentation helper for camera stream start/stop and frame pipeline trigger.
 /// This is a plain class, not a GetxService.
@@ -16,7 +16,7 @@ class RealtimeStreamCoordinator {
   RealtimeStreamCoordinator({
     required CaptureRealtimeConfig config,
     required CameraSessionService cameraSessionService,
-    required RealtimeFrameProcessor frameProcessor,
+    required RealtimeDetectionPipelineCoordinator frameProcessor,
     required RxBool hasCameraPermission,
     required RxBool isStreaming,
     required Rxn<Failure> failure,
@@ -51,7 +51,7 @@ class RealtimeStreamCoordinator {
 
   final CaptureRealtimeConfig _config;
   final CameraSessionService _cameraSessionService;
-  final RealtimeFrameProcessor _frameProcessor;
+  final RealtimeDetectionPipelineCoordinator _frameProcessor;
   final RxBool _hasCameraPermission;
   final RxBool _isStreaming;
   final Rxn<Failure> _failure;
