@@ -1,12 +1,12 @@
 import 'package:camera/camera.dart';
 import 'package:get/get.dart';
 
-import '../../../core/constants/app_constants.dart';
-import '../../../core/error/failures.dart';
-import '../../../core/services/camera_session_service.dart';
-import '../../../core/services/permission_service.dart';
-import '../../../core/utils/camera_lifecycle_guard.dart';
-import '../presentation/models/camera_capture_config.dart';
+import '../../../../core/constants/app_constants.dart';
+import '../../../../core/error/failures.dart';
+import '../../../../core/services/camera_session_service.dart';
+import '../../../../core/services/permission_service.dart';
+import '../../../../core/utils/camera_lifecycle_guard.dart';
+import '../models/camera_capture_config.dart';
 
 /// Presentation helper for camera session lifecycle operations in capture flow.
 /// This is a plain class, not a GetxService.

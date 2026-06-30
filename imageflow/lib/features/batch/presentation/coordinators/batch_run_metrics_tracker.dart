@@ -1,5 +1,5 @@
-import '../../../core/utils/perf_trace.dart';
-import '../presentation/models/batch_item_status.dart';
+import '../../../../core/utils/perf_trace.dart';
+import '../models/batch_item_status.dart';
 
 class BatchRunMetricsTracker {
   static const _perfTag = 'PerfBatch';

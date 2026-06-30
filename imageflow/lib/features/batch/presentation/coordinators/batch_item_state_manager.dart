@@ -1,10 +1,10 @@
 import 'package:get/get.dart';
 
-import '../../../core/error/failures.dart';
-import '../../processing/domain/entities/processing_result.dart';
-import '../../processing/domain/entities/processing_step.dart';
-import '../presentation/models/batch_item_state.dart';
-import '../presentation/models/batch_item_status.dart';
+import '../../../../core/error/failures.dart';
+import '../../../processing/domain/entities/processing_result.dart';
+import '../../../processing/domain/entities/processing_step.dart';
+import '../models/batch_item_state.dart';
+import '../models/batch_item_status.dart';
 
 /// Owns batch-item state changes: computes the next [BatchItemState] for a
 /// transition and applies it to the reactive [RxList] in one step.

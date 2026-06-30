@@ -8,7 +8,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/services/camera_route_lifecycle_controller.dart';
 import '../../../../core/services/camera_session_service.dart';
 import '../../../../core/services/permission_service.dart';
-import '../../services/camera_capture_session_lifecycle_helper.dart';
+import '../coordinators/camera_capture_session_lifecycle_helper.dart';
 import '../models/camera_capture_config.dart';
 
 class CameraCaptureController extends GetxController

@@ -1,9 +1,9 @@
 import 'dart:collection';
 
-import '../../../core/error/failures.dart';
-import '../../../core/error/result.dart';
-import '../presentation/models/batch_item_state.dart';
-import '../presentation/models/batch_item_status.dart';
+import '../../../../core/error/failures.dart';
+import '../../../../core/error/result.dart';
+import '../models/batch_item_state.dart';
+import '../models/batch_item_status.dart';
 
 /// Validates the batch route arguments (a list of image paths) and builds the
 /// initial, de-duplicated queue of pending [BatchItemState]s.
