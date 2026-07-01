@@ -22,9 +22,9 @@ import '../../data/datasources/realtime_ocr_gate_service.dart';
 import '../state/realtime_overlay_state_store.dart';
 import '../../data/services/realtime_preview_builder.dart';
 import '../coordinators/realtime_stream_coordinator.dart';
-import '../../config/realtime_native_rotation_strategy.dart';
+import '../realtime_native_rotation_strategy.dart';
 import '../enums/realtime_preview_target.dart';
-import '../../config/capture_realtime_config.dart';
+import '../capture_realtime_config.dart';
 import '../models/realtime_overlay_state.dart';
 import '../../data/services/realtime_detection_scheduler.dart';
 
@@ -69,7 +69,10 @@ class RealtimeCameraController extends GetxController
     _detectionOrchestrator =
         detectionOrchestrator ??
         RealtimeDetectionPipelineCoordinator(
-          config: _config,
+          imageFormatGroup: _config.imageFormatGroup,
+          frameImageUsesNativeRotation: _config.frameImageUsesNativeRotation,
+          documentNoTextStatus: _config.documentNoTextStatus,
+          documentScanningStatus: _config.documentScanningStatus,
           scheduler: _scheduler,
           overlayStateManager: _overlayStateManager,
           cornerDetectionService: cornerDetectionService,

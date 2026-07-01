@@ -10,7 +10,6 @@ import '../../../../core/platform/camera_nv21_converter.dart';
 import '../../../../core/utils/log.dart';
 import '../../../../core/utils/perf_trace.dart';
 import '../../../../core/platform/camera_input_image_factory.dart';
-import '../../config/capture_realtime_config.dart';
 import 'realtime_detection_scheduler.dart';
 import '../../presentation/state/realtime_overlay_state_store.dart';
 import '../datasources/realtime_face_detection_service.dart';
@@ -23,7 +22,10 @@ import 'realtime_preview_builder.dart';
 /// This is a plain class, not a GetxService.
 class RealtimeDetectionPipelineCoordinator {
   RealtimeDetectionPipelineCoordinator({
-    required CaptureRealtimeConfig config,
+    required this.imageFormatGroup,
+    required this.frameImageUsesNativeRotation,
+    required this.documentNoTextStatus,
+    required this.documentScanningStatus,
     required RealtimeDetectionScheduler scheduler,
     required RealtimeOverlayStateStore overlayStateManager,
     required CornerDetector cornerDetectionService,
@@ -32,8 +34,7 @@ class RealtimeDetectionPipelineCoordinator {
     required RealtimePreviewBuilder previewBuilder,
     RealtimeFaceGeometryNormalizer? faceGeometryNormalizer,
     RealtimeFramePerfTracker? perfTracker,
-  }) : _config = config,
-       _scheduler = scheduler,
+  }) : _scheduler = scheduler,
        _overlayStateManager = overlayStateManager,
        _cornerDetectionService = cornerDetectionService,
        _faceDetectionService = faceDetectionService,
@@ -42,13 +43,27 @@ class RealtimeDetectionPipelineCoordinator {
        _faceGeometryNormalizer =
            faceGeometryNormalizer ??
            RealtimeFaceGeometryNormalizer(
-             frameImageUsesNativeRotation: config.frameImageUsesNativeRotation,
+             frameImageUsesNativeRotation: frameImageUsesNativeRotation,
            ),
        _perfTracker = perfTracker ?? RealtimeFramePerfTracker();
 
   static const _tag = 'RealtimeCamera';
 
-  final CaptureRealtimeConfig _config;
+  /// Camera frame plane layout — decides bgra vs yuv420 handling. Genuinely a
+  /// data/camera concern, passed in from the platform preset.
+  final ImageFormatGroup imageFormatGroup;
+
+  /// Whether frames arrive already preview-oriented (native rotation applied).
+  final bool frameImageUsesNativeRotation;
+
+  // NOTE: these two are UI status strings the pipeline currently *reads back*
+  // from the overlay store to decide transitions. That read-back is the
+  // remaining data->presentation coupling; it will be inverted (data returns
+  // results, presentation owns status) after realtime has a test safety net.
+  // See docs/REALTIME_IDEAL_STRUCTURE.md.
+  final String documentNoTextStatus;
+  final String documentScanningStatus;
+
   final RealtimeDetectionScheduler _scheduler;
   final RealtimeOverlayStateStore _overlayStateManager;
   final CornerDetector _cornerDetectionService;
@@ -75,9 +90,9 @@ class RealtimeDetectionPipelineCoordinator {
         );
         if (result.hasText) {
           if (_overlayStateManager.documentStatus.value ==
-                  _config.documentNoTextStatus ||
+                  documentNoTextStatus ||
               _overlayStateManager.documentStatus.value ==
-                  _config.documentScanningStatus) {
+                  documentScanningStatus) {
             _overlayStateManager.setDocumentSearchingState();
           }
         } else {
@@ -251,13 +266,13 @@ class RealtimeDetectionPipelineCoordinator {
   }) {
     if (frame.planes.isEmpty) return Future.value(null);
 
-    if (_config.imageFormatGroup == ImageFormatGroup.bgra8888) {
+    if (imageFormatGroup == ImageFormatGroup.bgra8888) {
       final plane = frame.planes.first;
       return _cornerDetectionService.detectCornersFromFrame(
         width: frame.width,
         height: frame.height,
         // If frame image is already preview-oriented, keep rotation at 0.
-        rotation: _config.frameImageUsesNativeRotation
+        rotation: frameImageUsesNativeRotation
             ? nativeRotationDegrees
             : 0,
         bytes: plane.bytes,
@@ -310,7 +325,7 @@ class RealtimeDetectionPipelineCoordinator {
     final shouldRunFace = _scheduler.tryScheduleFace(now);
 
     Uint8List? resolveAndroidNv21() {
-      if (_config.imageFormatGroup != ImageFormatGroup.yuv420) return null;
+      if (imageFormatGroup != ImageFormatGroup.yuv420) return null;
       if (!nv21Resolved) {
         sharedAndroidNv21 = cameraImageToNv21(frame);
         nv21Resolved = true;

@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/models/normalized_corners.dart';
 import '../enums/realtime_preview_target.dart';
-import '../../config/capture_realtime_config.dart';
+import '../capture_realtime_config.dart';
 import '../models/realtime_overlay_state.dart';
 
 /// Presentation helper for realtime overlay state.
