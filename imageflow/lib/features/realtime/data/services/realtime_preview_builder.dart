@@ -8,6 +8,7 @@ import 'package:image/image.dart' as img;
 
 import '../../../../core/models/normalized_corners.dart';
 import '../../../../core/utils/face_mask_utils.dart';
+import '../../../../core/utils/log.dart';
 
 part 'realtime_preview_builder_payloads.dart';
 part 'realtime_preview_payloads.dart';
@@ -31,9 +32,14 @@ class RealtimePreviewBuilder {
   var _facePreviewRequestId = 0;
   var _documentPreviewRequestId = 0;
 
+  static const _tag = 'RealtimePreview';
   static const _maxPreviewLongSide = 840;
   static const _maxFacePreviewLongSide = 360;
   static const _maxDocumentPreviewLongSide = 720;
+
+  /// Normalized padding added around a detected face before cropping, so the
+  /// preview shows a little context beyond the bounding box.
+  static const _faceCropPaddingRatio = 0.08;
 
   RealtimeFramePayload? _toFramePayload(CameraImage frame) {
     if (frame.planes.isEmpty) return null;
@@ -92,8 +98,12 @@ class RealtimePreviewBuilder {
       );
       if (requestId != _facePreviewRequestId) return null;
       if (preview != null) return preview;
-    } catch (_) {
+    } catch (e) {
       // Fall back to local path if isolate cannot process this frame.
+      Log.warning(
+        'Face preview isolate failed; using main-thread fallback: $e',
+        tag: _tag,
+      );
     }
 
     if (requestId != _facePreviewRequestId) return null;
@@ -105,7 +115,10 @@ class RealtimePreviewBuilder {
     );
     if (image == null) return null;
 
-    final cropRect = _expandedNormalizedRect(normalizedFaceRect, padding: 0.08);
+    final cropRect = _expandedNormalizedRect(
+      normalizedFaceRect,
+      padding: _faceCropPaddingRatio,
+    );
     final left = _clampInt(
       (cropRect.left * image.width).round(),
       0,
@@ -186,8 +199,12 @@ class RealtimePreviewBuilder {
       );
       if (requestId != _documentPreviewRequestId) return null;
       if (preview != null) return preview;
-    } catch (_) {
+    } catch (e) {
       // Fall back to local path if isolate cannot process this frame.
+      Log.warning(
+        'Document preview isolate failed; using main-thread fallback: $e',
+        tag: _tag,
+      );
     }
 
     if (requestId != _documentPreviewRequestId) return null;

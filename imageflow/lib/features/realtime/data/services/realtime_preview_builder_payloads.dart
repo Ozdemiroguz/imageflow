@@ -10,11 +10,12 @@ Uint8List? _buildFacePreviewFromFrameOnIsolate(
   );
   if (prepared == null) return null;
 
+  const pad = RealtimePreviewBuilder._faceCropPaddingRatio;
   final cropRect = Rect.fromLTRB(
-    (payload.normalizedLeft - 0.08).clamp(0.0, 1.0),
-    (payload.normalizedTop - 0.08).clamp(0.0, 1.0),
-    (payload.normalizedRight + 0.08).clamp(0.0, 1.0),
-    (payload.normalizedBottom + 0.08).clamp(0.0, 1.0),
+    (payload.normalizedLeft - pad).clamp(0.0, 1.0),
+    (payload.normalizedTop - pad).clamp(0.0, 1.0),
+    (payload.normalizedRight + pad).clamp(0.0, 1.0),
+    (payload.normalizedBottom + pad).clamp(0.0, 1.0),
   );
 
   final left = _clampIntIsolate(
