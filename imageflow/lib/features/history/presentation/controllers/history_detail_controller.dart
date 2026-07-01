@@ -15,10 +15,15 @@ class HistoryDetailController extends GetxController {
   }) : _documentActions = documentActions,
        _pdfRasterService = pdfRasterService;
 
-  late final ProcessingHistory history;
+  ProcessingHistory? _history;
+  final failure = Rxn<Failure>();
   final DocumentActionsPresenter _documentActions;
   final PdfRasterService _pdfRasterService;
   final _pdfViewerControllers = <String, PdfViewerController>{};
+
+  /// The history record. Only valid when [failure] is null (a bad route
+  /// argument sets [failure] instead of assigning a record).
+  ProcessingHistory get history => _history!;
 
   bool get isFace => history.type == ProcessingType.face;
   bool get isDocument => history.type == ProcessingType.document;
@@ -38,17 +43,15 @@ class HistoryDetailController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    final watch = Stopwatch()..start();
     final args = Get.arguments;
     if (args is! ProcessingHistory) {
-      throw const RouteArgumentFailure('Expected ProcessingHistory');
+      failure.value = const RouteArgumentFailure('Expected ProcessingHistory');
+      return;
     }
-    history = args;
-    watch.stop();
+    _history = args;
     Log.debug(
       'Detail controller initialized. id=${history.id} type=${history.type.name} '
-      'faces=${history.faceRects.length} hasPdf=${(history.pdfPath ?? '').trim().isNotEmpty} '
-      'init=${watch.elapsedMilliseconds}ms',
+      'faces=${history.faceRects.length} hasPdf=${(history.pdfPath ?? '').trim().isNotEmpty}',
       tag: 'HistoryDetail',
     );
   }

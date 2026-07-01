@@ -16,10 +16,15 @@ class ResultController extends GetxController {
   }) : _documentActions = documentActions,
        _pdfRasterService = pdfRasterService;
 
-  late final ProcessingResult result;
+  ProcessingResult? _result;
+  final failure = Rxn<Failure>();
   final DocumentActionsPresenter _documentActions;
   final PdfRasterService _pdfRasterService;
   final _pdfViewerControllers = <String, PdfViewerController>{};
+
+  /// The processed result. Only valid when [failure] is null (a bad route
+  /// argument sets [failure] instead of assigning a result).
+  ProcessingResult get result => _result!;
 
   bool get isFace => result.type == ProcessingType.face;
   bool get isDocument => result.type == ProcessingType.document;
@@ -36,13 +41,16 @@ class ResultController extends GetxController {
   void onInit() {
     super.onInit();
     final args = Get.arguments;
-    result = switch (args) {
-      ProcessingResult() => args,
-      ProcessingHistory() => _fromHistory(args),
-      _ => throw const RouteArgumentFailure(
-        'Expected ProcessingResult or ProcessingHistory',
-      ),
-    };
+    switch (args) {
+      case ProcessingResult():
+        _result = args;
+      case ProcessingHistory():
+        _result = _fromHistory(args);
+      default:
+        failure.value = const RouteArgumentFailure(
+          'Expected ProcessingResult or ProcessingHistory',
+        );
+    }
   }
 
   Future<void> openPdfExternally() async {
