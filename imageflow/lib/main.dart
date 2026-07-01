@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import 'app.dart';
-import 'core/modal/modal_service_factory.dart';
 import 'core/platform/image_picker_gateway.dart';
 import 'core/services/face_thumbnail_cache_service.dart';
 import 'core/services/file_service.dart';
@@ -61,7 +60,7 @@ Future<void> _initServices() async {
   );
   Get.put<PermissionService>(PermissionService(), permanent: true);
   Get.put<ImagePickerGateway>(ImagePickerGatewayImpl(), permanent: true);
-  Get.put<ModalService>(ModalServiceFactory.create(), permanent: true);
+  Get.put<ModalService>(ModalService(), permanent: true);
 
   Log.info('Services initialized', tag: 'App');
 }

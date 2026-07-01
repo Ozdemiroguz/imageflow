@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../modal/app_modal_content_builder.dart';
 import '../modal/modal_content_builder.dart';
 import '../models/snack_data.dart';
 import '../theme/app_tokens.dart';
@@ -10,7 +11,9 @@ import '../utils/log.dart';
 
 /// Centralized UI modal service (dialog, bottom sheet, snackbar).
 class ModalService extends GetxService {
-  ModalService({required ModalContentBuilder contentBuilder})
+  /// [contentBuilder] defaults to the app's standard builder; override it only
+  /// to supply custom modal chrome (e.g. in tests).
+  ModalService({ModalContentBuilder contentBuilder = const AppModalContentBuilder()})
     : _contentBuilder = contentBuilder;
 
   static const _tag = 'ModalService';
