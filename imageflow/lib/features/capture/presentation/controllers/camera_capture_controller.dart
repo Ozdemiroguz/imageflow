@@ -8,6 +8,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/services/camera_route_lifecycle_controller.dart';
 import '../../../../core/services/camera_session_service.dart';
 import '../../../../core/services/permission_service.dart';
+import '../../../../core/utils/log.dart';
 import '../coordinators/camera_capture_session_lifecycle_helper.dart';
 import '../models/camera_capture_config.dart';
 
@@ -104,9 +105,21 @@ class CameraCaptureController extends GetxController
     try {
       await cam.setFlashMode(next);
       flashMode.value = next;
-    } on CameraException catch (e) {
+    } on CameraException catch (e, st) {
+      Log.error(
+        'Flash mode change failed',
+        error: e,
+        stackTrace: st,
+        tag: 'CameraCapture',
+      );
       failure.value = CameraFailure('Flash mode failed: ${e.description}');
-    } catch (e) {
+    } catch (e, st) {
+      Log.error(
+        'Flash mode change failed',
+        error: e,
+        stackTrace: st,
+        tag: 'CameraCapture',
+      );
       failure.value = CameraFailure('Flash mode failed: $e');
     }
   }
@@ -139,10 +152,22 @@ class CameraCaptureController extends GetxController
           'capturedWithFrontCamera': isFrontCamera,
         },
       );
-    } on CameraException catch (e) {
+    } on CameraException catch (e, st) {
+      Log.error(
+        'Capture failed',
+        error: e,
+        stackTrace: st,
+        tag: 'CameraCapture',
+      );
       if (isClosed) return;
       failure.value = CameraFailure('Capture failed: ${e.description}');
-    } catch (e) {
+    } catch (e, st) {
+      Log.error(
+        'Capture failed',
+        error: e,
+        stackTrace: st,
+        tag: 'CameraCapture',
+      );
       if (isClosed) return;
       failure.value = CameraFailure('Capture failed: $e');
     } finally {

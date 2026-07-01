@@ -14,6 +14,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/services/camera_route_lifecycle_controller.dart';
 import '../../../../core/services/camera_session_service.dart';
 import '../../../../core/services/permission_service.dart';
+import '../../../../core/utils/log.dart';
 import '../coordinators/realtime_camera_session_coordinator.dart';
 import '../../data/services/realtime_detection_pipeline_coordinator.dart';
 import '../../data/datasources/realtime_face_detection_service.dart';
@@ -247,10 +248,22 @@ class RealtimeCameraController extends GetxController
           'capturedWithFrontCamera': isFrontCamera,
         },
       );
-    } on CameraException catch (e) {
+    } on CameraException catch (e, st) {
+      Log.error(
+        'Realtime capture failed',
+        error: e,
+        stackTrace: st,
+        tag: 'RealtimeCamera',
+      );
       if (isClosed) return;
       failure.value = CameraFailure('Capture failed: ${e.description}');
-    } catch (e) {
+    } catch (e, st) {
+      Log.error(
+        'Realtime capture failed',
+        error: e,
+        stackTrace: st,
+        tag: 'RealtimeCamera',
+      );
       if (isClosed) return;
       failure.value = CameraFailure('Capture failed: $e');
     } finally {
