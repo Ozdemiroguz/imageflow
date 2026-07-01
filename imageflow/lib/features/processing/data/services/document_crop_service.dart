@@ -5,9 +5,10 @@ import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
 
-import '../../domain/entities/recognized_text_data.dart';
+import '../../../../core/error/result.dart';
 import '../../../../core/platform/corner_detector.dart';
 import '../../../../core/utils/log.dart';
+import '../../domain/entities/recognized_text_data.dart';
 import '../../domain/services/document_cropper.dart';
 
 /// Document crop & enhancement service.
@@ -33,8 +34,22 @@ class DocumentCropService implements DocumentCropper {
     required String targetPath,
     RecognizedTextData? recognizedText,
   }) async {
-    // Try native corner detection first
-    final corners = await _cornerDetection.detectCorners(imagePath: sourcePath);
+    // Try native corner detection first. A detection failure is not fatal here
+    // — we log it and fall through to the text-block crop fallback below.
+    final cornersResult = await _cornerDetection.detectCorners(
+      imagePath: sourcePath,
+    );
+    final corners = switch (cornersResult) {
+      Ok(:final value) => value,
+      Error(:final failure) => () {
+        Log.warning(
+          'Corner detection failed (${failure.message}); '
+          'falling back to text-block crop.',
+          tag: _tag,
+        );
+        return null;
+      }(),
+    };
 
     if (corners != null) {
       Log.info('Using native corners for perspective correction.', tag: _tag);

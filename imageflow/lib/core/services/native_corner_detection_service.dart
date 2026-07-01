@@ -1,5 +1,7 @@
 import 'package:flutter/services.dart';
 
+import '../error/failures.dart';
+import '../error/result.dart';
 import '../models/document_corners.dart';
 import '../models/normalized_corners.dart';
 import '../platform/corner_detector.dart';
@@ -21,10 +23,12 @@ class NativeCornerDetectionService implements CornerDetector {
 
   /// Detect document corners from an image file.
   ///
-  /// Returns null if no document rectangle is found.
-  /// Coordinates are in pixel space of the image.
+  /// Returns `Ok(null)` when no rectangle is found (valid) and `Error` on a
+  /// real detection failure. Coordinates are in pixel space of the image.
   @override
-  Future<DocumentCorners?> detectCorners({required String imagePath}) async {
+  Future<Result<DocumentCorners?>> detectCorners({
+    required String imagePath,
+  }) async {
     try {
       final result = await _channel.invokeMapMethod<String, dynamic>(
         'detectCorners',
@@ -33,7 +37,7 @@ class NativeCornerDetectionService implements CornerDetector {
 
       if (result == null) {
         Log.info('No document corners detected.', tag: _tag);
-        return null;
+        return Result.ok(null);
       }
 
       final corners = DocumentCorners(
@@ -64,27 +68,38 @@ class NativeCornerDetectionService implements CornerDetector {
         tag: _tag,
       );
 
-      return corners;
-    } on PlatformException catch (e) {
+      return Result.ok(corners);
+    } on PlatformException catch (e, st) {
       Log.error(
         'Corner detection platform error: ${e.message}',
         error: e,
+        stackTrace: st,
         tag: _tag,
       );
-      return null;
-    } on MissingPluginException {
+      return Result.error(
+        NativeChannelFailure('Corner detection failed: ${e.message}'),
+      );
+    } on MissingPluginException catch (e, st) {
       Log.warning(
         'Corner detection not implemented on this platform.',
         tag: _tag,
       );
-      return null;
-    } catch (e) {
+      Log.error('MissingPlugin', error: e, stackTrace: st, tag: _tag);
+      return Result.error(
+        const NativeChannelFailure(
+          'Corner detection is not available on this platform.',
+        ),
+      );
+    } catch (e, st) {
       Log.error(
         'Unexpected error in corner detection: $e',
         error: e,
+        stackTrace: st,
         tag: _tag,
       );
-      return null;
+      return Result.error(
+        NativeChannelFailure('Corner detection failed: $e'),
+      );
     }
   }
 

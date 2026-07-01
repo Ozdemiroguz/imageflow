@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../error/result.dart';
 import '../models/document_corners.dart';
 import '../models/normalized_corners.dart';
 
@@ -10,14 +11,18 @@ import '../models/normalized_corners.dart';
 abstract interface class CornerDetector {
   /// Detects document corners from an image file.
   ///
-  /// Returns null if no document rectangle is found. Coordinates are in the
-  /// pixel space of the image.
-  Future<DocumentCorners?> detectCorners({required String imagePath});
+  /// Returns `Ok(null)` when no rectangle is found (a valid outcome) and
+  /// `Error(failure)` on a real detection failure — so callers can tell "no
+  /// document" apart from "detection broke". Coordinates are in pixel space.
+  Future<Result<DocumentCorners?>> detectCorners({required String imagePath});
 
   /// Detects document corners from a raw camera frame (realtime).
   ///
   /// Returns [NormalizedCorners] with 0-1 coordinates, or null if no rectangle
-  /// is found, detection is busy, or on error.
+  /// is found, detection is busy, or on error. **Deliberately returns null (not
+  /// a Result) on error**: this is a per-frame hot path where the correct
+  /// behavior is to drop the frame and continue — wrapping every frame in a
+  /// Result would add allocation cost against the frame budget for no benefit.
   Future<NormalizedCorners?> detectCornersFromFrame({
     required int width,
     required int height,
