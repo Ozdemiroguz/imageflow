@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/services/camera_permission_gate_mixin.dart';
 import '../../../../core/services/camera_session_service.dart';
 import '../../../../core/services/permission_service.dart';
 import '../../../../core/utils/camera_lifecycle_guard.dart';
@@ -10,7 +11,7 @@ import '../models/camera_capture_config.dart';
 
 /// Presentation helper for camera session lifecycle operations in capture flow.
 /// This is a plain class, not a GetxService.
-class CameraCaptureSessionLifecycleHelper {
+class CameraCaptureSessionLifecycleHelper with CameraPermissionGateMixin {
   CameraCaptureSessionLifecycleHelper({
     required PermissionService permissionService,
     required CameraSessionService cameraSessionService,
@@ -47,6 +48,13 @@ class CameraCaptureSessionLifecycleHelper {
   final bool Function() _isClosed;
   final bool enableInitGenerationGuard;
   final _lifecycleGuard = CameraLifecycleGuard();
+
+  @override
+  PermissionService get permissionService => _permissionService;
+  @override
+  RxBool get cameraPermission => _hasCameraPermission;
+  @override
+  Rxn<Failure> get cameraFailure => _failure;
 
   bool get isBusy => _lifecycleGuard.isBusy;
 
@@ -104,7 +112,7 @@ class CameraCaptureSessionLifecycleHelper {
     if (!_beginCameraLifecycleOp()) return;
 
     try {
-      final permissionGranted = await _ensureCameraPermission(
+      final permissionGranted = await ensureCameraPermission(
         requestIfNeeded: false,
       );
       if (!permissionGranted) {
@@ -150,7 +158,7 @@ class CameraCaptureSessionLifecycleHelper {
   Future<void> _initializeCamera({required bool requestIfNeeded}) async {
     final initGeneration = _nextInitGeneration();
     _isInitialized.value = false;
-    final permissionGranted = await _ensureCameraPermission(
+    final permissionGranted = await ensureCameraPermission(
       requestIfNeeded: requestIfNeeded,
     );
     if (!_isCurrentInitGeneration(initGeneration) || _isClosed()) {
@@ -196,7 +204,7 @@ class CameraCaptureSessionLifecycleHelper {
 
   Future<void> _activateCamera(CameraDescription camera) async {
     final initGeneration = _nextInitGeneration();
-    final permissionGranted = await _ensureCameraPermission(
+    final permissionGranted = await ensureCameraPermission(
       requestIfNeeded: false,
     );
     if (!_isCurrentInitGeneration(initGeneration) || _isClosed()) {
@@ -233,22 +241,6 @@ class CameraCaptureSessionLifecycleHelper {
     _flashMode.value = cam.value.flashMode;
   }
 
-  Future<bool> _ensureCameraPermission({required bool requestIfNeeded}) async {
-    var granted = await _permissionService.isCameraGranted;
-    if (!granted && requestIfNeeded) {
-      granted = await _permissionService.requestCamera();
-    }
-
-    _hasCameraPermission.value = granted;
-    if (!granted) {
-      _failure.value = const PermissionFailure(
-        'Camera access is required. Please enable it in Settings.',
-      );
-    } else if (_failure.value is PermissionFailure) {
-      _failure.value = null;
-    }
-    return granted;
-  }
 
   bool _beginCameraLifecycleOp() {
     return _lifecycleGuard.begin();
