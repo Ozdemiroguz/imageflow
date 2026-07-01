@@ -11,7 +11,7 @@ import '../../../../core/utils/log.dart';
 import '../../../../core/utils/perf_trace.dart';
 import '../../../../core/platform/camera_input_image_factory.dart';
 import '../../config/capture_realtime_config.dart';
-import '../../config/realtime_pipeline_coordinator.dart';
+import 'realtime_detection_scheduler.dart';
 import '../../presentation/state/realtime_overlay_state_store.dart';
 import '../datasources/realtime_face_detection_service.dart';
 import 'realtime_face_geometry_normalizer.dart';
@@ -24,7 +24,7 @@ import 'realtime_preview_builder.dart';
 class RealtimeDetectionPipelineCoordinator {
   RealtimeDetectionPipelineCoordinator({
     required CaptureRealtimeConfig config,
-    required RealtimePipelineCoordinator pipelineCoordinator,
+    required RealtimeDetectionScheduler scheduler,
     required RealtimeOverlayStateStore overlayStateManager,
     required CornerDetector cornerDetectionService,
     required RealtimeFaceDetectionService faceDetectionService,
@@ -33,7 +33,7 @@ class RealtimeDetectionPipelineCoordinator {
     RealtimeFaceGeometryNormalizer? faceGeometryNormalizer,
     RealtimeFramePerfTracker? perfTracker,
   }) : _config = config,
-       _pipelineCoordinator = pipelineCoordinator,
+       _scheduler = scheduler,
        _overlayStateManager = overlayStateManager,
        _cornerDetectionService = cornerDetectionService,
        _faceDetectionService = faceDetectionService,
@@ -49,7 +49,7 @@ class RealtimeDetectionPipelineCoordinator {
   static const _tag = 'RealtimeCamera';
 
   final CaptureRealtimeConfig _config;
-  final RealtimePipelineCoordinator _pipelineCoordinator;
+  final RealtimeDetectionScheduler _scheduler;
   final RealtimeOverlayStateStore _overlayStateManager;
   final CornerDetector _cornerDetectionService;
   final RealtimeFaceDetectionService _faceDetectionService;
@@ -86,7 +86,7 @@ class RealtimeDetectionPipelineCoordinator {
         return result.hasText;
       },
     );
-    _pipelineCoordinator.completeOcr(hasText: hasText);
+    _scheduler.completeOcr(hasText: hasText);
   }
 
   Future<void> runFaceDetection(
@@ -142,7 +142,7 @@ class RealtimeDetectionPipelineCoordinator {
         _overlayStateManager.setFaceDetectedStatus(normalizedFaces.length);
 
         final now = DateTime.now();
-        if (!_pipelineCoordinator.tryScheduleFacePanel(now)) return;
+        if (!_scheduler.tryScheduleFacePanel(now)) return;
 
         final primaryFaceIndex = _faceGeometryNormalizer.selectPrimaryFaceIndex(
           normalizedFaces,
@@ -176,7 +176,7 @@ class RealtimeDetectionPipelineCoordinator {
         }
       },
     );
-    _pipelineCoordinator.completeFace();
+    _scheduler.completeFace();
   }
 
   Future<void> runDocumentEdgeDetection(
@@ -205,7 +205,7 @@ class RealtimeDetectionPipelineCoordinator {
         _overlayStateManager.setDocumentFoundState();
 
         final now = DateTime.now();
-        if (!_pipelineCoordinator.tryScheduleDocumentPanel(now)) return;
+        if (!_scheduler.tryScheduleDocumentPanel(now)) return;
 
         if (!_overlayStateManager.shouldBuildDocumentPanelPreview(
           corners: corners,
@@ -230,7 +230,7 @@ class RealtimeDetectionPipelineCoordinator {
         }
       },
     );
-    _pipelineCoordinator.completeEdge();
+    _scheduler.completeEdge();
   }
 
   Future<T?> _runGuarded<T>({
@@ -306,8 +306,8 @@ class RealtimeDetectionPipelineCoordinator {
     int? ocrMs;
     int? faceMs;
     int? edgeMs;
-    final shouldRunOcr = _pipelineCoordinator.tryScheduleOcr(now);
-    final shouldRunFace = _pipelineCoordinator.tryScheduleFace(now);
+    final shouldRunOcr = _scheduler.tryScheduleOcr(now);
+    final shouldRunFace = _scheduler.tryScheduleFace(now);
 
     Uint8List? resolveAndroidNv21() {
       if (_config.imageFormatGroup != ImageFormatGroup.yuv420) return null;
@@ -376,7 +376,7 @@ class RealtimeDetectionPipelineCoordinator {
       }
     }
 
-    if (_pipelineCoordinator.tryScheduleEdge(now)) {
+    if (_scheduler.tryScheduleEdge(now)) {
       final edgeWatch = PerfTrace.start();
       await runDocumentEdgeDetection(
         frame,
@@ -396,7 +396,7 @@ class RealtimeDetectionPipelineCoordinator {
       return;
     }
 
-    if (!_pipelineCoordinator.hasOcrText) {
+    if (!_scheduler.hasOcrText) {
       _overlayStateManager.setDocumentNoTextState();
     }
 

@@ -26,7 +26,7 @@ import '../../config/realtime_native_rotation_strategy.dart';
 import '../enums/realtime_preview_target.dart';
 import '../../config/capture_realtime_config.dart';
 import '../models/realtime_overlay_state.dart';
-import '../../config/realtime_pipeline_coordinator.dart';
+import '../../data/services/realtime_detection_scheduler.dart';
 
 class RealtimeCameraController extends GetxController
     with WidgetsBindingObserver {
@@ -39,7 +39,7 @@ class RealtimeCameraController extends GetxController
     required RealtimePreviewBuilder previewBuilder,
     CaptureRealtimeConfig config = CaptureRealtimeConfig.defaults,
     RealtimeOverlayState? overlayState,
-    RealtimePipelineCoordinator? pipelineCoordinator,
+    RealtimeDetectionScheduler? scheduler,
     RealtimeOverlayStateStore? overlayStateManager,
     RealtimeDetectionPipelineCoordinator? detectionOrchestrator,
     RealtimeStreamCoordinator? streamCoordinator,
@@ -51,8 +51,15 @@ class RealtimeCameraController extends GetxController
        _ocrGateService = ocrGateService,
        _config = config {
     _overlayState = overlayState ?? RealtimeOverlayState(config: _config);
-    _pipelineCoordinator =
-        pipelineCoordinator ?? RealtimePipelineCoordinator(config: _config);
+    _scheduler =
+        scheduler ??
+        RealtimeDetectionScheduler(
+          faceInterval: _config.faceInterval,
+          ocrInterval: _config.ocrInterval,
+          edgeInterval: _config.edgeInterval,
+          facePanelInterval: _config.facePanelInterval,
+          documentPanelInterval: _config.documentPanelInterval,
+        );
     _overlayStateManager =
         overlayStateManager ??
         RealtimeOverlayStateStore(
@@ -63,7 +70,7 @@ class RealtimeCameraController extends GetxController
         detectionOrchestrator ??
         RealtimeDetectionPipelineCoordinator(
           config: _config,
-          pipelineCoordinator: _pipelineCoordinator,
+          scheduler: _scheduler,
           overlayStateManager: _overlayStateManager,
           cornerDetectionService: cornerDetectionService,
           faceDetectionService: faceDetectionService,
@@ -139,7 +146,7 @@ class RealtimeCameraController extends GetxController
   final CaptureRealtimeConfig _config;
 
   late final RealtimeOverlayState _overlayState;
-  late final RealtimePipelineCoordinator _pipelineCoordinator;
+  late final RealtimeDetectionScheduler _scheduler;
   late final RealtimeOverlayStateStore _overlayStateManager;
   late final RealtimeDetectionPipelineCoordinator _detectionOrchestrator;
   late final RealtimeStreamCoordinator _streamCoordinator;
@@ -358,7 +365,7 @@ class RealtimeCameraController extends GetxController
   bool get _needsMirrorCompensation => false;
 
   void _resetRealtimeState() {
-    _pipelineCoordinator.reset();
+    _scheduler.reset();
     _overlayStateManager.resetAll();
   }
 }
