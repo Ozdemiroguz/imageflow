@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/services/camera_session_service.dart';
 import '../capture_realtime_config.dart';
 import '../../data/services/realtime_detection_pipeline.dart';
+import 'realtime_frame_geometry_source.dart';
 
 /// Presentation helper for camera stream start/stop and frame pipeline trigger.
 /// This is a plain class, not a GetxService.
@@ -25,12 +25,7 @@ class RealtimeFrameStreamHandler {
     required bool Function() isCameraLifecycleBusy,
     required bool Function() isPausedByRoute,
     required AppLifecycleState Function() appLifecycleState,
-    required void Function() syncFrameRotation,
-    required InputImageRotation Function() mlKitRotation,
-    required int Function() nativeRotationDegrees,
-    required int Function() frameImageRotationDegrees,
-    required bool Function() isFrontCamera,
-    required bool Function() needsMirrorCompensation,
+    required RealtimeFrameGeometrySource frameGeometry,
   }) : _config = config,
        _cameraSessionService = cameraSessionService,
        _detectionPipeline = detectionPipeline,
@@ -42,12 +37,7 @@ class RealtimeFrameStreamHandler {
        _isCameraLifecycleBusy = isCameraLifecycleBusy,
        _isPausedByRoute = isPausedByRoute,
        _appLifecycleState = appLifecycleState,
-       _syncFrameRotation = syncFrameRotation,
-       _mlKitRotation = mlKitRotation,
-       _nativeRotationDegrees = nativeRotationDegrees,
-       _frameImageRotationDegrees = frameImageRotationDegrees,
-       _isFrontCamera = isFrontCamera,
-       _needsMirrorCompensation = needsMirrorCompensation;
+       _frameGeometry = frameGeometry;
 
   final CaptureRealtimeConfig _config;
   final CameraSessionService _cameraSessionService;
@@ -60,12 +50,7 @@ class RealtimeFrameStreamHandler {
   final bool Function() _isCameraLifecycleBusy;
   final bool Function() _isPausedByRoute;
   final AppLifecycleState Function() _appLifecycleState;
-  final void Function() _syncFrameRotation;
-  final InputImageRotation Function() _mlKitRotation;
-  final int Function() _nativeRotationDegrees;
-  final int Function() _frameImageRotationDegrees;
-  final bool Function() _isFrontCamera;
-  final bool Function() _needsMirrorCompensation;
+  final RealtimeFrameGeometrySource _frameGeometry;
 
   Timer? _realtimeStartTimer;
   var _isFrameProcessing = false;
@@ -131,14 +116,14 @@ class RealtimeFrameStreamHandler {
 
     _isFrameProcessing = true;
     try {
-      _syncFrameRotation();
+      _frameGeometry.sync();
       await _detectionPipeline.processFrame(
         frame,
-        rotation: _mlKitRotation(),
-        nativeRotationDegrees: _nativeRotationDegrees(),
-        frameImageRotationDegrees: _frameImageRotationDegrees(),
-        isFrontCamera: _isFrontCamera(),
-        needsMirrorCompensation: _needsMirrorCompensation(),
+        rotation: _frameGeometry.mlKitRotation,
+        nativeRotationDegrees: _frameGeometry.nativeRotationDegrees,
+        frameImageRotationDegrees: _frameGeometry.frameImageRotationDegrees,
+        isFrontCamera: _frameGeometry.isFrontCamera,
+        needsMirrorCompensation: _frameGeometry.needsMirrorCompensation,
       );
     } finally {
       _isFrameProcessing = false;

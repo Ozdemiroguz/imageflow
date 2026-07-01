@@ -21,6 +21,7 @@ import '../../data/datasources/realtime_face_detection_service.dart';
 import '../../data/datasources/realtime_ocr_gate_service.dart';
 import '../state/realtime_overlay_state_store.dart';
 import '../../data/services/realtime_preview_builder.dart';
+import '../coordinators/realtime_frame_geometry_source.dart';
 import '../coordinators/realtime_frame_stream_handler.dart';
 import '../realtime_native_rotation_strategy.dart';
 import '../enums/realtime_preview_target.dart';
@@ -94,12 +95,14 @@ class RealtimeCameraController extends GetxController
           isCameraLifecycleBusy: () => _isCameraLifecycleBusy,
           isPausedByRoute: () => _isPausedByRoute,
           appLifecycleState: () => _appLifecycleState,
-          syncFrameRotation: _syncFrameRotation,
-          mlKitRotation: _mlKitRotation,
-          nativeRotationDegrees: () => _nativeRotationDegrees,
-          frameImageRotationDegrees: _frameImageRotationDegrees,
-          isFrontCamera: () => isFrontCamera,
-          needsMirrorCompensation: () => _needsMirrorCompensation,
+          frameGeometry: RealtimeFrameGeometrySource(
+            sync: _syncFrameRotation,
+            mlKitRotation: _mlKitRotation,
+            nativeRotationDegrees: () => _nativeRotationDegrees,
+            frameImageRotationDegrees: _frameImageRotationDegrees,
+            isFrontCamera: () => isFrontCamera,
+            needsMirrorCompensation: () => _needsMirrorCompensation,
+          ),
         );
 
     _sessionManager =
