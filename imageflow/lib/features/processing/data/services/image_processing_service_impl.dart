@@ -27,12 +27,12 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
     required DocumentCropper documentCropper,
     required FaceAnnotator faceAnnotator,
   }) : _fileService = fileService,
-       _contentDetection = contentDetector,
+       _contentDetector = contentDetector,
        _documentCrop = documentCropper,
        _faceAnnotator = faceAnnotator;
 
   final FileService _fileService;
-  final ContentDetector _contentDetection;
+  final ContentDetector _contentDetector;
   final DocumentCropper _documentCrop;
   final FaceAnnotator _faceAnnotator;
 
@@ -62,7 +62,7 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
       final workingPath = _fileService.processedFilePath('${id}_work');
       await File(originalPath).copy(workingPath);
       try {
-        var detection = await _contentDetection.detect(
+        var detection = await _contentDetector.detect(
           imagePath: workingPath,
           preferredType: preferredType,
         );
@@ -71,7 +71,7 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
             hasMirroredExifOrientation &&
             detection.type == ProcessingType.document) {
           await _flipImageHorizontallyInPlace(workingPath);
-          final correctedDetection = await _contentDetection.detect(
+          final correctedDetection = await _contentDetector.detect(
             imagePath: workingPath,
             preferredType: ProcessingType.document,
           );
@@ -195,7 +195,7 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
       final workingPath = _fileService.processedFilePath('${id}_work');
       await File(originalPath).copy(workingPath);
       try {
-        final detection = await _contentDetection.detect(
+        final detection = await _contentDetector.detect(
           imagePath: workingPath,
           preferredType: ProcessingType.document,
         );
@@ -340,9 +340,10 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
         await file.delete();
       }
     } catch (e, st) {
-      Log.warning('Failed to delete temp file: $path', tag: 'Processing');
+      // Best-effort cleanup: a leftover temp file is harmless, so we log and
+      // move on rather than failing the pipeline.
       Log.error(
-        'Temp cleanup error',
+        'Failed to delete temp file: $path',
         error: e,
         stackTrace: st,
         tag: 'Processing',
