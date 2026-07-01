@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:get/get.dart';
 
 import '../../../../core/models/normalized_corners.dart';
+import '../../../../core/utils/num_utils.dart';
 import '../../data/services/detection_output_port.dart';
 import '../enums/realtime_preview_target.dart';
 import '../capture_realtime_config.dart';
@@ -233,7 +234,7 @@ class RealtimeOverlayStateStore implements DetectionOutputPort {
 
     var hash = 0x9E3779B97F4A7C15 ^ length;
     const sampleCount = 64;
-    final step = _clampInt((length / sampleCount).ceil(), 1, length);
+    final step = clampInt((length / sampleCount).ceil(), 1, length);
 
     for (var i = 0; i < length; i += step) {
       hash = _mix(hash, bytes[i]);
@@ -247,9 +248,5 @@ class RealtimeOverlayStateStore implements DetectionOutputPort {
   int _mix(int hash, int value) {
     final mixed = (hash ^ value) * 0x100000001b3;
     return mixed & 0xFFFFFFFFFFFFFFFF;
-  }
-
-  int _clampInt(int value, int min, int max) {
-    return value < min ? min : (value > max ? max : value);
   }
 }

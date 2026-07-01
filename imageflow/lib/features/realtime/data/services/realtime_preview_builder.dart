@@ -9,6 +9,7 @@ import 'package:image/image.dart' as img;
 import '../../../../core/models/normalized_corners.dart';
 import '../../../../core/utils/face_mask_utils.dart';
 import '../../../../core/utils/log.dart';
+import '../../../../core/utils/num_utils.dart';
 
 part 'realtime_preview_builder_payloads.dart';
 part 'realtime_preview_payloads.dart';
@@ -119,22 +120,22 @@ class RealtimePreviewBuilder {
       normalizedFaceRect,
       padding: _faceCropPaddingRatio,
     );
-    final left = _clampInt(
+    final left = clampInt(
       (cropRect.left * image.width).round(),
       0,
       image.width - 1,
     );
-    final top = _clampInt(
+    final top = clampInt(
       (cropRect.top * image.height).round(),
       0,
       image.height - 1,
     );
-    final right = _clampInt(
+    final right = clampInt(
       (cropRect.right * image.width).round(),
       left + 1,
       image.width,
     );
-    final bottom = _clampInt(
+    final bottom = clampInt(
       (cropRect.bottom * image.height).round(),
       top + 1,
       image.height,
@@ -155,8 +156,8 @@ class RealtimePreviewBuilder {
           final x = (p.dx * image.width) - left;
           final y = (p.dy * image.height) - top;
           return img.Point(
-            _clampDouble(x, 0, faceCrop.width - 1.0),
-            _clampDouble(y, 0, faceCrop.height - 1.0),
+            clampDouble(x, 0, faceCrop.width - 1.0),
+            clampDouble(y, 0, faceCrop.height - 1.0),
           );
         })
         .toList(growable: false);
@@ -232,11 +233,11 @@ class RealtimePreviewBuilder {
       maxLongSide: _maxDocumentPreviewLongSide,
     );
     if (previewScale < 1.0) {
-      dstWidth = _clampInt((dstWidth * previewScale).round(), 1, dstWidth);
-      dstHeight = _clampInt((dstHeight * previewScale).round(), 1, dstHeight);
+      dstWidth = clampInt((dstWidth * previewScale).round(), 1, dstWidth);
+      dstHeight = clampInt((dstHeight * previewScale).round(), 1, dstHeight);
     }
-    dstWidth = _clampInt(dstWidth, 1, 4096);
-    dstHeight = _clampInt(dstHeight, 1, 4096);
+    dstWidth = clampInt(dstWidth, 1, 4096);
+    dstHeight = clampInt(dstHeight, 1, 4096);
 
     return _buildDocumentPreviewFallback(
       image: image,
@@ -330,12 +331,12 @@ class RealtimePreviewBuilder {
     final sourceLongSide = math.max(sourceWidth, sourceHeight);
     final needsDownscale = sourceLongSide > _maxPreviewLongSide;
     final scale = needsDownscale ? _maxPreviewLongSide / sourceLongSide : 1.0;
-    final targetWidth = _clampInt(
+    final targetWidth = clampInt(
       (sourceWidth * scale).round(),
       1,
       sourceWidth,
     );
-    final targetHeight = _clampInt(
+    final targetHeight = clampInt(
       (sourceHeight * scale).round(),
       1,
       sourceHeight,
@@ -418,8 +419,8 @@ class RealtimePreviewBuilder {
     if (longSide <= _maxPreviewLongSide) return source;
 
     final scale = _maxPreviewLongSide / longSide;
-    final width = _clampInt((source.width * scale).round(), 1, source.width);
-    final height = _clampInt((source.height * scale).round(), 1, source.height);
+    final width = clampInt((source.width * scale).round(), 1, source.width);
+    final height = clampInt((source.height * scale).round(), 1, source.height);
     return img.copyResize(
       source,
       width: width,
@@ -438,8 +439,8 @@ class RealtimePreviewBuilder {
     }
 
     final scale = _maxFacePreviewLongSide / longSide;
-    final width = _clampInt((source.width * scale).round(), 1, source.width);
-    final height = _clampInt((source.height * scale).round(), 1, source.height);
+    final width = clampInt((source.width * scale).round(), 1, source.width);
+    final height = clampInt((source.height * scale).round(), 1, source.height);
     final resized = img.copyResize(
       source,
       width: width,
@@ -453,8 +454,8 @@ class RealtimePreviewBuilder {
 
     final scaledContour = contour
         .map((p) {
-          final dx = _clampDouble(p.x.toDouble() * scale, 0, width - 1.0);
-          final dy = _clampDouble(p.y.toDouble() * scale, 0, height - 1.0);
+          final dx = clampDouble(p.x.toDouble() * scale, 0, width - 1.0);
+          final dy = clampDouble(p.y.toDouble() * scale, 0, height - 1.0);
           return img.Point(dx, dy);
         })
         .toList(growable: false);
@@ -511,7 +512,7 @@ class RealtimePreviewBuilder {
     _cachedXMapSourceWidth = sourceWidth;
     _cachedXMapTargetWidth = targetWidth;
     _cachedXIndexMap = List<int>.generate(targetWidth, (x) {
-      return _clampInt((x * sourceWidth) ~/ targetWidth, 0, sourceWidth - 1);
+      return clampInt((x * sourceWidth) ~/ targetWidth, 0, sourceWidth - 1);
     }, growable: false);
     return _cachedXIndexMap;
   }
@@ -529,7 +530,7 @@ class RealtimePreviewBuilder {
     _cachedYMapSourceHeight = sourceHeight;
     _cachedYMapTargetHeight = targetHeight;
     _cachedYIndexMap = List<int>.generate(targetHeight, (y) {
-      return _clampInt((y * sourceHeight) ~/ targetHeight, 0, sourceHeight - 1);
+      return clampInt((y * sourceHeight) ~/ targetHeight, 0, sourceHeight - 1);
     }, growable: false);
     return _cachedYIndexMap;
   }
@@ -542,13 +543,5 @@ class RealtimePreviewBuilder {
     final longSide = math.max(width, height);
     if (longSide <= maxLongSide) return 1.0;
     return maxLongSide / longSide;
-  }
-
-  int _clampInt(int value, int min, int max) {
-    return value < min ? min : (value > max ? max : value);
-  }
-
-  double _clampDouble(double value, double min, double max) {
-    return value < min ? min : (value > max ? max : value);
   }
 }

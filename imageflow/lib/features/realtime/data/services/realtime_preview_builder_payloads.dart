@@ -18,22 +18,22 @@ Uint8List? _buildFacePreviewFromFrameOnIsolate(
     (payload.normalizedBottom + pad).clamp(0.0, 1.0),
   );
 
-  final left = _clampIntIsolate(
+  final left = clampInt(
     (cropRect.left * prepared.width).round(),
     0,
     prepared.width - 1,
   );
-  final top = _clampIntIsolate(
+  final top = clampInt(
     (cropRect.top * prepared.height).round(),
     0,
     prepared.height - 1,
   );
-  final right = _clampIntIsolate(
+  final right = clampInt(
     (cropRect.right * prepared.width).round(),
     left + 1,
     prepared.width,
   );
-  final bottom = _clampIntIsolate(
+  final bottom = clampInt(
     (cropRect.bottom * prepared.height).round(),
     top + 1,
     prepared.height,
@@ -57,8 +57,8 @@ Uint8List? _buildFacePreviewFromFrameOnIsolate(
     final y = (payload.contourPairs[i + 1] * prepared.height) - top;
     localContour.add(
       img.Point(
-        _clampDoubleIsolate(x, 0, faceCrop.width - 1.0),
-        _clampDoubleIsolate(y, 0, faceCrop.height - 1.0),
+        clampDouble(x, 0, faceCrop.width - 1.0),
+        clampDouble(y, 0, faceCrop.height - 1.0),
       ),
     );
   }
@@ -119,15 +119,15 @@ Uint8List? _buildDocumentPreviewFromFrameOnIsolate(
     maxLongSide: RealtimePreviewBuilder._maxDocumentPreviewLongSide,
   );
   if (previewScale < 1.0) {
-    dstWidth = _clampIntIsolate((dstWidth * previewScale).round(), 1, dstWidth);
-    dstHeight = _clampIntIsolate(
+    dstWidth = clampInt((dstWidth * previewScale).round(), 1, dstWidth);
+    dstHeight = clampInt(
       (dstHeight * previewScale).round(),
       1,
       dstHeight,
     );
   }
-  dstWidth = _clampIntIsolate(dstWidth, 1, 4096);
-  dstHeight = _clampIntIsolate(dstHeight, 1, 4096);
+  dstWidth = clampInt(dstWidth, 1, 4096);
+  dstHeight = clampInt(dstHeight, 1, 4096);
 
   final docPayload = DocumentPreviewIsolatePayload(
     width: prepared.width,
@@ -188,26 +188,26 @@ img.Image? _framePayloadToImageOnIsolate(RealtimeFramePayload payload) {
   final scale = needsDownscale
       ? RealtimePreviewBuilder._maxPreviewLongSide / sourceLongSide
       : 1.0;
-  final targetWidth = _clampIntIsolate(
+  final targetWidth = clampInt(
     (sourceWidth * scale).round(),
     1,
     sourceWidth,
   );
-  final targetHeight = _clampIntIsolate(
+  final targetHeight = clampInt(
     (sourceHeight * scale).round(),
     1,
     sourceHeight,
   );
 
   final xMap = List<int>.generate(targetWidth, (x) {
-    return _clampIntIsolate(
+    return clampInt(
       (x * sourceWidth) ~/ targetWidth,
       0,
       sourceWidth - 1,
     );
   }, growable: false);
   final yMap = List<int>.generate(targetHeight, (y) {
-    return _clampIntIsolate(
+    return clampInt(
       (y * sourceHeight) ~/ targetHeight,
       0,
       sourceHeight - 1,
@@ -241,12 +241,12 @@ img.Image _downscaleForPreviewIsolate(img.Image source) {
   if (longSide <= RealtimePreviewBuilder._maxPreviewLongSide) return source;
 
   final scale = RealtimePreviewBuilder._maxPreviewLongSide / longSide;
-  final width = _clampIntIsolate(
+  final width = clampInt(
     (source.width * scale).round(),
     1,
     source.width,
   );
-  final height = _clampIntIsolate(
+  final height = clampInt(
     (source.height * scale).round(),
     1,
     source.height,
@@ -358,12 +358,12 @@ Uint8List _buildDocumentPreviewOnIsolate(
   }
 
   final scale = RealtimePreviewBuilder._maxFacePreviewLongSide / longSide;
-  final width = _clampIntIsolate(
+  final width = clampInt(
     (source.width * scale).round(),
     1,
     source.width,
   );
-  final height = _clampIntIsolate(
+  final height = clampInt(
     (source.height * scale).round(),
     1,
     source.height,
@@ -381,18 +381,10 @@ Uint8List _buildDocumentPreviewOnIsolate(
 
   final scaledContour = contour
       .map((p) {
-        final dx = _clampDoubleIsolate(p.x.toDouble() * scale, 0, width - 1.0);
-        final dy = _clampDoubleIsolate(p.y.toDouble() * scale, 0, height - 1.0);
+        final dx = clampDouble(p.x.toDouble() * scale, 0, width - 1.0);
+        final dy = clampDouble(p.y.toDouble() * scale, 0, height - 1.0);
         return img.Point(dx, dy);
       })
       .toList(growable: false);
   return (image: resized, contour: scaledContour);
-}
-
-int _clampIntIsolate(int value, int min, int max) {
-  return value < min ? min : (value > max ? max : value);
-}
-
-double _clampDoubleIsolate(double value, double min, double max) {
-  return value < min ? min : (value > max ? max : value);
 }

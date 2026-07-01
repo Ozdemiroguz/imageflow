@@ -103,7 +103,7 @@ class RealtimeDetectionPipeline {
         return result.hasText;
       },
     );
-    _scheduler.completeOcr(hasText: hasText);
+    _scheduler.endOcrDetection(hasText: hasText);
   }
 
   Future<void> runFaceDetection(
@@ -159,7 +159,7 @@ class RealtimeDetectionPipeline {
         _output.setFaceDetectedStatus(normalizedFaces.length);
 
         final now = DateTime.now();
-        if (!_scheduler.tryScheduleFacePanel(now)) return;
+        if (!_scheduler.tryTakeFacePanelSlot(now)) return;
 
         final primaryFaceIndex = _faceGeometryNormalizer.selectPrimaryFaceIndex(
           normalizedFaces,
@@ -193,7 +193,7 @@ class RealtimeDetectionPipeline {
         }
       },
     );
-    _scheduler.completeFace();
+    _scheduler.endFaceDetection();
   }
 
   Future<void> runDocumentEdgeDetection(
@@ -222,7 +222,7 @@ class RealtimeDetectionPipeline {
         _output.setDocumentFoundState();
 
         final now = DateTime.now();
-        if (!_scheduler.tryScheduleDocumentPanel(now)) return;
+        if (!_scheduler.tryTakeDocumentPanelSlot(now)) return;
 
         if (!_output.shouldBuildDocumentPanelPreview(
           corners: corners,
@@ -247,7 +247,7 @@ class RealtimeDetectionPipeline {
         }
       },
     );
-    _scheduler.completeEdge();
+    _scheduler.endEdgeDetection();
   }
 
   Future<T?> _runGuarded<T>({
@@ -323,8 +323,8 @@ class RealtimeDetectionPipeline {
     int? ocrMs;
     int? faceMs;
     int? edgeMs;
-    final shouldRunOcr = _scheduler.tryScheduleOcr(now);
-    final shouldRunFace = _scheduler.tryScheduleFace(now);
+    final shouldRunOcr = _scheduler.tryBeginOcrDetection(now);
+    final shouldRunFace = _scheduler.tryBeginFaceDetection(now);
 
     Uint8List? resolveAndroidNv21() {
       if (imageFormatGroup != ImageFormatGroup.yuv420) return null;
@@ -393,7 +393,7 @@ class RealtimeDetectionPipeline {
       }
     }
 
-    if (_scheduler.tryScheduleEdge(now)) {
+    if (_scheduler.tryBeginEdgeDetection(now)) {
       final edgeWatch = PerfTrace.start();
       await runDocumentEdgeDetection(
         frame,

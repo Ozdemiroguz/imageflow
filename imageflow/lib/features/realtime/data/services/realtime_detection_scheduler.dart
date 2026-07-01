@@ -36,7 +36,16 @@ class RealtimeDetectionScheduler {
 
   bool get hasOcrText => _hasOcrText;
 
-  bool tryScheduleFace(DateTime now) {
+  // --- Detection slots: acquire/release pairs -------------------------------
+  //
+  // `tryBegin*Detection` acquires a slot: it returns true and LOCKS the
+  // detector busy iff the detector is free and its interval has elapsed. On
+  // true, the caller MUST later call the matching `end*Detection` (do it in a
+  // `finally`) or the detector stays busy forever. On false, no slot was taken
+  // and no release is needed. This is a try-acquire, not a pure predicate — the
+  // `tryBegin` name signals both the possible failure and the state change.
+
+  bool tryBeginFaceDetection(DateTime now) {
     if (_isFaceBusy) return false;
     if (_lastFaceRunAt != null &&
         now.difference(_lastFaceRunAt!) < _faceInterval) {
@@ -47,11 +56,11 @@ class RealtimeDetectionScheduler {
     return true;
   }
 
-  void completeFace() {
+  void endFaceDetection() {
     _isFaceBusy = false;
   }
 
-  bool tryScheduleOcr(DateTime now) {
+  bool tryBeginOcrDetection(DateTime now) {
     if (_isOcrBusy) return false;
     if (_lastOcrRunAt != null &&
         now.difference(_lastOcrRunAt!) < _ocrInterval) {
@@ -62,14 +71,14 @@ class RealtimeDetectionScheduler {
     return true;
   }
 
-  void completeOcr({bool? hasText}) {
+  void endOcrDetection({bool? hasText}) {
     _isOcrBusy = false;
     if (hasText != null) {
       _hasOcrText = hasText;
     }
   }
 
-  bool tryScheduleEdge(DateTime now) {
+  bool tryBeginEdgeDetection(DateTime now) {
     if (!_hasOcrText || _isEdgeBusy) return false;
     if (_lastEdgeRunAt != null &&
         now.difference(_lastEdgeRunAt!) < _edgeInterval) {
@@ -80,11 +89,17 @@ class RealtimeDetectionScheduler {
     return true;
   }
 
-  void completeEdge() {
+  void endEdgeDetection() {
     _isEdgeBusy = false;
   }
 
-  bool tryScheduleFacePanel(DateTime now) {
+  // --- Preview-panel throttle slots -----------------------------------------
+  //
+  // `tryTake*PanelSlot` is a pure throttle: it returns true and marks "now" as
+  // the last panel-build time iff enough time has elapsed. There is NO busy
+  // lock and NO matching release — taking the slot is the whole operation.
+
+  bool tryTakeFacePanelSlot(DateTime now) {
     if (_lastFacePanelAt != null &&
         now.difference(_lastFacePanelAt!) < _facePanelInterval) {
       return false;
@@ -93,7 +108,7 @@ class RealtimeDetectionScheduler {
     return true;
   }
 
-  bool tryScheduleDocumentPanel(DateTime now) {
+  bool tryTakeDocumentPanelSlot(DateTime now) {
     if (_lastDocumentPanelAt != null &&
         now.difference(_lastDocumentPanelAt!) < _documentPanelInterval) {
       return false;
