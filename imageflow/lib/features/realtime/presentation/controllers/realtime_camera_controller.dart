@@ -74,7 +74,7 @@ class RealtimeCameraController extends GetxController
           documentNoTextStatus: _config.documentNoTextStatus,
           documentScanningStatus: _config.documentScanningStatus,
           scheduler: _scheduler,
-          overlayStateManager: _overlayStateManager,
+          output: _overlayStateManager,
           cornerDetectionService: cornerDetectionService,
           faceDetectionService: faceDetectionService,
           ocrGateService: ocrGateService,

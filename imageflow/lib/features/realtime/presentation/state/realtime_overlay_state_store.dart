@@ -4,13 +4,19 @@ import 'dart:ui';
 import 'package:get/get.dart';
 
 import '../../../../core/models/normalized_corners.dart';
+import '../../data/services/detection_output_port.dart';
 import '../enums/realtime_preview_target.dart';
 import '../capture_realtime_config.dart';
 import '../models/realtime_overlay_state.dart';
 
 /// Presentation helper for realtime overlay state.
+///
+/// Implements [DetectionOutputPort]: the data-layer detection pipeline writes
+/// results through that abstraction, so the dependency points presentation ->
+/// data (never the reverse). This is the store's role as the output boundary.
+///
 /// This is a plain class, not a GetxService.
-class RealtimeOverlayStateStore {
+class RealtimeOverlayStateStore implements DetectionOutputPort {
   RealtimeOverlayStateStore({
     required CaptureRealtimeConfig config,
     required RealtimeOverlayState overlayState,
@@ -34,6 +40,10 @@ class RealtimeOverlayStateStore {
   int? _lastFacePreviewHash;
   int? _lastDocumentPreviewHash;
 
+  /// Read side of [DetectionOutputPort]: the raw current document status label.
+  @override
+  String get documentStatusLabel => documentStatus.value;
+
   bool get isFacePreviewExpanded =>
       expandedPreviewTarget.value == RealtimePreviewTarget.face;
 
@@ -50,6 +60,7 @@ class RealtimeOverlayStateStore {
     expandedPreviewTarget.value = null;
   }
 
+  @override
   void applyFaceGeometry({
     required List<Rect> nextFaceRects,
     required List<List<Offset>> nextFaceContours,
@@ -62,6 +73,7 @@ class RealtimeOverlayStateStore {
     }
   }
 
+  @override
   void setFaceNotFoundState() {
     if (faceStatus.value != _config.faceNotFoundStatus) {
       faceStatus.value = _config.faceNotFoundStatus;
@@ -70,6 +82,7 @@ class RealtimeOverlayStateStore {
     _overlayState.resetFacePreviewMotionState();
   }
 
+  @override
   void setFaceDetectedStatus(int count) {
     final detectedLabel = _config.faceFoundStatusTemplate.replaceFirst(
       '{count}',
@@ -84,6 +97,7 @@ class RealtimeOverlayStateStore {
     }
   }
 
+  @override
   bool shouldBuildFacePanelPreview({
     required Rect faceRect,
     required List<Offset> faceContour,
@@ -96,6 +110,7 @@ class RealtimeOverlayStateStore {
     );
   }
 
+  @override
   void rememberFacePreviewMotion({
     required Rect faceRect,
     required List<Offset> faceContour,
@@ -108,6 +123,7 @@ class RealtimeOverlayStateStore {
     );
   }
 
+  @override
   void setFacePreviewBytes(Uint8List? bytes) {
     if (bytes == null) {
       _lastFacePreviewHash = null;
@@ -122,6 +138,7 @@ class RealtimeOverlayStateStore {
     facePreviewBytes.value = bytes;
   }
 
+  @override
   void setDocumentNoTextState() {
     setDocumentStatus(_config.documentNoTextStatus);
     setDocumentCorners(null);
@@ -129,10 +146,12 @@ class RealtimeOverlayStateStore {
     resetDocumentPreviewMotionState();
   }
 
+  @override
   void setDocumentSearchingState() {
     setDocumentStatus(_config.documentEdgeSearchingStatus);
   }
 
+  @override
   void setDocumentFoundState() {
     setDocumentStatus(_config.documentFoundStatus);
   }
@@ -143,6 +162,7 @@ class RealtimeOverlayStateStore {
     }
   }
 
+  @override
   void setDocumentCorners(NormalizedCorners? corners) {
     if (_overlayState.hasDocumentCornersChanged(
       documentCorners.value,
@@ -152,6 +172,7 @@ class RealtimeOverlayStateStore {
     }
   }
 
+  @override
   bool shouldBuildDocumentPanelPreview({
     required NormalizedCorners corners,
     required DateTime now,
@@ -162,6 +183,7 @@ class RealtimeOverlayStateStore {
     );
   }
 
+  @override
   void rememberDocumentPreviewMotion({
     required NormalizedCorners corners,
     required DateTime now,
@@ -169,6 +191,7 @@ class RealtimeOverlayStateStore {
     _overlayState.rememberDocumentPreviewMotion(corners: corners, now: now);
   }
 
+  @override
   void setDocumentPreviewBytes(Uint8List? bytes) {
     if (bytes == null) {
       _lastDocumentPreviewHash = null;
@@ -183,6 +206,7 @@ class RealtimeOverlayStateStore {
     documentPreviewBytes.value = bytes;
   }
 
+  @override
   void resetDocumentPreviewMotionState() {
     _overlayState.resetDocumentPreviewMotionState();
   }

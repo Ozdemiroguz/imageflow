@@ -10,8 +10,8 @@ import '../../../../core/platform/camera_nv21_converter.dart';
 import '../../../../core/utils/log.dart';
 import '../../../../core/utils/perf_trace.dart';
 import '../../../../core/platform/camera_input_image_factory.dart';
+import 'detection_output_port.dart';
 import 'realtime_detection_scheduler.dart';
-import '../../presentation/state/realtime_overlay_state_store.dart';
 import '../datasources/realtime_face_detection_service.dart';
 import 'realtime_face_geometry_normalizer.dart';
 import 'realtime_frame_perf_tracker.dart';
@@ -27,7 +27,7 @@ class RealtimeDetectionPipelineCoordinator {
     required this.documentNoTextStatus,
     required this.documentScanningStatus,
     required RealtimeDetectionScheduler scheduler,
-    required RealtimeOverlayStateStore overlayStateManager,
+    required DetectionOutputPort output,
     required CornerDetector cornerDetectionService,
     required RealtimeFaceDetectionService faceDetectionService,
     required RealtimeOcrGateService ocrGateService,
@@ -35,7 +35,7 @@ class RealtimeDetectionPipelineCoordinator {
     RealtimeFaceGeometryNormalizer? faceGeometryNormalizer,
     RealtimeFramePerfTracker? perfTracker,
   }) : _scheduler = scheduler,
-       _overlayStateManager = overlayStateManager,
+       _output = output,
        _cornerDetectionService = cornerDetectionService,
        _faceDetectionService = faceDetectionService,
        _ocrGateService = ocrGateService,
@@ -65,7 +65,7 @@ class RealtimeDetectionPipelineCoordinator {
   final String documentScanningStatus;
 
   final RealtimeDetectionScheduler _scheduler;
-  final RealtimeOverlayStateStore _overlayStateManager;
+  final DetectionOutputPort _output;
   final CornerDetector _cornerDetectionService;
   final RealtimeFaceDetectionService _faceDetectionService;
   final RealtimeOcrGateService _ocrGateService;
@@ -89,14 +89,14 @@ class RealtimeDetectionPipelineCoordinator {
           preparedInputImage: preparedInputImage,
         );
         if (result.hasText) {
-          if (_overlayStateManager.documentStatus.value ==
+          if (_output.documentStatusLabel ==
                   documentNoTextStatus ||
-              _overlayStateManager.documentStatus.value ==
+              _output.documentStatusLabel ==
                   documentScanningStatus) {
-            _overlayStateManager.setDocumentSearchingState();
+            _output.setDocumentSearchingState();
           }
         } else {
-          _overlayStateManager.setDocumentNoTextState();
+          _output.setDocumentNoTextState();
         }
         return result.hasText;
       },
@@ -144,17 +144,17 @@ class RealtimeDetectionPipelineCoordinator {
             )
             .toList(growable: false);
 
-        _overlayStateManager.applyFaceGeometry(
+        _output.applyFaceGeometry(
           nextFaceRects: normalizedFaces,
           nextFaceContours: normalizedContours,
         );
 
         if (normalizedFaces.isEmpty) {
-          _overlayStateManager.setFaceNotFoundState();
+          _output.setFaceNotFoundState();
           return;
         }
 
-        _overlayStateManager.setFaceDetectedStatus(normalizedFaces.length);
+        _output.setFaceDetectedStatus(normalizedFaces.length);
 
         final now = DateTime.now();
         if (!_scheduler.tryScheduleFacePanel(now)) return;
@@ -166,7 +166,7 @@ class RealtimeDetectionPipelineCoordinator {
         final primaryContour = primaryFaceIndex < normalizedContours.length
             ? normalizedContours[primaryFaceIndex]
             : const <Offset>[];
-        if (!_overlayStateManager.shouldBuildFacePanelPreview(
+        if (!_output.shouldBuildFacePanelPreview(
           faceRect: primaryFaceRect,
           faceContour: primaryContour,
           now: now,
@@ -182,8 +182,8 @@ class RealtimeDetectionPipelineCoordinator {
           needsMirrorCompensation: needsMirrorCompensation,
         );
         if (preview != null) {
-          _overlayStateManager.setFacePreviewBytes(preview);
-          _overlayStateManager.rememberFacePreviewMotion(
+          _output.setFacePreviewBytes(preview);
+          _output.rememberFacePreviewMotion(
             faceRect: primaryFaceRect,
             faceContour: primaryContour,
             now: now,
@@ -209,20 +209,20 @@ class RealtimeDetectionPipelineCoordinator {
           nativeRotationDegrees: nativeRotationDegrees,
         );
         if (corners == null) {
-          _overlayStateManager.setDocumentCorners(null);
-          _overlayStateManager.setDocumentPreviewBytes(null);
-          _overlayStateManager.resetDocumentPreviewMotionState();
-          _overlayStateManager.setDocumentSearchingState();
+          _output.setDocumentCorners(null);
+          _output.setDocumentPreviewBytes(null);
+          _output.resetDocumentPreviewMotionState();
+          _output.setDocumentSearchingState();
           return;
         }
 
-        _overlayStateManager.setDocumentCorners(corners);
-        _overlayStateManager.setDocumentFoundState();
+        _output.setDocumentCorners(corners);
+        _output.setDocumentFoundState();
 
         final now = DateTime.now();
         if (!_scheduler.tryScheduleDocumentPanel(now)) return;
 
-        if (!_overlayStateManager.shouldBuildDocumentPanelPreview(
+        if (!_output.shouldBuildDocumentPanelPreview(
           corners: corners,
           now: now,
         )) {
@@ -237,8 +237,8 @@ class RealtimeDetectionPipelineCoordinator {
           needsMirrorCompensation: needsMirrorCompensation,
         );
         if (preview != null) {
-          _overlayStateManager.setDocumentPreviewBytes(preview);
-          _overlayStateManager.rememberDocumentPreviewMotion(
+          _output.setDocumentPreviewBytes(preview);
+          _output.rememberDocumentPreviewMotion(
             corners: corners,
             now: now,
           );
@@ -412,7 +412,7 @@ class RealtimeDetectionPipelineCoordinator {
     }
 
     if (!_scheduler.hasOcrText) {
-      _overlayStateManager.setDocumentNoTextState();
+      _output.setDocumentNoTextState();
     }
 
     _perfTracker.recordSample(

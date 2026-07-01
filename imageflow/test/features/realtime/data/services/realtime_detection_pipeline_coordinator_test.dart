@@ -1,14 +1,13 @@
 import 'package:camera/camera.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:imageflow/core/platform/corner_detector.dart';
 import 'package:imageflow/features/realtime/data/datasources/realtime_face_detection_service.dart';
 import 'package:imageflow/features/realtime/data/datasources/realtime_ocr_gate_service.dart';
 import 'package:imageflow/features/realtime/data/services/realtime_detection_pipeline_coordinator.dart';
+import 'package:imageflow/features/realtime/data/services/detection_output_port.dart';
 import 'package:imageflow/features/realtime/data/services/realtime_detection_scheduler.dart';
 import 'package:imageflow/features/realtime/data/services/realtime_preview_builder.dart';
-import 'package:imageflow/features/realtime/presentation/state/realtime_overlay_state_store.dart';
 import 'package:mocktail/mocktail.dart';
 
 /// Characterization tests for the realtime detection pipeline.
@@ -19,7 +18,7 @@ import 'package:mocktail/mocktail.dart';
 /// switched from depending on the concrete store to a DetectionOutputPort, and
 /// these assertions must stay green because behavior does not change — only the
 /// dependency direction does.
-class _MockOverlayStore extends Mock implements RealtimeOverlayStateStore {}
+class _MockOutputPort extends Mock implements DetectionOutputPort {}
 
 class _MockCornerDetector extends Mock implements CornerDetector {}
 
@@ -40,7 +39,7 @@ void main() {
     registerFallbackValue(InputImageRotation.rotation0deg);
   });
 
-  late _MockOverlayStore overlay;
+  late _MockOutputPort output;
   late _MockCornerDetector cornerDetector;
   late _MockFaceDetectionService faceService;
   late _MockOcrGateService ocrService;
@@ -53,7 +52,7 @@ void main() {
   const scanningStatus = 'Scanning for document...';
 
   setUp(() {
-    overlay = _MockOverlayStore();
+    output = _MockOutputPort();
     cornerDetector = _MockCornerDetector();
     faceService = _MockFaceDetectionService();
     ocrService = _MockOcrGateService();
@@ -75,7 +74,7 @@ void main() {
       documentNoTextStatus: noTextStatus,
       documentScanningStatus: scanningStatus,
       scheduler: scheduler,
-      overlayStateManager: overlay,
+      output: output,
       cornerDetectionService: cornerDetector,
       faceDetectionService: faceService,
       ocrGateService: ocrService,
@@ -96,8 +95,8 @@ void main() {
 
       await pipeline.runOcrGate(frame, rotation: InputImageRotation.rotation0deg);
 
-      verify(() => overlay.setDocumentNoTextState()).called(1);
-      verifyNever(() => overlay.setDocumentSearchingState());
+      verify(() => output.setDocumentNoTextState()).called(1);
+      verifyNever(() => output.setDocumentSearchingState());
     });
 
     test(
@@ -111,15 +110,15 @@ void main() {
             preparedInputImage: any(named: 'preparedInputImage'),
           ),
         ).thenAnswer((_) async => (hasText: true));
-        when(() => overlay.documentStatus).thenReturn(scanningStatus.obs);
+        when(() => output.documentStatusLabel).thenReturn(scanningStatus);
 
         await pipeline.runOcrGate(
           frame,
           rotation: InputImageRotation.rotation0deg,
         );
 
-        verify(() => overlay.setDocumentSearchingState()).called(1);
-        verifyNever(() => overlay.setDocumentNoTextState());
+        verify(() => output.setDocumentSearchingState()).called(1);
+        verifyNever(() => output.setDocumentNoTextState());
       },
     );
   });
@@ -144,13 +143,13 @@ void main() {
       );
 
       verify(
-        () => overlay.applyFaceGeometry(
+        () => output.applyFaceGeometry(
           nextFaceRects: const [],
           nextFaceContours: const [],
         ),
       ).called(1);
-      verify(() => overlay.setFaceNotFoundState()).called(1);
-      verifyNever(() => overlay.setFaceDetectedStatus(any()));
+      verify(() => output.setFaceNotFoundState()).called(1);
+      verifyNever(() => output.setFaceDetectedStatus(any()));
     });
   });
 
@@ -183,11 +182,11 @@ void main() {
         needsMirrorCompensation: false,
       );
 
-      verify(() => overlay.setDocumentCorners(null)).called(1);
-      verify(() => overlay.setDocumentPreviewBytes(null)).called(1);
-      verify(() => overlay.resetDocumentPreviewMotionState()).called(1);
-      verify(() => overlay.setDocumentSearchingState()).called(1);
-      verifyNever(() => overlay.setDocumentFoundState());
+      verify(() => output.setDocumentCorners(null)).called(1);
+      verify(() => output.setDocumentPreviewBytes(null)).called(1);
+      verify(() => output.resetDocumentPreviewMotionState()).called(1);
+      verify(() => output.setDocumentSearchingState()).called(1);
+      verifyNever(() => output.setDocumentFoundState());
     });
   });
 }
