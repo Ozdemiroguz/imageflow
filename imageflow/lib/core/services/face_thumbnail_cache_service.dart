@@ -1,55 +1,37 @@
-import 'dart:collection';
 import 'dart:typed_data';
 
 import 'package:get/get.dart';
 
-/// Shared LRU cache for face preview thumbnails.
-class FaceThumbnailCacheService extends GetxService {
-  FaceThumbnailCacheService({this.maxEntries = 24});
+import '../utils/lru_cache.dart';
 
-  final int maxEntries;
-  final _cache = <String, List<Uint8List>>{};
-  final _order = Queue<String>();
+/// Shared LRU cache for face preview thumbnails.
+///
+/// Thin GetxService adapter over [LruCache] that additionally treats an empty
+/// thumbnail list as "no value" (never stored, never returned).
+class FaceThumbnailCacheService extends GetxService {
+  FaceThumbnailCacheService({int maxEntries = 24})
+    : _cache = LruCache<String, List<Uint8List>>(maxEntries: maxEntries);
+
+  final LruCache<String, List<Uint8List>> _cache;
 
   List<Uint8List>? read(String key) {
-    final value = _cache[key];
+    final value = _cache.read(key);
     if (value == null || value.isEmpty) return null;
-    _touch(key);
     return value;
   }
 
   void write(String key, List<Uint8List> value) {
     if (value.isEmpty) return;
-    _cache[key] = value;
-    _touch(key);
-    _trim();
+    _cache.write(key, value);
   }
 
-  void remove(String key) {
-    _cache.remove(key);
-    _order.remove(key);
-  }
+  void remove(String key) => _cache.remove(key);
 
-  void clear() {
-    _cache.clear();
-    _order.clear();
-  }
+  void clear() => _cache.clear();
 
   @override
   void onClose() {
     clear();
     super.onClose();
-  }
-
-  void _touch(String key) {
-    _order.remove(key);
-    _order.addLast(key);
-  }
-
-  void _trim() {
-    while (_order.length > maxEntries) {
-      final oldest = _order.removeFirst();
-      _cache.remove(oldest);
-    }
   }
 }

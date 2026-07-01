@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -8,6 +7,7 @@ import 'package:get/get.dart';
 import '../../error/failures.dart';
 import '../../error/result.dart';
 import '../../utils/log.dart';
+import '../../utils/lru_cache.dart';
 import '../../utils/perf_trace.dart';
 
 typedef PdfRasterizer =
@@ -36,8 +36,9 @@ class PdfRasterService extends GetxService {
   final PdfByteLoader _byteLoader;
   final PdfDpiResolver _dpiResolver;
 
-  final _cache = <String, List<Uint8List>>{};
-  final _cacheOrder = Queue<String>();
+  final _cache = LruCache<String, List<Uint8List>>(
+    maxEntries: _maxCacheEntries,
+  );
   final _inFlight = <String, Future<Result<List<Uint8List>>>>{};
 
   Future<Result<List<Uint8List>>> rasterize({
@@ -47,7 +48,7 @@ class PdfRasterService extends GetxService {
     final totalWatch = PerfTrace.start();
 
     if (!forceRefresh) {
-      final cached = _cache[pdfPath];
+      final cached = _cache.read(pdfPath);
       if (cached != null) {
         PerfTrace.info(
           'pdf.raster.cache_hit',
@@ -161,14 +162,11 @@ class PdfRasterService extends GetxService {
   }
 
   void invalidate(String pdfPath) {
-    if (!_cache.containsKey(pdfPath)) return;
     _cache.remove(pdfPath);
-    _cacheOrder.remove(pdfPath);
   }
 
   void clearAll() {
     _cache.clear();
-    _cacheOrder.clear();
   }
 
   Failure _mapFailure(Object error) {
@@ -180,14 +178,7 @@ class PdfRasterService extends GetxService {
   }
 
   void _putCache(String pdfPath, List<Uint8List> pages) {
-    _cache[pdfPath] = pages;
-    _cacheOrder.remove(pdfPath);
-    _cacheOrder.addLast(pdfPath);
-
-    while (_cacheOrder.length > _maxCacheEntries) {
-      final oldest = _cacheOrder.removeFirst();
-      _cache.remove(oldest);
-    }
+    _cache.write(pdfPath, pages);
   }
 
   static Future<Uint8List> _defaultByteLoader(String pdfPath) async {
