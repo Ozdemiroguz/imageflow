@@ -156,38 +156,6 @@ void main() {
       });
     });
 
-    group('getById', () {
-      test('returns Ok with resolved entity when id exists', () async {
-        final model = _fakeModel(id: 'abc');
-        when(() => box.get('abc')).thenReturn(model);
-
-        final result = await repo.getById('abc');
-
-        expect(result.isOk, isTrue);
-        final item = (result as Ok<ProcessingHistory>).value;
-        expect(item.id, 'abc');
-        expect(item.originalImagePath, '/base/originals/abc.jpg');
-      });
-
-      test('returns Error(StorageFailure) when id not found', () async {
-        when(() => box.get('missing')).thenReturn(null);
-
-        final result = await repo.getById('missing');
-
-        expect(result.isError, isTrue);
-        expect((result as Error<ProcessingHistory>).failure, isA<StorageFailure>());
-      });
-
-      test('returns Error when box.get throws', () async {
-        when(() => box.get(any())).thenThrow(Exception('io error'));
-
-        final result = await repo.getById('id');
-
-        expect(result.isError, isTrue);
-        expect((result as Error<ProcessingHistory>).failure, isA<StorageFailure>());
-      });
-    });
-
     group('save', () {
       test('calls box.put with correct key', () async {
         final history = _fakeHistory(id: 'save-1');

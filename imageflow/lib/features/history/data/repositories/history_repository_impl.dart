@@ -27,17 +27,6 @@ class HistoryRepositoryImpl implements HistoryRepository {
     onLog: _logStorageError,
   );
 
-  @override
-  Future<Result<ProcessingHistory>> getById(String id) => Result.guard(
-    () async {
-      final model = _box.get(id);
-      if (model == null) throw const StorageFailure('History item not found');
-      return _resolve(model.toEntity());
-    },
-    onError: (e) => StorageFailure('Failed to get history: $e'),
-    onLog: _logStorageError,
-  );
-
   /// Resolves stored (relative) paths to absolute paths for UI consumption.
   ProcessingHistory _resolve(ProcessingHistory h) => ProcessingHistory(
     id: h.id,
