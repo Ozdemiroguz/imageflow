@@ -56,7 +56,7 @@ class HistoryPage extends GetView<HistoryController> {
             return HistoryListItem(
               key: ValueKey(item.id),
               history: item,
-              onConfirmDelete: controller.confirmDeleteHistory,
+              onConfirmDelete: controller.askDeleteConfirmation,
               onDismissed: () => controller.removeHistory(item.id),
               onOpenDetail: () => controller.openHistoryDetail(item),
             );

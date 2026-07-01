@@ -61,7 +61,7 @@ class HistoryController extends GetxController {
     }
   }
 
-  Future<bool> confirmDeleteHistory() {
+  Future<bool> askDeleteConfirmation() {
     return _modalService.confirm(
       title: 'Delete',
       message: 'Are you sure you want to delete this item?',

@@ -205,7 +205,7 @@ void main() {
       });
     });
 
-    group('confirmDeleteHistory', () {
+    group('askDeleteConfirmation', () {
       test('delegates to modalService.confirm and returns true', () async {
         when(
           () => modalService.confirm(
@@ -215,7 +215,7 @@ void main() {
         ).thenAnswer((_) async => true);
 
         final controller = await makeAndInit();
-        final confirmed = await controller.confirmDeleteHistory();
+        final confirmed = await controller.askDeleteConfirmation();
 
         expect(confirmed, isTrue);
         verify(
@@ -236,7 +236,7 @@ void main() {
         ).thenAnswer((_) async => false);
 
         final controller = await makeAndInit();
-        final confirmed = await controller.confirmDeleteHistory();
+        final confirmed = await controller.askDeleteConfirmation();
 
         expect(confirmed, isFalse);
         controller.onClose();
