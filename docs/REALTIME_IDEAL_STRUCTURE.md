@@ -93,25 +93,37 @@ realtime/                       (12 folders, down from 15 — 2 invented ones go
 **Removed:** `config/` (invented 4th layer) and `data/converters/` (generic utils → `core/platform/`).
 **Lifted to core:** `camera_nv21_converter`, `camera_input_image_factory` (cross-cutting camera/ML bridges).
 **Decoupled:** the scheduler and the pipeline coordinator no longer depend on `CaptureRealtimeConfig` — they take only the primitive fields they use.
+**Cycle broken:** the pipeline's write-back to the overlay store was inverted with `DetectionOutputPort` (DIP) — `data/` no longer imports `presentation/`. See below.
 
-### The one remaining data→presentation edge (accepted, deferred)
+### The last data→presentation edge — RESOLVED via DIP
 
-`data/services/realtime_detection_pipeline_coordinator.dart` still imports
-`presentation/state/realtime_overlay_state_store.dart` and **writes overlay
-state directly** (`setDocumentSearchingState`, `applyFaceGeometry`,
-`setFacePreviewBytes`, …) and **reads back** two status strings to decide
-transitions. This is the last inversion-of-control smell.
+`data/services/realtime_detection_pipeline_coordinator.dart` used to import
+`presentation/state/realtime_overlay_state_store.dart` and write overlay state
+against the concrete store — the last cycle edge, a Dependency-Rule violation.
 
-- **Why not fixed now:** the proper fix inverts the flow — the data pipeline
-  returns detection *results*, and presentation applies them to the store. That
-  is a substantial rewrite of a 411-line **untested** realtime hot-path file.
-  Doing it without a test net risks silent per-frame regressions.
-- **Decision (user-approved):** document and accept it now; invert **after**
-  realtime has tests. One honestly-documented coupling beats inventing a neutral
-  layer to hide it (Fowler/Metz: don't add structure to dodge a minor coupling).
-- **Tracked marker:** the two status-string params on the pipeline coordinator
-  carry an inline `NOTE` pointing here, so the deferred work is discoverable from
-  the code, not just this doc.
+**Fixed with Dependency Inversion** (not deferred after all — done once a safety
+net existed):
+
+1. **Safety net first:** 4 characterization tests
+   ([realtime_detection_pipeline_coordinator_test.dart](../imageflow/test/features/realtime/data/services/realtime_detection_pipeline_coordinator_test.dart))
+   lock the pipeline's outputs on the stable no-text / no-face / no-corner
+   branches, so the refactor can't silently change behavior.
+2. **Port:** [detection_output_port.dart](../imageflow/lib/features/realtime/data/services/detection_output_port.dart)
+   — a data-owned abstraction with exactly the store ops the pipeline uses
+   (Interface Segregation).
+3. **Invert:** the pipeline depends on `DetectionOutputPort`; the store
+   `implements DetectionOutputPort`. Both sides depend on the abstraction, so
+   `data/` no longer imports `presentation/` anywhere.
+
+**Result:** the dependency arrow points **presentation → data only**. The
+Dependency Rule holds across all of realtime; there is no remaining cycle. The
+same 4 tests stayed green through the inversion, proving behavior was preserved.
+
+> Residual (cosmetic, not a layering violation): the pipeline still *reads back*
+> two status strings via `documentStatusLabel` to decide transitions — a
+> transition-ownership question inside the data layer, not a cross-layer
+> dependency. Can be cleaned up later by moving that decision, but it no longer
+> couples the layers.
 
 ## 5. One-paragraph rationale
 
