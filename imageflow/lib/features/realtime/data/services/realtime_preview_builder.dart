@@ -8,9 +8,9 @@ import 'package:image/image.dart' as img;
 
 import '../../../../core/models/normalized_corners.dart';
 import '../../../../core/utils/face_mask_utils.dart';
-import 'realtime_preview_payloads.dart';
 
 part 'realtime_preview_builder_payloads.dart';
+part 'realtime_preview_payloads.dart';
 
 /// Realtime image-processing helper for preview bytes.
 /// This is a plain class, not a GetxService.

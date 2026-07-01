@@ -1,5 +1,4 @@
-import 'dart:isolate';
-import 'dart:typed_data';
+part of 'realtime_preview_builder.dart';
 
 class RealtimeFramePayload {
   const RealtimeFramePayload({
