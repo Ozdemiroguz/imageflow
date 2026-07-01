@@ -19,7 +19,11 @@ class CaptureController extends GetxController {
   final ImagePickerGateway _imagePicker;
   final PermissionService _permissionService;
   final ModalService _modalService;
+  // Let the capture dialog's dismiss animation finish before opening the
+  // camera/gallery, so the two transitions don't visually collide.
   static const _sourceTransitionDelay = Duration(milliseconds: 140);
+  // Keep the loading overlay on screen at least this long so a fast pick
+  // doesn't flash it for a single frame.
   static const _navigationOverlayMinVisible = Duration(milliseconds: 180);
   static const _genericLoadingMessage = 'Loading...';
 

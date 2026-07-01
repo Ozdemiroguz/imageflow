@@ -21,6 +21,9 @@ class HistoryListItem extends StatelessWidget {
   final VoidCallback onOpenDetail;
   static const _dismissMovementDuration = Duration(milliseconds: 280);
   static const _dismissResizeDuration = Duration(milliseconds: 240);
+  // Require a swipe past ~28% of the row width to dismiss, so an accidental
+  // small drag doesn't delete an item.
+  static const _dismissThreshold = 0.28;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +36,9 @@ class HistoryListItem extends StatelessWidget {
       direction: DismissDirection.endToStart,
       movementDuration: _dismissMovementDuration,
       resizeDuration: _dismissResizeDuration,
-      dismissThresholds: const {DismissDirection.endToStart: 0.28},
+      dismissThresholds: const {
+        DismissDirection.endToStart: _dismissThreshold,
+      },
       background: Padding(
         padding: EdgeInsets.symmetric(vertical: tokens.spacingXs),
         child: DecoratedBox(
