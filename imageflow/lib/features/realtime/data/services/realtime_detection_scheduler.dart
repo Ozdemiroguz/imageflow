@@ -3,7 +3,7 @@
 /// Pure timing/throttle logic: it decides whether a given detector (face, OCR,
 /// edge) or preview panel may run for the current frame, based on per-detector
 /// intervals and busy guards. No framework, no camera, no state store — this is
-/// the data-layer scheduler consumed by [RealtimeDetectionPipelineCoordinator].
+/// the data-layer scheduler consumed by [RealtimeDetectionPipeline].
 class RealtimeDetectionScheduler {
   RealtimeDetectionScheduler({
     required Duration faceInterval,

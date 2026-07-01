@@ -13,8 +13,8 @@ import '../capture_realtime_config.dart';
 
 /// Presentation helper for camera session lifecycle operations in realtime flow.
 /// This is a plain class, not a GetxService.
-class RealtimeCameraSessionCoordinator {
-  RealtimeCameraSessionCoordinator({
+class RealtimeCameraSessionManager {
+  RealtimeCameraSessionManager({
     required PermissionService permissionService,
     required CameraSessionService cameraSessionService,
     required CaptureRealtimeConfig config,

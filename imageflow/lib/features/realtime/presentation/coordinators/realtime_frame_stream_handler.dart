@@ -8,15 +8,15 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/services/camera_session_service.dart';
 import '../capture_realtime_config.dart';
-import '../../data/services/realtime_detection_pipeline_coordinator.dart';
+import '../../data/services/realtime_detection_pipeline.dart';
 
 /// Presentation helper for camera stream start/stop and frame pipeline trigger.
 /// This is a plain class, not a GetxService.
-class RealtimeStreamCoordinator {
-  RealtimeStreamCoordinator({
+class RealtimeFrameStreamHandler {
+  RealtimeFrameStreamHandler({
     required CaptureRealtimeConfig config,
     required CameraSessionService cameraSessionService,
-    required RealtimeDetectionPipelineCoordinator frameProcessor,
+    required RealtimeDetectionPipeline detectionPipeline,
     required RxBool hasCameraPermission,
     required RxBool isStreaming,
     required Rxn<Failure> failure,
@@ -33,7 +33,7 @@ class RealtimeStreamCoordinator {
     required bool Function() needsMirrorCompensation,
   }) : _config = config,
        _cameraSessionService = cameraSessionService,
-       _frameProcessor = frameProcessor,
+       _detectionPipeline = detectionPipeline,
        _hasCameraPermission = hasCameraPermission,
        _isStreaming = isStreaming,
        _failure = failure,
@@ -51,7 +51,7 @@ class RealtimeStreamCoordinator {
 
   final CaptureRealtimeConfig _config;
   final CameraSessionService _cameraSessionService;
-  final RealtimeDetectionPipelineCoordinator _frameProcessor;
+  final RealtimeDetectionPipeline _detectionPipeline;
   final RxBool _hasCameraPermission;
   final RxBool _isStreaming;
   final Rxn<Failure> _failure;
@@ -132,7 +132,7 @@ class RealtimeStreamCoordinator {
     _isFrameProcessing = true;
     try {
       _syncFrameRotation();
-      await _frameProcessor.processFrame(
+      await _detectionPipeline.processFrame(
         frame,
         rotation: _mlKitRotation(),
         nativeRotationDegrees: _nativeRotationDegrees(),

@@ -15,13 +15,13 @@ import '../../../../core/services/camera_route_lifecycle_controller.dart';
 import '../../../../core/services/camera_session_service.dart';
 import '../../../../core/services/permission_service.dart';
 import '../../../../core/utils/log.dart';
-import '../coordinators/realtime_camera_session_coordinator.dart';
-import '../../data/services/realtime_detection_pipeline_coordinator.dart';
+import '../coordinators/realtime_camera_session_manager.dart';
+import '../../data/services/realtime_detection_pipeline.dart';
 import '../../data/datasources/realtime_face_detection_service.dart';
 import '../../data/datasources/realtime_ocr_gate_service.dart';
 import '../state/realtime_overlay_state_store.dart';
 import '../../data/services/realtime_preview_builder.dart';
-import '../coordinators/realtime_stream_coordinator.dart';
+import '../coordinators/realtime_frame_stream_handler.dart';
 import '../realtime_native_rotation_strategy.dart';
 import '../enums/realtime_preview_target.dart';
 import '../capture_realtime_config.dart';
@@ -41,9 +41,9 @@ class RealtimeCameraController extends GetxController
     RealtimeOverlayState? overlayState,
     RealtimeDetectionScheduler? scheduler,
     RealtimeOverlayStateStore? overlayStateManager,
-    RealtimeDetectionPipelineCoordinator? detectionOrchestrator,
-    RealtimeStreamCoordinator? streamCoordinator,
-    RealtimeCameraSessionCoordinator? sessionCoordinator,
+    RealtimeDetectionPipeline? detectionPipeline,
+    RealtimeFrameStreamHandler? streamHandler,
+    RealtimeCameraSessionManager? sessionManager,
     CameraRouteLifecycleController? routeLifecycleController,
   }) : _permissionService = permissionService,
        _cameraSessionService = cameraSessionService,
@@ -66,9 +66,9 @@ class RealtimeCameraController extends GetxController
           config: _config,
           overlayState: _overlayState,
         );
-    _detectionOrchestrator =
-        detectionOrchestrator ??
-        RealtimeDetectionPipelineCoordinator(
+    _detectionPipeline =
+        detectionPipeline ??
+        RealtimeDetectionPipeline(
           imageFormatGroup: _config.imageFormatGroup,
           frameImageUsesNativeRotation: _config.frameImageUsesNativeRotation,
           documentNoTextStatus: _config.documentNoTextStatus,
@@ -80,12 +80,12 @@ class RealtimeCameraController extends GetxController
           ocrGateService: ocrGateService,
           previewBuilder: previewBuilder,
         );
-    _streamCoordinator =
-        streamCoordinator ??
-        RealtimeStreamCoordinator(
+    _streamHandler =
+        streamHandler ??
+        RealtimeFrameStreamHandler(
           config: _config,
           cameraSessionService: _cameraSessionService,
-          frameProcessor: _detectionOrchestrator,
+          detectionPipeline: _detectionPipeline,
           hasCameraPermission: hasCameraPermission,
           isStreaming: isStreaming,
           failure: failure,
@@ -102,9 +102,9 @@ class RealtimeCameraController extends GetxController
           needsMirrorCompensation: () => _needsMirrorCompensation,
         );
 
-    _sessionCoordinator =
-        sessionCoordinator ??
-        RealtimeCameraSessionCoordinator(
+    _sessionManager =
+        sessionManager ??
+        RealtimeCameraSessionManager(
           permissionService: _permissionService,
           cameraSessionService: _cameraSessionService,
           config: _config,
@@ -120,13 +120,13 @@ class RealtimeCameraController extends GetxController
           resetRealtimeState: _resetRealtimeState,
           syncFrameRotation: _syncFrameRotation,
           resetRotationCache: _resetRotationCache,
-          stopImageStream: _streamCoordinator.stopImageStream,
+          stopImageStream: _streamHandler.stopImageStream,
           resetFrameProcessingState:
-              _streamCoordinator.resetFrameProcessingState,
+              _streamHandler.resetFrameProcessingState,
           scheduleRealtimeStreamStart:
-              _streamCoordinator.scheduleRealtimeStreamStart,
+              _streamHandler.scheduleRealtimeStreamStart,
           cancelRealtimeStreamStart:
-              _streamCoordinator.cancelRealtimeStreamStart,
+              _streamHandler.cancelRealtimeStreamStart,
           enableInitGenerationGuard:
               AppConstants.enableCameraInitGenerationGuard,
         );
@@ -134,8 +134,8 @@ class RealtimeCameraController extends GetxController
     _routeLifecycleController =
         routeLifecycleController ??
         CameraRouteLifecycleController(
-          onPauseForLifecycle: _sessionCoordinator.pauseForLifecycle,
-          onResumeCameraSession: _sessionCoordinator.resumeCameraSession,
+          onPauseForLifecycle: _sessionManager.pauseForLifecycle,
+          onResumeCameraSession: _sessionManager.resumeCameraSession,
           enableRouteAwareLifecycle:
               AppConstants.enableRealtimeRouteAwareLifecycle,
           enableInactiveDebounce: AppConstants.enableCameraInactiveDebounce,
@@ -151,9 +151,9 @@ class RealtimeCameraController extends GetxController
   late final RealtimeOverlayState _overlayState;
   late final RealtimeDetectionScheduler _scheduler;
   late final RealtimeOverlayStateStore _overlayStateManager;
-  late final RealtimeDetectionPipelineCoordinator _detectionOrchestrator;
-  late final RealtimeStreamCoordinator _streamCoordinator;
-  late final RealtimeCameraSessionCoordinator _sessionCoordinator;
+  late final RealtimeDetectionPipeline _detectionPipeline;
+  late final RealtimeFrameStreamHandler _streamHandler;
+  late final RealtimeCameraSessionManager _sessionManager;
   late final CameraRouteLifecycleController _routeLifecycleController;
 
   CameraController? get cameraController => _cameraSessionService.controller;
@@ -163,7 +163,7 @@ class RealtimeCameraController extends GetxController
   int? _lastRotationSensorOrientation;
   CameraLensDirection? _lastRotationLensDirection;
 
-  bool get _isCameraLifecycleBusy => _sessionCoordinator.isBusy;
+  bool get _isCameraLifecycleBusy => _sessionManager.isBusy;
   bool get _isPausedByRoute => _routeLifecycleController.isPausedByRoute;
   AppLifecycleState get _appLifecycleState =>
       _routeLifecycleController.appLifecycleState;
@@ -200,15 +200,15 @@ class RealtimeCameraController extends GetxController
   Future<void> onInit() async {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
-    await _sessionCoordinator.init();
+    await _sessionManager.init();
   }
 
   Future<void> retryInit() {
-    return _sessionCoordinator.retryInit();
+    return _sessionManager.retryInit();
   }
 
   Future<void> openSystemSettings() async {
-    await _sessionCoordinator.shutdownCameraSession(resetRealtime: true);
+    await _sessionManager.shutdownCameraSession(resetRealtime: true);
     if (Get.isOverlaysOpen) {
       Get.back();
     } else if (Get.currentRoute == AppRoutes.realtime) {
@@ -231,11 +231,11 @@ class RealtimeCameraController extends GetxController
   Future<void> startImageStream(
     Future<void> Function(CameraImage image) onFrame,
   ) {
-    return _streamCoordinator.startImageStream(onFrame);
+    return _streamHandler.startImageStream(onFrame);
   }
 
   Future<void> stopImageStream() {
-    return _streamCoordinator.stopImageStream();
+    return _streamHandler.stopImageStream();
   }
 
   Future<void> capture() async {
@@ -282,7 +282,7 @@ class RealtimeCameraController extends GetxController
   }
 
   Future<void> switchCamera() {
-    return _sessionCoordinator.switchCamera();
+    return _sessionManager.switchCamera();
   }
 
   @override
@@ -294,8 +294,8 @@ class RealtimeCameraController extends GetxController
   Future<void> onClose() async {
     WidgetsBinding.instance.removeObserver(this);
     _routeLifecycleController.dispose();
-    _streamCoordinator.dispose();
-    await _sessionCoordinator.shutdownCameraSession(resetRealtime: false);
+    _streamHandler.dispose();
+    await _sessionManager.shutdownCameraSession(resetRealtime: false);
     await _faceDetectionService.close();
     await _ocrGateService.close();
     super.onClose();

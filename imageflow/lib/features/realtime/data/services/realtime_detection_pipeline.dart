@@ -18,10 +18,12 @@ import 'realtime_frame_perf_tracker.dart';
 import '../datasources/realtime_ocr_gate_service.dart';
 import 'realtime_preview_builder.dart';
 
-/// Presentation helper for coordinating OCR, face, and document detection.
-/// This is a plain class, not a GetxService.
-class RealtimeDetectionPipelineCoordinator {
-  RealtimeDetectionPipelineCoordinator({
+/// Per-frame detection pipeline: runs OCR, face, and document-edge detection
+/// for a camera frame and writes results through [DetectionOutputPort].
+///
+/// Data layer, framework-free (plain class, not a GetxService).
+class RealtimeDetectionPipeline {
+  RealtimeDetectionPipeline({
     required this.imageFormatGroup,
     required this.frameImageUsesNativeRotation,
     required this.documentNoTextStatus,

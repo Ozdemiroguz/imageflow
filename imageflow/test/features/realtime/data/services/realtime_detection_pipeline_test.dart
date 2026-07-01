@@ -4,7 +4,7 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:imageflow/core/platform/corner_detector.dart';
 import 'package:imageflow/features/realtime/data/datasources/realtime_face_detection_service.dart';
 import 'package:imageflow/features/realtime/data/datasources/realtime_ocr_gate_service.dart';
-import 'package:imageflow/features/realtime/data/services/realtime_detection_pipeline_coordinator.dart';
+import 'package:imageflow/features/realtime/data/services/realtime_detection_pipeline.dart';
 import 'package:imageflow/features/realtime/data/services/detection_output_port.dart';
 import 'package:imageflow/features/realtime/data/services/realtime_detection_scheduler.dart';
 import 'package:imageflow/features/realtime/data/services/realtime_preview_builder.dart';
@@ -45,7 +45,7 @@ void main() {
   late _MockOcrGateService ocrService;
   late _MockPreviewBuilder previewBuilder;
   late RealtimeDetectionScheduler scheduler;
-  late RealtimeDetectionPipelineCoordinator pipeline;
+  late RealtimeDetectionPipeline pipeline;
   late _FakeCameraImage frame;
 
   const noTextStatus = 'No document';
@@ -68,7 +68,7 @@ void main() {
       documentPanelInterval: Duration.zero,
     );
 
-    pipeline = RealtimeDetectionPipelineCoordinator(
+    pipeline = RealtimeDetectionPipeline(
       imageFormatGroup: ImageFormatGroup.yuv420,
       frameImageUsesNativeRotation: true,
       documentNoTextStatus: noTextStatus,
