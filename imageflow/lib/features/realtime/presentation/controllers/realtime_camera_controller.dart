@@ -22,11 +22,11 @@ import '../../data/datasources/realtime_ocr_gate_service.dart';
 import '../state/realtime_overlay_state_store.dart';
 import '../../data/services/realtime_preview_builder.dart';
 import '../coordinators/realtime_stream_coordinator.dart';
-import '../enums/realtime_native_rotation_strategy.dart';
+import '../../config/realtime_native_rotation_strategy.dart';
 import '../enums/realtime_preview_target.dart';
-import '../models/capture_realtime_config.dart';
+import '../../config/capture_realtime_config.dart';
 import '../models/realtime_overlay_state.dart';
-import '../models/realtime_pipeline_coordinator.dart';
+import '../../config/realtime_pipeline_coordinator.dart';
 
 class RealtimeCameraController extends GetxController
     with WidgetsBindingObserver {

@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import '../../../../core/models/normalized_corners.dart';
-import 'capture_realtime_config.dart';
+import '../../config/capture_realtime_config.dart';
 
 class RealtimeOverlayState {
   RealtimeOverlayState({required CaptureRealtimeConfig config})

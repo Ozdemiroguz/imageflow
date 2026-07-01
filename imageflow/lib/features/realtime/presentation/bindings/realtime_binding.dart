@@ -8,7 +8,7 @@ import '../../data/datasources/realtime_face_detection_service.dart';
 import '../../data/datasources/realtime_ocr_gate_service.dart';
 import '../../data/services/realtime_preview_builder.dart';
 import '../controllers/realtime_camera_controller.dart';
-import '../models/capture_realtime_config.dart';
+import '../../config/capture_realtime_config.dart';
 
 class RealtimeBinding implements Bindings {
   @override

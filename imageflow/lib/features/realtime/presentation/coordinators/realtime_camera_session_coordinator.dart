@@ -9,7 +9,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/services/camera_session_service.dart';
 import '../../../../core/services/permission_service.dart';
 import '../../../../core/utils/camera_lifecycle_guard.dart';
-import '../models/capture_realtime_config.dart';
+import '../../config/capture_realtime_config.dart';
 
 /// Presentation helper for camera session lifecycle operations in realtime flow.
 /// This is a plain class, not a GetxService.

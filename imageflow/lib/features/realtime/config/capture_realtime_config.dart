@@ -1,6 +1,6 @@
 import 'package:camera/camera.dart';
 
-import '../enums/realtime_native_rotation_strategy.dart';
+import 'realtime_native_rotation_strategy.dart';
 
 class CaptureRealtimeConfig {
   const CaptureRealtimeConfig({

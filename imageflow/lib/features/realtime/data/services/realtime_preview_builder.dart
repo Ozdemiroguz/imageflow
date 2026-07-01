@@ -8,7 +8,7 @@ import 'package:image/image.dart' as img;
 
 import '../../../../core/models/normalized_corners.dart';
 import '../../../../core/utils/face_mask_utils.dart';
-import '../../presentation/models/realtime_preview_payloads.dart';
+import 'realtime_preview_payloads.dart';
 
 part 'realtime_preview_builder_payloads.dart';
 
