@@ -5,12 +5,12 @@ import 'dart:ui' show Size;
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
-import 'android_nv21.dart';
+import 'camera_nv21_converter.dart';
 
-/// Builds a realtime ML Kit [InputImage] from camera stream frame.
+/// Builds an ML Kit [InputImage] from a camera stream frame.
 ///
 /// Android expects NV21 bytes, iOS expects BGRA8888.
-InputImage? buildRealtimeInputImage({
+InputImage? buildCameraInputImage({
   required CameraImage frame,
   required InputImageRotation rotation,
   Uint8List? androidNv21Bytes,

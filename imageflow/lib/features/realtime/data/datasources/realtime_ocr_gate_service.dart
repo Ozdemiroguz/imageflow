@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
-import '../converters/realtime_input_image_factory.dart';
+import '../../../../core/platform/camera_input_image_factory.dart';
 
 typedef OcrGateResult = ({bool hasText});
 
@@ -25,7 +25,7 @@ class RealtimeOcrGateService {
   }) async {
     final input =
         preparedInputImage ??
-        buildRealtimeInputImage(
+        buildCameraInputImage(
           frame: frame,
           rotation: rotation,
           androidNv21Bytes: androidNv21Bytes,
