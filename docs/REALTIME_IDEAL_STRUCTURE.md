@@ -1,8 +1,8 @@
-# Realtime — Ideal Structure (De-fragmentation Plan)
+# Realtime — Ideal Structure (De-fragmentation, APPLIED)
 
-> Root problem: `realtime` grew to **15 folders for 29 files** (~2 files/folder) — over-fragmentation, the opposite of clean. Each small concern got its own folder (`config/`, `converters/`, `coordinators/`, `state/`, `enums/`, separate `datasources/`+`services/`). This doc designs the **minimal, clean-architecture-correct** structure: 3 layers, only the role-folders that carry real weight, general classes lifted to `core/` where their *nature* is cross-cutting.
+> Root problem: `realtime` grew to **15 folders for 29 files** (~2 files/folder) — over-fragmentation, the opposite of clean. This doc designed and then **applied** the minimal, clean-architecture-correct structure: two layers (`data`/`presentation`), only weight-bearing role-folders, generic camera classes lifted to `core/` by their *nature*, and the two invented folders (`config/`, `data/converters/`) deleted. See §4b for the applied result and the one accepted/deferred coupling.
 
-**Date:** 2026-07-01 · Companion to [FOLDER_CONVENTIONS.md](./FOLDER_CONVENTIONS.md).
+**Date:** 2026-07-01 · Status: **applied** (3 commits, analyze clean + 188 tests green) · Companion to [FOLDER_CONVENTIONS.md](./FOLDER_CONVENTIONS.md).
 
 **Guiding principles (the lesson learned):**
 1. **3 layers first** (`domain` / `data` / `presentation`); add a sub-folder only when it holds ≥~3 files of one real role. A folder for 1-2 files is fragmentation, not structure.
@@ -74,6 +74,44 @@ These two were moved *out* of core last round on the "1 feature" rule — which 
 **Result:** 2 folders removed (`config/`, `data/converters/`), no invented layers, generic camera utils in core, one documented data→presentation overlay-write edge deferred to post-tests.
 
 ---
+
+## 4b. Applied result (final state)
+
+Done across 3 commits, analyze clean + 188 tests green after each:
+
+```
+realtime/                       (12 folders, down from 15 — 2 invented ones gone)
+├── data/
+│   ├── datasources/  (2)        face + ocr ML-Kit wrappers
+│   └── services/     (7)        pipeline coordinator, scheduler, normalizer,
+│                                perf tracker, preview builder + payload parts
+└── presentation/     (2 at root: capture_realtime_config, rotation enum)
+    ├── bindings/ controllers/ coordinators/ pages/ widgets/
+    └── state/ enums/ models/    (conventional, untouched)
+```
+
+**Removed:** `config/` (invented 4th layer) and `data/converters/` (generic utils → `core/platform/`).
+**Lifted to core:** `camera_nv21_converter`, `camera_input_image_factory` (cross-cutting camera/ML bridges).
+**Decoupled:** the scheduler and the pipeline coordinator no longer depend on `CaptureRealtimeConfig` — they take only the primitive fields they use.
+
+### The one remaining data→presentation edge (accepted, deferred)
+
+`data/services/realtime_detection_pipeline_coordinator.dart` still imports
+`presentation/state/realtime_overlay_state_store.dart` and **writes overlay
+state directly** (`setDocumentSearchingState`, `applyFaceGeometry`,
+`setFacePreviewBytes`, …) and **reads back** two status strings to decide
+transitions. This is the last inversion-of-control smell.
+
+- **Why not fixed now:** the proper fix inverts the flow — the data pipeline
+  returns detection *results*, and presentation applies them to the store. That
+  is a substantial rewrite of a 411-line **untested** realtime hot-path file.
+  Doing it without a test net risks silent per-frame regressions.
+- **Decision (user-approved):** document and accept it now; invert **after**
+  realtime has tests. One honestly-documented coupling beats inventing a neutral
+  layer to hide it (Fowler/Metz: don't add structure to dodge a minor coupling).
+- **Tracked marker:** the two status-string params on the pipeline coordinator
+  carry an inline `NOTE` pointing here, so the deferred work is discoverable from
+  the code, not just this doc.
 
 ## 5. One-paragraph rationale
 
