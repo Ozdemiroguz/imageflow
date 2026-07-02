@@ -43,7 +43,7 @@
 
 ### 1.3 Controllers with no test
 - **`result_controller_test.dart`** — route-arg switch (ProcessingResult / ProcessingHistory / bad → failure state), `hasPdf`/`isFace`/`isDocument`, `resultFromHistory` path, PDF-viewer disposal in onClose.
-- **`camera_capture_controller_test.dart`** — capture success → navigate; CameraException → failure state + log; `isCapturing` guard; onClose cleanup. (Camera plugin mocked.)
+- ~~`camera_capture_controller_test.dart`~~ — **SKIPPED (documented).** `capture()` calls the real `CameraController.takePicture()` and reads `_cameraSessionService.controller` (a live plugin object). Mocking the Flutter camera plugin here would test the mock, not the behavior. Its genuinely-testable logic (permission gate, lifecycle race guard) is covered by `camera_permission_gate_mixin_test` and `camera_lifecycle_guard_test`. The controller itself is a thin native-orchestration wrapper — native side is out of unit-test scope (see below).
 
 ---
 
