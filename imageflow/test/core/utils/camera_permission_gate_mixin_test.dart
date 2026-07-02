@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:imageflow/core/error/failures.dart';
-import 'package:imageflow/core/services/camera_permission_gate_mixin.dart';
+import 'package:imageflow/core/utils/camera_permission_gate_mixin.dart';
 import 'package:imageflow/core/services/permission_service.dart';
 import 'package:mocktail/mocktail.dart';
 

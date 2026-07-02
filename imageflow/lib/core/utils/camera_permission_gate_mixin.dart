@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 
 import '../error/failures.dart';
-import 'permission_service.dart';
+import '../services/permission_service.dart';
 
 /// Shared camera-permission check for the camera session lifecycle classes.
 ///

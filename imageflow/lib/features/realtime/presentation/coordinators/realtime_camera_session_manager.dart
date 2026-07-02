@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/failures.dart';
-import '../../../../core/services/camera_permission_gate_mixin.dart';
+import '../../../../core/utils/camera_permission_gate_mixin.dart';
 import '../../../../core/services/camera_session_service.dart';
 import '../../../../core/services/permission_service.dart';
 import '../../../../core/utils/camera_lifecycle_guard.dart';
