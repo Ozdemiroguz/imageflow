@@ -5,6 +5,8 @@
 !/docs/
 !/docs/**
 !/.gitignore
+!/.github/
+!/.github/**
 
 # macOS
 .DS_Store
