@@ -12,9 +12,9 @@ import '../../../history/domain/usecases/save_history.dart';
 import '../../../processing/domain/entities/processing_result.dart';
 import '../../../processing/domain/usecases/process_image.dart';
 import '../../../../core/mappers/processing_history_mapper.dart';
-import '../services/batch_item_state_manager.dart';
-import '../services/batch_queue_initializer.dart';
-import '../services/batch_run_metrics_tracker.dart';
+import '../helpers/batch_item_state_manager.dart';
+import '../helpers/batch_queue_initializer.dart';
+import '../helpers/batch_run_metrics_tracker.dart';
 import '../models/batch_item_state.dart';
 import '../models/batch_item_status.dart';
 

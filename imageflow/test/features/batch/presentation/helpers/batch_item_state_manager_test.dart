@@ -6,7 +6,7 @@ import 'package:imageflow/features/batch/presentation/models/batch_item_state.da
 import 'package:imageflow/features/batch/presentation/models/batch_item_status.dart';
 import 'package:imageflow/features/processing/domain/entities/processing_result.dart';
 import 'package:imageflow/features/processing/domain/entities/processing_step.dart';
-import 'package:imageflow/features/batch/presentation/services/batch_item_state_manager.dart';
+import 'package:imageflow/features/batch/presentation/helpers/batch_item_state_manager.dart';
 
 ProcessingResult _result() => ProcessingResult(
   id: 'r',

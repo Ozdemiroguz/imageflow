@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:imageflow/core/error/failures.dart';
 import 'package:imageflow/core/error/result.dart';
 import 'package:imageflow/features/batch/presentation/models/batch_item_status.dart';
-import 'package:imageflow/features/batch/presentation/services/batch_queue_initializer.dart';
+import 'package:imageflow/features/batch/presentation/helpers/batch_queue_initializer.dart';
 
 void main() {
   group('buildBatchQueue', () {
