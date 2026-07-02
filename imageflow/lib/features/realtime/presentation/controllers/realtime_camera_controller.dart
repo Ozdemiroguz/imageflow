@@ -11,7 +11,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/models/normalized_corners.dart';
 import '../../../../core/platform/corner_detector.dart';
 import '../../../../core/routes/app_routes.dart';
-import '../../../../core/services/camera_route_lifecycle_controller.dart';
+import '../../../../core/coordinators/camera_route_lifecycle_controller.dart';
 import '../../../../core/services/camera_session_service.dart';
 import '../../../../core/services/permission_service.dart';
 import '../../../../core/utils/log.dart';
