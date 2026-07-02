@@ -7,7 +7,7 @@ import '../../../../core/models/normalized_corners.dart';
 import '../../../../core/utils/num_utils.dart';
 import '../../data/services/detection_output_port.dart';
 import '../enums/realtime_preview_target.dart';
-import '../capture_realtime_config.dart';
+import '../models/capture_realtime_config.dart';
 import '../models/realtime_overlay_state.dart';
 
 /// Presentation helper for realtime overlay state.

@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/services/camera_session_service.dart';
-import '../capture_realtime_config.dart';
+import '../models/capture_realtime_config.dart';
 import '../../data/services/realtime_detection_pipeline.dart';
 import 'realtime_frame_geometry_source.dart';
 

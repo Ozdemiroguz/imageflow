@@ -382,9 +382,8 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
     final normalizedRotation = appliedRotationDegrees % 360;
     if (normalizedRotation == 0) return;
 
+    // normalizedRotation is 1..359 here, so the reverse is always non-zero.
     final reverseRotation = (360 - normalizedRotation) % 360;
-    if (reverseRotation == 0) return;
-
     await ImageUtils.rotateInPlace(imagePath, degrees: reverseRotation);
   }
 

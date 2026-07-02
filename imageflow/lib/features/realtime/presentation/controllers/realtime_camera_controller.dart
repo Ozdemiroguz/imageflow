@@ -23,9 +23,9 @@ import '../state/realtime_overlay_state_store.dart';
 import '../../data/services/realtime_preview_builder.dart';
 import '../coordinators/realtime_frame_geometry_source.dart';
 import '../coordinators/realtime_frame_stream_handler.dart';
-import '../realtime_native_rotation_strategy.dart';
+import '../models/realtime_native_rotation_strategy.dart';
 import '../enums/realtime_preview_target.dart';
-import '../capture_realtime_config.dart';
+import '../models/capture_realtime_config.dart';
 import '../models/realtime_overlay_state.dart';
 import '../../data/services/realtime_detection_scheduler.dart';
 
