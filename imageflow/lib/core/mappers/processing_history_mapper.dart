@@ -1,6 +1,6 @@
-import '../../../../core/services/file_service.dart';
-import '../../../history/domain/entities/processing_history.dart';
-import '../../domain/entities/processing_result.dart';
+import '../services/file_service.dart';
+import '../../features/history/domain/entities/processing_history.dart';
+import '../../features/processing/domain/entities/processing_result.dart';
 
 /// Maps the pipeline output [ProcessingResult] to the persistence-facing
 /// [ProcessingHistory].

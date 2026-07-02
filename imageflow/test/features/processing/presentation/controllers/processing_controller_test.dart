@@ -10,7 +10,7 @@ import 'package:imageflow/features/processing/domain/entities/processing_result.
 import 'package:imageflow/features/processing/domain/entities/processing_step.dart';
 import 'package:imageflow/features/processing/domain/usecases/process_image.dart';
 import 'package:imageflow/features/processing/presentation/controllers/processing_controller.dart';
-import 'package:imageflow/features/processing/presentation/mappers/processing_history_mapper.dart';
+import 'package:imageflow/core/mappers/processing_history_mapper.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockProcessImage extends Mock implements ProcessImage {}

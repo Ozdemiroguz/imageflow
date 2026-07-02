@@ -6,7 +6,7 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../history/domain/usecases/save_history.dart';
 import '../../domain/entities/processing_step.dart';
 import '../../domain/usecases/process_image.dart';
-import '../mappers/processing_history_mapper.dart';
+import '../../../../core/mappers/processing_history_mapper.dart';
 
 class ProcessingController extends GetxController {
   ProcessingController({
