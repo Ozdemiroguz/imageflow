@@ -7,6 +7,10 @@ import '../../../../core/routes/app_routes.dart';
 import '../../../../core/services/modal_service.dart';
 import '../../../../core/services/permission_service.dart';
 
+/// Drives the "add image" entry dialog: picks the source (camera, gallery,
+/// or batch), gates the camera path on permission, and routes to the matching
+/// screen. Holds only the dialog's transient `cameraDenied` warning — the live
+/// camera session state lives in [CameraCaptureController].
 class CaptureController extends GetxController {
   CaptureController({
     required PermissionService permissionService,

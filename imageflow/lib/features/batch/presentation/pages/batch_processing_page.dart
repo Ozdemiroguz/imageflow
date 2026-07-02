@@ -11,6 +11,28 @@ class BatchProcessingPage extends GetView<BatchProcessingController> {
 
   @override
   Widget build(BuildContext context) {
+    // Build the Scaffold once (it doesn't depend on isRunning); only the
+    // leading button and PopScope.canPop are reactive, each scoped to its own
+    // Obx so an isRunning change never rebuilds the body or bottom bar.
+    final scaffold = Scaffold(
+      appBar: AppBar(
+        title: const Text('Batch Processing'),
+        leading: Obx(() {
+          final running = controller.isRunning.value;
+          return IconButton(
+            icon: Icon(
+              running ? Icons.stop_circle_outlined : Icons.arrow_back_outlined,
+            ),
+            tooltip: running ? 'Stop after current' : 'Back',
+            onPressed: running ? controller.requestStop : controller.goHome,
+          );
+        }),
+      ),
+      body: BatchBody(controller: controller),
+      bottomNavigationBar: BatchBottomBar(controller: controller),
+      backgroundColor: context.colors.surfaceContainerLowest,
+    );
+
     return Obx(() {
       final running = controller.isRunning.value;
       return PopScope(
@@ -20,25 +42,7 @@ class BatchProcessingPage extends GetView<BatchProcessingController> {
             controller.requestStop();
           }
         },
-        child: Scaffold(
-          appBar: AppBar(
-            title: const Text('Batch Processing'),
-            leading: IconButton(
-              icon: Icon(
-                running
-                    ? Icons.stop_circle_outlined
-                    : Icons.arrow_back_outlined,
-              ),
-              tooltip: running ? 'Stop after current' : 'Back',
-              onPressed: running
-                  ? controller.requestStop
-                  : () => controller.goHome(),
-            ),
-          ),
-          body: BatchBody(controller: controller),
-          bottomNavigationBar: BatchBottomBar(controller: controller),
-          backgroundColor: context.colors.surfaceContainerLowest,
-        ),
+        child: scaffold,
       );
     });
   }

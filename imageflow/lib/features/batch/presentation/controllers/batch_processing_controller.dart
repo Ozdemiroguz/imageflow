@@ -18,6 +18,11 @@ import '../services/batch_run_metrics_tracker.dart';
 import '../models/batch_item_state.dart';
 import '../models/batch_item_status.dart';
 
+/// Runs a queue of images through the shared [ProcessImage] use case one at a
+/// time, tracking per-item status/progress and saving each success to history.
+/// Supports stop-after-current and per-item retry/reselect; `isRunning` guards
+/// against overlapping runs, and every async step bails out if the controller
+/// is disposed mid-flight.
 class BatchProcessingController extends GetxController {
   BatchProcessingController({
     required ProcessImage processImage,
