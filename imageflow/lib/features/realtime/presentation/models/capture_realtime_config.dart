@@ -3,29 +3,33 @@ import 'package:camera/camera.dart';
 import 'realtime_native_rotation_strategy.dart';
 
 class CaptureRealtimeConfig {
+  // Timing, thresholds, and UI labels are identical across platforms, so they
+  // default here and only the platform-specific camera fields (resolution,
+  // format, rotation, start delay) are supplied per preset. This keeps the
+  // ios/android presets free of duplicated boilerplate.
   const CaptureRealtimeConfig({
-    required this.faceInterval,
-    required this.ocrInterval,
-    required this.edgeInterval,
-    required this.facePanelInterval,
-    required this.documentPanelInterval,
-    required this.minFaceRectDelta,
-    required this.minFaceContourDelta,
-    required this.minDocumentCornerDelta,
-    required this.faceScanningStatus,
-    required this.faceNotFoundStatus,
-    required this.faceFoundStatusTemplate,
-    required this.facePrimaryPreviewLabel,
-    required this.faceDetectedPreviewLabel,
-    required this.documentScanningStatus,
-    required this.documentNoTextStatus,
-    required this.documentEdgeSearchingStatus,
-    required this.documentFoundStatus,
     required this.realtimeStreamStartDelay,
     required this.resolutionPreset,
     required this.imageFormatGroup,
     required this.nativeRotationStrategy,
     required this.frameImageUsesNativeRotation,
+    this.faceInterval = const Duration(milliseconds: 180),
+    this.ocrInterval = const Duration(milliseconds: 850),
+    this.edgeInterval = const Duration(milliseconds: 260),
+    this.facePanelInterval = const Duration(milliseconds: 700),
+    this.documentPanelInterval = const Duration(milliseconds: 800),
+    this.minFaceRectDelta = 0.015,
+    this.minFaceContourDelta = 0.02,
+    this.minDocumentCornerDelta = 0.015,
+    this.faceScanningStatus = 'Scanning for faces...',
+    this.faceNotFoundStatus = 'No face detected',
+    this.faceFoundStatusTemplate = 'Face found ({count})',
+    this.facePrimaryPreviewLabel = 'Preview: primary face',
+    this.faceDetectedPreviewLabel = 'Preview: detected face',
+    this.documentScanningStatus = 'Scanning for document...',
+    this.documentNoTextStatus = 'No document',
+    this.documentEdgeSearchingStatus = 'Searching document edges...',
+    this.documentFoundStatus = 'Document found',
   });
 
   final Duration faceInterval;
@@ -60,24 +64,8 @@ class CaptureRealtimeConfig {
 
   static const defaults = android;
 
+  /// iOS: BGRA frames, sensor-only rotation, a short warm-up delay.
   static const ios = CaptureRealtimeConfig(
-    faceInterval: Duration(milliseconds: 180),
-    ocrInterval: Duration(milliseconds: 850),
-    edgeInterval: Duration(milliseconds: 260),
-    facePanelInterval: Duration(milliseconds: 700),
-    documentPanelInterval: Duration(milliseconds: 800),
-    minFaceRectDelta: 0.015,
-    minFaceContourDelta: 0.02,
-    minDocumentCornerDelta: 0.015,
-    faceScanningStatus: 'Scanning for faces...',
-    faceNotFoundStatus: 'No face detected',
-    faceFoundStatusTemplate: 'Face found ({count})',
-    facePrimaryPreviewLabel: 'Preview: primary face',
-    faceDetectedPreviewLabel: 'Preview: detected face',
-    documentScanningStatus: 'Scanning for document...',
-    documentNoTextStatus: 'No document',
-    documentEdgeSearchingStatus: 'Searching document edges...',
-    documentFoundStatus: 'Document found',
     realtimeStreamStartDelay: Duration(milliseconds: 500),
     resolutionPreset: ResolutionPreset.low,
     imageFormatGroup: ImageFormatGroup.bgra8888,
@@ -85,29 +73,12 @@ class CaptureRealtimeConfig {
     frameImageUsesNativeRotation: false,
   );
 
+  /// Android: YUV420 frames, native (sensor+device-by-lens) rotation.
   static const android = CaptureRealtimeConfig(
-    faceInterval: Duration(milliseconds: 180),
-    ocrInterval: Duration(milliseconds: 850),
-    edgeInterval: Duration(milliseconds: 260),
-    facePanelInterval: Duration(milliseconds: 700),
-    documentPanelInterval: Duration(milliseconds: 800),
-    minFaceRectDelta: 0.015,
-    minFaceContourDelta: 0.02,
-    minDocumentCornerDelta: 0.015,
-    faceScanningStatus: 'Scanning for faces...',
-    faceNotFoundStatus: 'No face detected',
-    faceFoundStatusTemplate: 'Face found ({count})',
-    facePrimaryPreviewLabel: 'Preview: primary face',
-    faceDetectedPreviewLabel: 'Preview: detected face',
-    documentScanningStatus: 'Scanning for document...',
-    documentNoTextStatus: 'No document',
-    documentEdgeSearchingStatus: 'Searching document edges...',
-    documentFoundStatus: 'Document found',
     realtimeStreamStartDelay: Duration.zero,
     resolutionPreset: ResolutionPreset.medium,
     imageFormatGroup: ImageFormatGroup.yuv420,
-    nativeRotationStrategy:
-        RealtimeNativeRotationStrategy.sensorAndDeviceByLens,
+    nativeRotationStrategy: RealtimeNativeRotationStrategy.sensorAndDeviceByLens,
     frameImageUsesNativeRotation: true,
   );
 }
