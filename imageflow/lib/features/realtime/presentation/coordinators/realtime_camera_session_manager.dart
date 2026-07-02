@@ -10,6 +10,7 @@ import '../../../../core/services/camera_permission_gate_mixin.dart';
 import '../../../../core/services/camera_session_service.dart';
 import '../../../../core/services/permission_service.dart';
 import '../../../../core/utils/camera_lifecycle_guard.dart';
+import '../../../../core/utils/log.dart';
 import '../capture_realtime_config.dart';
 
 /// Presentation helper for camera session lifecycle operations in realtime flow.
@@ -79,6 +80,8 @@ class RealtimeCameraSessionManager with CameraPermissionGateMixin {
   final bool enableInitGenerationGuard;
   final _lifecycleGuard = CameraLifecycleGuard();
 
+  static const _tag = 'RealtimeCamera';
+
   @override
   PermissionService get permissionService => _permissionService;
   @override
@@ -130,9 +133,11 @@ class RealtimeCameraSessionManager with CameraPermissionGateMixin {
       await _cameraSessionService.disposeControllerSafely();
       _resetRealtimeState();
       await _activateCamera(next);
-    } on CameraException catch (e) {
+    } on CameraException catch (e, st) {
+      Log.error('Camera switch failed', error: e, stackTrace: st, tag: _tag);
       _failure.value = CameraFailure('Camera switch failed: ${e.description}');
-    } catch (e) {
+    } catch (e, st) {
+      Log.error('Camera switch failed', error: e, stackTrace: st, tag: _tag);
       _failure.value = CameraFailure('Camera switch failed: $e');
     } finally {
       _isSwitchingCamera.value = false;
@@ -177,11 +182,13 @@ class RealtimeCameraSessionManager with CameraPermissionGateMixin {
 
       try {
         await _activateCamera(lastDescription);
-      } on CameraException catch (e) {
+      } on CameraException catch (e, st) {
+        Log.error('Camera resume failed', error: e, stackTrace: st, tag: _tag);
         _failure.value = CameraFailure(
           'Camera resume failed: ${e.description}',
         );
-      } catch (e) {
+      } catch (e, st) {
+        Log.error('Camera resume failed', error: e, stackTrace: st, tag: _tag);
         _failure.value = CameraFailure('Camera resume failed: $e');
       }
     } finally {
@@ -240,10 +247,11 @@ class RealtimeCameraSessionManager with CameraPermissionGateMixin {
         await _cameraSessionService.disposeControllerSafely();
         _isInitialized.value = false;
       }
-    } on CameraException catch (e) {
+    } on CameraException catch (e, st) {
       if (!_isCurrentInitGeneration(initGeneration) || _isClosed()) {
         return;
       }
+      Log.error('Camera activation failed', error: e, stackTrace: st, tag: _tag);
       if (e.code == 'no-camera') {
         _failure.value = const CameraFailure('No camera found on this device.');
       } else {
@@ -251,10 +259,11 @@ class RealtimeCameraSessionManager with CameraPermissionGateMixin {
           'Camera initialization failed: ${e.description}',
         );
       }
-    } catch (e) {
+    } catch (e, st) {
       if (!_isCurrentInitGeneration(initGeneration) || _isClosed()) {
         return;
       }
+      Log.error('Camera activation failed', error: e, stackTrace: st, tag: _tag);
       _failure.value = CameraFailure('Unexpected camera error: $e');
     }
   }

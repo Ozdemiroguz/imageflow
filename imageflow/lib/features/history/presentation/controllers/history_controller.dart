@@ -76,7 +76,7 @@ class HistoryController extends GetxController {
     if (_isOpeningDetail) {
       Log.debug(
         'Detail navigation ignored: already in progress. id=${history.id}',
-        tag: 'HistoryDetailNav',
+        tag: 'History',
       );
       return;
     }
@@ -86,7 +86,7 @@ class HistoryController extends GetxController {
     Log.debug(
       'Detail navigation start. id=${history.id} type=${history.type.name} '
       'faces=${history.faceRects.length} hasPdf=${(history.pdfPath ?? '').trim().isNotEmpty}',
-      tag: 'HistoryDetailNav',
+      tag: 'History',
     );
 
     final routeFuture = Get.toNamed(
@@ -100,7 +100,7 @@ class HistoryController extends GetxController {
           Log.debug(
             'Detail route closed. id=${history.id} '
             'elapsed=${watch.elapsedMilliseconds}ms',
-            tag: 'HistoryDetailNav',
+            tag: 'History',
           );
           _isOpeningDetail = false;
         }),
@@ -112,7 +112,7 @@ class HistoryController extends GetxController {
     Log.warning(
       'Detail navigation returned null future. id=${history.id} '
       'elapsed=${watch.elapsedMilliseconds}ms',
-      tag: 'HistoryDetailNav',
+      tag: 'History',
     );
     _isOpeningDetail = false;
   }
