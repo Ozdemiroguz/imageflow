@@ -4,6 +4,7 @@ import '../../../../core/enums/processing_type.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/coordinators/document_actions_presenter.dart';
+import '../../../../core/mappers/processing_history_mapper.dart';
 import '../../../../core/services/pdf_raster/pdf_raster_service.dart';
 import '../../../../core/widgets/pdf/pdf_viewer_controller.dart';
 import '../../../history/domain/entities/processing_history.dart';
@@ -45,7 +46,7 @@ class ResultController extends GetxController {
       case ProcessingResult():
         _result = args;
       case ProcessingHistory():
-        _result = _fromHistory(args);
+        _result = ProcessingHistoryMapper.resultFromHistory(args);
       default:
         failure.value = const RouteArgumentFailure(
           'Expected ProcessingResult or ProcessingHistory',
@@ -73,19 +74,4 @@ class ResultController extends GetxController {
     _pdfViewerControllers.clear();
     super.onClose();
   }
-
-  static ProcessingResult _fromHistory(ProcessingHistory h) => ProcessingResult(
-    id: h.id,
-    type: h.type,
-    originalImagePath: h.originalImagePath,
-    processedImagePath: h.processedImagePath,
-    thumbnailPath: h.thumbnailPath ?? '',
-    fileSizeBytes: h.fileSizeBytes,
-    createdAt: h.createdAt,
-    extractedText: h.extractedText,
-    facesDetected: h.facesDetected,
-    faceRects: h.faceRects,
-    faceContours: h.faceContours,
-    pdfPath: h.pdfPath,
-  );
 }

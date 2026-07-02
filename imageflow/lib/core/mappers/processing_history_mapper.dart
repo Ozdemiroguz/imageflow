@@ -49,4 +49,25 @@ class ProcessingHistoryMapper {
     faceContours: result.faceContours,
     pdfPath: result.pdfPath,
   );
+
+  /// Reverse mapping for the result screen when it is opened from a saved
+  /// [ProcessingHistory] record. The history's paths are already resolved to
+  /// absolute by the repository, so they carry over unchanged; a legacy record
+  /// with no thumbnail maps to an empty path. Pure (no [FileService]) so it can
+  /// be used as a static helper.
+  static ProcessingResult resultFromHistory(ProcessingHistory h) =>
+      ProcessingResult(
+        id: h.id,
+        type: h.type,
+        originalImagePath: h.originalImagePath,
+        processedImagePath: h.processedImagePath,
+        thumbnailPath: h.thumbnailPath ?? '',
+        fileSizeBytes: h.fileSizeBytes,
+        createdAt: h.createdAt,
+        extractedText: h.extractedText,
+        facesDetected: h.facesDetected,
+        faceRects: h.faceRects,
+        faceContours: h.faceContours,
+        pdfPath: h.pdfPath,
+      );
 }
