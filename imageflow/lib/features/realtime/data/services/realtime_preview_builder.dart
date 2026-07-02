@@ -38,6 +38,10 @@ class RealtimePreviewBuilder {
   static const _maxFacePreviewLongSide = 360;
   static const _maxDocumentPreviewLongSide = 720;
 
+  /// Hard ceiling on the rectified document-preview buffer in each dimension,
+  /// guarding against pathological corner geometry producing a huge allocation.
+  static const _maxRectifiedPreviewDimension = 4096;
+
   /// Normalized padding added around a detected face before cropping, so the
   /// preview shows a little context beyond the bounding box.
   static const _faceCropPaddingRatio = 0.08;
@@ -236,8 +240,8 @@ class RealtimePreviewBuilder {
       dstWidth = clampInt((dstWidth * previewScale).round(), 1, dstWidth);
       dstHeight = clampInt((dstHeight * previewScale).round(), 1, dstHeight);
     }
-    dstWidth = clampInt(dstWidth, 1, 4096);
-    dstHeight = clampInt(dstHeight, 1, 4096);
+    dstWidth = clampInt(dstWidth, 1, _maxRectifiedPreviewDimension);
+    dstHeight = clampInt(dstHeight, 1, _maxRectifiedPreviewDimension);
 
     return _buildDocumentPreviewFallback(
       image: image,

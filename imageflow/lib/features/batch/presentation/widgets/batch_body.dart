@@ -47,7 +47,9 @@ class BatchBody extends StatelessWidget {
                     itemBuilder: (_, index) {
                       final item = items[index];
                       return BatchItemTile(
-                        key: ValueKey(item.index),
+                        // imagePath is unique per row (the queue de-dups paths),
+                        // so it's a stabler widget key than the list index.
+                        key: ValueKey(item.imagePath),
                         controller: controller,
                         item: item,
                         fileName: controller.fileName(item),

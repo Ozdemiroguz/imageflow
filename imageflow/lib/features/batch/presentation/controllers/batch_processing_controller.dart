@@ -182,7 +182,6 @@ class BatchProcessingController extends GetxController {
   }
 
   void _endRun() {
-    if (isClosed) return;
     _runMetrics.finish(pendingCount: pendingCount);
     isRunning.value = false;
     isStopping.value = false;

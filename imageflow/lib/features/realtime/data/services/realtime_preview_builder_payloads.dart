@@ -126,8 +126,8 @@ Uint8List? _buildDocumentPreviewFromFrameOnIsolate(
       dstHeight,
     );
   }
-  dstWidth = clampInt(dstWidth, 1, 4096);
-  dstHeight = clampInt(dstHeight, 1, 4096);
+  dstWidth = clampInt(dstWidth, 1, RealtimePreviewBuilder._maxRectifiedPreviewDimension);
+  dstHeight = clampInt(dstHeight, 1, RealtimePreviewBuilder._maxRectifiedPreviewDimension);
 
   final docPayload = DocumentPreviewIsolatePayload(
     width: prepared.width,
