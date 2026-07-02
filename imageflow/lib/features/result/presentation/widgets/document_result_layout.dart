@@ -55,6 +55,7 @@ class DocumentResultLayout extends StatelessWidget {
         ),
         child: controller.hasPdf
             ? Row(
+                spacing: tokens.spacingSm,
                 children: [
                   Expanded(
                     child: AppPrimaryButton.outlined(
@@ -64,7 +65,6 @@ class DocumentResultLayout extends StatelessWidget {
                       expand: true,
                     ),
                   ),
-                  SizedBox(width: tokens.spacingSm),
                   Expanded(
                     child: AppPrimaryButton.filled(
                       label: 'Done',

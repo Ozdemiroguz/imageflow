@@ -34,6 +34,7 @@ class RealtimeResultPanels extends StatelessWidget {
     final tokens = context.tokens;
 
     return Row(
+      spacing: tokens.spacingSm,
       children: [
         Expanded(
           child: RealtimeResultPanelCard(
@@ -45,7 +46,6 @@ class RealtimeResultPanels extends StatelessWidget {
             onTap: onFaceTap,
           ),
         ),
-        SizedBox(width: tokens.spacingSm),
         Expanded(
           child: RealtimeResultPanelCard(
             title: 'Document',

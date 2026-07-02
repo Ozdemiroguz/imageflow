@@ -52,9 +52,9 @@ class AppPrimaryButton extends StatelessWidget {
         ? Text(label)
         : Row(
             mainAxisSize: MainAxisSize.min,
+            spacing: tokens.spacingXs,
             children: [
               Icon(icon, size: 18),
-              SizedBox(width: tokens.spacingXs),
               Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
             ],
           );

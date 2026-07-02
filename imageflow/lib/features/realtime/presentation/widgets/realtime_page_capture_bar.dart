@@ -30,6 +30,7 @@ class RealtimeCaptureBar extends StatelessWidget {
         ),
       ),
       child: Row(
+        spacing: tokens.spacingSm,
         children: [
           Expanded(
             child: Obx(() {
@@ -48,7 +49,6 @@ class RealtimeCaptureBar extends StatelessWidget {
               );
             }),
           ),
-          SizedBox(width: tokens.spacingSm),
           Expanded(
             child: Obx(() {
               final isExpanded =
