@@ -251,7 +251,12 @@ class RealtimeCameraSessionManager with CameraPermissionGateMixin {
       if (!_isCurrentInitGeneration(initGeneration) || _isClosed()) {
         return;
       }
-      Log.error('Camera activation failed', error: e, stackTrace: st, tag: _tag);
+      Log.error(
+        'Camera activation failed',
+        error: e,
+        stackTrace: st,
+        tag: _tag,
+      );
       if (e.code == 'no-camera') {
         _failure.value = const CameraFailure('No camera found on this device.');
       } else {
@@ -263,7 +268,12 @@ class RealtimeCameraSessionManager with CameraPermissionGateMixin {
       if (!_isCurrentInitGeneration(initGeneration) || _isClosed()) {
         return;
       }
-      Log.error('Camera activation failed', error: e, stackTrace: st, tag: _tag);
+      Log.error(
+        'Camera activation failed',
+        error: e,
+        stackTrace: st,
+        tag: _tag,
+      );
       _failure.value = CameraFailure('Unexpected camera error: $e');
     }
   }

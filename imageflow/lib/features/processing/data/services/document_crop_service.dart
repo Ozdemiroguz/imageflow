@@ -90,9 +90,8 @@ class DocumentCropService implements DocumentCropper {
   }
 
   /// Estimate crop region from text block bounding boxes with a 10% margin.
-  static ({int left, int top, int right, int bottom}) _estimateCropFromTextBlocks(
-    List<TextBlockBox> blocks,
-  ) {
+  static ({int left, int top, int right, int bottom})
+  _estimateCropFromTextBlocks(List<TextBlockBox> blocks) {
     var minLeft = double.infinity;
     var minTop = double.infinity;
     var maxRight = double.negativeInfinity;
@@ -201,9 +200,9 @@ void _perspectiveCorrectAndFilter(
     toImage: dst,
   );
 
-  File(targetPath).writeAsBytesSync(
-    img.encodeJpg(_ecoFilter(rectified), quality: 92),
-  );
+  File(
+    targetPath,
+  ).writeAsBytesSync(img.encodeJpg(_ecoFilter(rectified), quality: 92));
 }
 
 /// Crop to region + eco filter, then save.
@@ -225,9 +224,9 @@ void _cropAndFilter(
 
   final cropped = img.copyCrop(src, x: x, y: y, width: w, height: h);
 
-  File(targetPath).writeAsBytesSync(
-    img.encodeJpg(_ecoFilter(cropped), quality: 92),
-  );
+  File(
+    targetPath,
+  ).writeAsBytesSync(img.encodeJpg(_ecoFilter(cropped), quality: 92));
 }
 
 /// Apply eco filter to whole image, then save.
@@ -237,9 +236,9 @@ void _filterOnly(Uint8List sourceBytes, String targetPath) {
     File(targetPath).writeAsBytesSync(sourceBytes);
     return;
   }
-  File(targetPath).writeAsBytesSync(
-    img.encodeJpg(_ecoFilter(src), quality: 92),
-  );
+  File(
+    targetPath,
+  ).writeAsBytesSync(img.encodeJpg(_ecoFilter(src), quality: 92));
 }
 
 /// Eco filter: grayscale → contrast boost → normalize.

@@ -4,34 +4,34 @@ import 'package:imageflow/features/history/data/models/processing_history_model.
 import 'package:imageflow/features/history/domain/entities/processing_history.dart';
 
 ProcessingHistory _faceHistory() => ProcessingHistory(
-      id: 'face-id',
-      originalImagePath: '/originals/face.jpg',
-      processedImagePath: '/processed/face.jpg',
-      type: ProcessingType.face,
-      createdAt: DateTime(2024, 6, 15),
-      fileSizeBytes: 4096,
-      thumbnailPath: '/thumbnails/face_thumb.jpg',
-      facesDetected: 2,
-      faceRects: [
-        (left: 10, top: 20, width: 100, height: 120),
-        (left: 200, top: 50, width: 80, height: 90),
-      ],
-      faceContours: [
-        [(x: 10, y: 20), (x: 30, y: 40)],
-        [(x: 200, y: 50), (x: 220, y: 70)],
-      ],
-    );
+  id: 'face-id',
+  originalImagePath: '/originals/face.jpg',
+  processedImagePath: '/processed/face.jpg',
+  type: ProcessingType.face,
+  createdAt: DateTime(2024, 6, 15),
+  fileSizeBytes: 4096,
+  thumbnailPath: '/thumbnails/face_thumb.jpg',
+  facesDetected: 2,
+  faceRects: [
+    (left: 10, top: 20, width: 100, height: 120),
+    (left: 200, top: 50, width: 80, height: 90),
+  ],
+  faceContours: [
+    [(x: 10, y: 20), (x: 30, y: 40)],
+    [(x: 200, y: 50), (x: 220, y: 70)],
+  ],
+);
 
 ProcessingHistory _documentHistory() => ProcessingHistory(
-      id: 'doc-id',
-      originalImagePath: '/originals/doc.jpg',
-      processedImagePath: '/processed/doc.jpg',
-      type: ProcessingType.document,
-      createdAt: DateTime(2024, 1, 1),
-      fileSizeBytes: 8192,
-      pdfPath: '/pdfs/doc.pdf',
-      extractedText: 'Hello World',
-    );
+  id: 'doc-id',
+  originalImagePath: '/originals/doc.jpg',
+  processedImagePath: '/processed/doc.jpg',
+  type: ProcessingType.document,
+  createdAt: DateTime(2024, 1, 1),
+  fileSizeBytes: 8192,
+  pdfPath: '/pdfs/doc.pdf',
+  extractedText: 'Hello World',
+);
 
 void main() {
   group('ProcessingHistoryModel', () {
@@ -66,8 +66,14 @@ void main() {
         final model = ProcessingHistoryModel.fromEntity(_faceHistory());
 
         expect(model.faceContours.length, 2);
-        expect(model.faceContours[0], [[10, 20], [30, 40]]);
-        expect(model.faceContours[1], [[200, 50], [220, 70]]);
+        expect(model.faceContours[0], [
+          [10, 20],
+          [30, 40],
+        ]);
+        expect(model.faceContours[1], [
+          [200, 50],
+          [220, 70],
+        ]);
       });
 
       test('pdfPath and extractedText are null for face entity', () {
@@ -117,8 +123,9 @@ void main() {
       });
 
       test('reconstructs faceRects as named records', () {
-        final entity =
-            ProcessingHistoryModel.fromEntity(_faceHistory()).toEntity();
+        final entity = ProcessingHistoryModel.fromEntity(
+          _faceHistory(),
+        ).toEntity();
 
         expect(entity.faceRects.length, 2);
         expect(entity.faceRects[0].left, 10);
@@ -128,8 +135,9 @@ void main() {
       });
 
       test('reconstructs faceContours as named records', () {
-        final entity =
-            ProcessingHistoryModel.fromEntity(_faceHistory()).toEntity();
+        final entity = ProcessingHistoryModel.fromEntity(
+          _faceHistory(),
+        ).toEntity();
 
         expect(entity.faceContours.length, 2);
         expect(entity.faceContours[0][0].x, 10);
@@ -141,14 +149,16 @@ void main() {
 
     group('toEntity — document', () {
       test('maps ProcessingTypeModel.document → ProcessingType.document', () {
-        final entity =
-            ProcessingHistoryModel.fromEntity(_documentHistory()).toEntity();
+        final entity = ProcessingHistoryModel.fromEntity(
+          _documentHistory(),
+        ).toEntity();
         expect(entity.type, ProcessingType.document);
       });
 
       test('preserves pdfPath and extractedText', () {
-        final entity =
-            ProcessingHistoryModel.fromEntity(_documentHistory()).toEntity();
+        final entity = ProcessingHistoryModel.fromEntity(
+          _documentHistory(),
+        ).toEntity();
         expect(entity.pdfPath, '/pdfs/doc.pdf');
         expect(entity.extractedText, 'Hello World');
       });
@@ -157,8 +167,7 @@ void main() {
     group('round-trip', () {
       test('face entity survives entity → model → entity round-trip', () {
         final original = _faceHistory();
-        final restored =
-            ProcessingHistoryModel.fromEntity(original).toEntity();
+        final restored = ProcessingHistoryModel.fromEntity(original).toEntity();
 
         expect(restored.id, original.id);
         expect(restored.type, original.type);
@@ -170,8 +179,7 @@ void main() {
 
       test('document entity survives round-trip', () {
         final original = _documentHistory();
-        final restored =
-            ProcessingHistoryModel.fromEntity(original).toEntity();
+        final restored = ProcessingHistoryModel.fromEntity(original).toEntity();
 
         expect(restored.id, original.id);
         expect(restored.type, original.type);
@@ -190,8 +198,7 @@ void main() {
           createdAt: DateTime(2024),
           fileSizeBytes: 100,
         );
-        final restored =
-            ProcessingHistoryModel.fromEntity(minimal).toEntity();
+        final restored = ProcessingHistoryModel.fromEntity(minimal).toEntity();
 
         expect(restored.thumbnailPath, isNull);
         expect(restored.pdfPath, isNull);

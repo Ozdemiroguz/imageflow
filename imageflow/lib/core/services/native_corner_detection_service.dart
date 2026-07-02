@@ -97,9 +97,7 @@ class NativeCornerDetectionService implements CornerDetector {
         stackTrace: st,
         tag: _tag,
       );
-      return Result.error(
-        NativeChannelFailure('Corner detection failed: $e'),
-      );
+      return Result.error(NativeChannelFailure('Corner detection failed: $e'));
     }
   }
 

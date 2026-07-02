@@ -18,7 +18,12 @@ abstract final class Log {
     dev.log('⚠️ $message', name: tag ?? 'WARN');
   }
 
-  static void error(String message, {Object? error, StackTrace? stackTrace, String? tag}) {
+  static void error(
+    String message, {
+    Object? error,
+    StackTrace? stackTrace,
+    String? tag,
+  }) {
     if (!kDebugMode) return;
     dev.log(
       message,

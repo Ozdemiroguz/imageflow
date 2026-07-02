@@ -21,20 +21,22 @@ void main() {
   });
 
   group('generation guard (enabled)', () {
-    test('nextGeneration bumps; the latest is current, older ones are stale',
-        () {
-      final guard = CameraLifecycleGuard();
-      final g1 = guard.nextGeneration(enabled: true);
-      final g2 = guard.nextGeneration(enabled: true);
+    test(
+      'nextGeneration bumps; the latest is current, older ones are stale',
+      () {
+        final guard = CameraLifecycleGuard();
+        final g1 = guard.nextGeneration(enabled: true);
+        final g2 = guard.nextGeneration(enabled: true);
 
-      expect(g2, greaterThan(g1));
-      expect(guard.isCurrent(g2, enabled: true), isTrue);
-      expect(
-        guard.isCurrent(g1, enabled: true),
-        isFalse,
-        reason: 'a newer generation started, so g1 is stale',
-      );
-    });
+        expect(g2, greaterThan(g1));
+        expect(guard.isCurrent(g2, enabled: true), isTrue);
+        expect(
+          guard.isCurrent(g1, enabled: true),
+          isFalse,
+          reason: 'a newer generation started, so g1 is stale',
+        );
+      },
+    );
 
     test('invalidate makes the current generation stale', () {
       final guard = CameraLifecycleGuard();

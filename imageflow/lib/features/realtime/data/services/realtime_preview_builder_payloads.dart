@@ -120,14 +120,18 @@ Uint8List? _buildDocumentPreviewFromFrameOnIsolate(
   );
   if (previewScale < 1.0) {
     dstWidth = clampInt((dstWidth * previewScale).round(), 1, dstWidth);
-    dstHeight = clampInt(
-      (dstHeight * previewScale).round(),
-      1,
-      dstHeight,
-    );
+    dstHeight = clampInt((dstHeight * previewScale).round(), 1, dstHeight);
   }
-  dstWidth = clampInt(dstWidth, 1, RealtimePreviewBuilder._maxRectifiedPreviewDimension);
-  dstHeight = clampInt(dstHeight, 1, RealtimePreviewBuilder._maxRectifiedPreviewDimension);
+  dstWidth = clampInt(
+    dstWidth,
+    1,
+    RealtimePreviewBuilder._maxRectifiedPreviewDimension,
+  );
+  dstHeight = clampInt(
+    dstHeight,
+    1,
+    RealtimePreviewBuilder._maxRectifiedPreviewDimension,
+  );
 
   final docPayload = DocumentPreviewIsolatePayload(
     width: prepared.width,
@@ -188,11 +192,7 @@ img.Image? _framePayloadToImageOnIsolate(RealtimeFramePayload payload) {
   final scale = needsDownscale
       ? RealtimePreviewBuilder._maxPreviewLongSide / sourceLongSide
       : 1.0;
-  final targetWidth = clampInt(
-    (sourceWidth * scale).round(),
-    1,
-    sourceWidth,
-  );
+  final targetWidth = clampInt((sourceWidth * scale).round(), 1, sourceWidth);
   final targetHeight = clampInt(
     (sourceHeight * scale).round(),
     1,
@@ -200,18 +200,10 @@ img.Image? _framePayloadToImageOnIsolate(RealtimeFramePayload payload) {
   );
 
   final xMap = List<int>.generate(targetWidth, (x) {
-    return clampInt(
-      (x * sourceWidth) ~/ targetWidth,
-      0,
-      sourceWidth - 1,
-    );
+    return clampInt((x * sourceWidth) ~/ targetWidth, 0, sourceWidth - 1);
   }, growable: false);
   final yMap = List<int>.generate(targetHeight, (y) {
-    return clampInt(
-      (y * sourceHeight) ~/ targetHeight,
-      0,
-      sourceHeight - 1,
-    );
+    return clampInt((y * sourceHeight) ~/ targetHeight, 0, sourceHeight - 1);
   }, growable: false);
 
   final image = img.Image(width: targetWidth, height: targetHeight);
@@ -241,16 +233,8 @@ img.Image _downscaleForPreviewIsolate(img.Image source) {
   if (longSide <= RealtimePreviewBuilder._maxPreviewLongSide) return source;
 
   final scale = RealtimePreviewBuilder._maxPreviewLongSide / longSide;
-  final width = clampInt(
-    (source.width * scale).round(),
-    1,
-    source.width,
-  );
-  final height = clampInt(
-    (source.height * scale).round(),
-    1,
-    source.height,
-  );
+  final width = clampInt((source.width * scale).round(), 1, source.width);
+  final height = clampInt((source.height * scale).round(), 1, source.height);
   return img.copyResize(
     source,
     width: width,
@@ -358,16 +342,8 @@ Uint8List _buildDocumentPreviewOnIsolate(
   }
 
   final scale = RealtimePreviewBuilder._maxFacePreviewLongSide / longSide;
-  final width = clampInt(
-    (source.width * scale).round(),
-    1,
-    source.width,
-  );
-  final height = clampInt(
-    (source.height * scale).round(),
-    1,
-    source.height,
-  );
+  final width = clampInt((source.width * scale).round(), 1, source.width);
+  final height = clampInt((source.height * scale).round(), 1, source.height);
   final resized = img.copyResize(
     source,
     width: width,

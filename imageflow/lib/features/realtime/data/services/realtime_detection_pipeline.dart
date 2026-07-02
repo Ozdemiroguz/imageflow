@@ -91,10 +91,8 @@ class RealtimeDetectionPipeline {
           preparedInputImage: preparedInputImage,
         );
         if (result.hasText) {
-          if (_output.documentStatusLabel ==
-                  documentNoTextStatus ||
-              _output.documentStatusLabel ==
-                  documentScanningStatus) {
+          if (_output.documentStatusLabel == documentNoTextStatus ||
+              _output.documentStatusLabel == documentScanningStatus) {
             _output.setDocumentSearchingState();
           }
         } else {
@@ -240,10 +238,7 @@ class RealtimeDetectionPipeline {
         );
         if (preview != null) {
           _output.setDocumentPreviewBytes(preview);
-          _output.rememberDocumentPreviewMotion(
-            corners: corners,
-            now: now,
-          );
+          _output.rememberDocumentPreviewMotion(corners: corners, now: now);
         }
       },
     );
@@ -274,9 +269,7 @@ class RealtimeDetectionPipeline {
         width: frame.width,
         height: frame.height,
         // If frame image is already preview-oriented, keep rotation at 0.
-        rotation: frameImageUsesNativeRotation
-            ? nativeRotationDegrees
-            : 0,
+        rotation: frameImageUsesNativeRotation ? nativeRotationDegrees : 0,
         bytes: plane.bytes,
         bytesPerRow: plane.bytesPerRow,
         format: 'bgra',

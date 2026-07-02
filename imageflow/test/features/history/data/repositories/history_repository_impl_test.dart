@@ -152,16 +152,17 @@ void main() {
         final result = await repo.getAll();
 
         expect(result.isError, isTrue);
-        expect((result as Error<List<ProcessingHistory>>).failure, isA<StorageFailure>());
+        expect(
+          (result as Error<List<ProcessingHistory>>).failure,
+          isA<StorageFailure>(),
+        );
       });
     });
 
     group('save', () {
       test('calls box.put with correct key', () async {
         final history = _fakeHistory(id: 'save-1');
-        when(
-          () => box.put(any(), any()),
-        ).thenAnswer((_) async {});
+        when(() => box.put(any(), any())).thenAnswer((_) async {});
 
         await repo.save(history);
 

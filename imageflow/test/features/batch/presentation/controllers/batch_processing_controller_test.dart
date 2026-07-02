@@ -138,46 +138,50 @@ void main() {
       expect(controller.isRunning.value, isFalse);
     });
 
-    test('one item fails → that item failed, others success, warning snack',
-        () async {
-      when(
-        () => processImage(
-          imagePath: any(named: 'imagePath'),
-          onProgress: any(named: 'onProgress'),
-        ),
-      ).thenAnswer((invocation) async {
-        final path = invocation.namedArguments[#imagePath] as String;
-        if (path == 'bad.jpg') {
-          return Result.error(const ProcessingFailure('boom'));
-        }
-        return Result.ok(_fakeResult(path));
-      });
-      stubSaveOk();
-      final controller = withQueue(['ok.jpg', 'bad.jpg']);
+    test(
+      'one item fails → that item failed, others success, warning snack',
+      () async {
+        when(
+          () => processImage(
+            imagePath: any(named: 'imagePath'),
+            onProgress: any(named: 'onProgress'),
+          ),
+        ).thenAnswer((invocation) async {
+          final path = invocation.namedArguments[#imagePath] as String;
+          if (path == 'bad.jpg') {
+            return Result.error(const ProcessingFailure('boom'));
+          }
+          return Result.ok(_fakeResult(path));
+        });
+        stubSaveOk();
+        final controller = withQueue(['ok.jpg', 'bad.jpg']);
 
-      await controller.processPending();
+        await controller.processPending();
 
-      expect(controller.items[0].status, BatchItemStatus.success);
-      expect(controller.items[1].status, BatchItemStatus.failed);
-      expect(controller.successCount, 1);
-      expect(controller.failedCount, 1);
-      // Only the successful item is persisted.
-      verify(() => saveHistory(any())).called(1);
-    });
+        expect(controller.items[0].status, BatchItemStatus.success);
+        expect(controller.items[1].status, BatchItemStatus.failed);
+        expect(controller.successCount, 1);
+        expect(controller.failedCount, 1);
+        // Only the successful item is persisted.
+        verify(() => saveHistory(any())).called(1);
+      },
+    );
 
-    test('save failure marks the item failed even though processing succeeded',
-        () async {
-      stubProcessOk();
-      when(
-        () => saveHistory(any()),
-      ).thenAnswer((_) async => Result.error(const StorageFailure('disk')));
-      final controller = withQueue(['a.jpg']);
+    test(
+      'save failure marks the item failed even though processing succeeded',
+      () async {
+        stubProcessOk();
+        when(
+          () => saveHistory(any()),
+        ).thenAnswer((_) async => Result.error(const StorageFailure('disk')));
+        final controller = withQueue(['a.jpg']);
 
-      await controller.processPending();
+        await controller.processPending();
 
-      expect(controller.items[0].status, BatchItemStatus.failed);
-      expect(controller.failedCount, 1);
-    });
+        expect(controller.items[0].status, BatchItemStatus.failed);
+        expect(controller.failedCount, 1);
+      },
+    );
 
     test('overlapping run is blocked by isRunning', () async {
       stubProcessOk();

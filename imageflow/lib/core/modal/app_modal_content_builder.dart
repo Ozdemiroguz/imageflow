@@ -15,7 +15,11 @@ class AppModalContentBuilder implements ModalContentBuilder {
     String? label,
     bool showSpinner = true,
   }) {
-    return LoadingOverlay(message: message, label: label, showSpinner: showSpinner);
+    return LoadingOverlay(
+      message: message,
+      label: label,
+      showSpinner: showSpinner,
+    );
   }
 
   @override

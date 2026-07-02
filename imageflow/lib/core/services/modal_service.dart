@@ -13,8 +13,9 @@ import '../utils/log.dart';
 class ModalService extends GetxService {
   /// [contentBuilder] defaults to the app's standard builder; override it only
   /// to supply custom modal chrome (e.g. in tests).
-  ModalService({ModalContentBuilder contentBuilder = const AppModalContentBuilder()})
-    : _contentBuilder = contentBuilder;
+  ModalService({
+    ModalContentBuilder contentBuilder = const AppModalContentBuilder(),
+  }) : _contentBuilder = contentBuilder;
 
   static const _tag = 'ModalService';
   static const _defaultLoadingMessage = 'Loading...';

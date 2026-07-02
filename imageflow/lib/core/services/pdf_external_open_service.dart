@@ -18,10 +18,11 @@ class PdfExternalOpenService extends GetxService {
         throw const PdfFailure('No PDF available to open.');
       }
 
-      final opened = await _channel.invokeMethod<bool>(
-        'openPdf',
-        <String, dynamic>{'path': normalizedPath},
-      ).timeout(_openTimeout);
+      final opened = await _channel
+          .invokeMethod<bool>('openPdf', <String, dynamic>{
+            'path': normalizedPath,
+          })
+          .timeout(_openTimeout);
 
       if (opened != true) {
         throw const PdfFailure('Could not open PDF externally.');

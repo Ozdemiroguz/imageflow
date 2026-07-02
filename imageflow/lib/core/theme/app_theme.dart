@@ -53,5 +53,4 @@ abstract class AppTheme {
       extensions: const [AppTokens()],
     );
   }
-
 }

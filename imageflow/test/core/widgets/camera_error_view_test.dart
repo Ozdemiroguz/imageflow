@@ -22,30 +22,31 @@ void main() {
     );
   }
 
-  testWidgets('permission failure shows the no-photography icon + Open Settings',
-      (tester) async {
-    var settingsTapped = false;
-    await tester.pumpWidget(
-      host(
-        failure: const PermissionFailure('Camera access required'),
-        onOpenSettings: () => settingsTapped = true,
-      ),
-    );
+  testWidgets(
+    'permission failure shows the no-photography icon + Open Settings',
+    (tester) async {
+      var settingsTapped = false;
+      await tester.pumpWidget(
+        host(
+          failure: const PermissionFailure('Camera access required'),
+          onOpenSettings: () => settingsTapped = true,
+        ),
+      );
 
-    expect(find.byIcon(Icons.no_photography_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.videocam_off_outlined), findsNothing);
-    expect(find.text('Open Settings'), findsOneWidget);
-    expect(find.text('Retry'), findsOneWidget); // permission is retryable
+      expect(find.byIcon(Icons.no_photography_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.videocam_off_outlined), findsNothing);
+      expect(find.text('Open Settings'), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget); // permission is retryable
 
-    await tester.tap(find.text('Open Settings'));
-    expect(settingsTapped, isTrue);
-  });
+      await tester.tap(find.text('Open Settings'));
+      expect(settingsTapped, isTrue);
+    },
+  );
 
-  testWidgets('generic camera failure shows the videocam-off icon, no settings',
-      (tester) async {
-    await tester.pumpWidget(
-      host(failure: const CameraFailure('Camera broke')),
-    );
+  testWidgets('generic camera failure shows the videocam-off icon, no settings', (
+    tester,
+  ) async {
+    await tester.pumpWidget(host(failure: const CameraFailure('Camera broke')));
 
     expect(find.byIcon(Icons.videocam_off_outlined), findsOneWidget);
     expect(find.byIcon(Icons.no_photography_outlined), findsNothing);
@@ -56,10 +57,7 @@ void main() {
   testWidgets('Retry button invokes the retry callback', (tester) async {
     var retried = false;
     await tester.pumpWidget(
-      host(
-        failure: const CameraFailure('boom'),
-        onRetry: () => retried = true,
-      ),
+      host(failure: const CameraFailure('boom'), onRetry: () => retried = true),
     );
 
     // CameraFailure is retryable → Retry is shown.

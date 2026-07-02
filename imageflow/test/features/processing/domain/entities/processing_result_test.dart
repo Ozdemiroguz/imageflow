@@ -74,7 +74,9 @@ void main() {
     group('face result', () {
       test('stores all face-specific fields', () {
         final rects = [(left: 10, top: 20, width: 100, height: 120)];
-        final contours = [[(x: 1, y: 2), (x: 3, y: 4)]];
+        final contours = [
+          [(x: 1, y: 2), (x: 3, y: 4)],
+        ];
         final createdAt = DateTime(2024, 3, 10);
 
         final r = ProcessingResult(

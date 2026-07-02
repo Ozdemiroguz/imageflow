@@ -23,9 +23,7 @@ void main() {
     test('returns 0 for empty or single face', () {
       expect(normalizer.selectPrimaryFaceIndex(const []), 0);
       expect(
-        normalizer.selectPrimaryFaceIndex([
-          const Rect.fromLTWH(0, 0, 10, 10),
-        ]),
+        normalizer.selectPrimaryFaceIndex([const Rect.fromLTWH(0, 0, 10, 10)]),
         0,
       );
     });

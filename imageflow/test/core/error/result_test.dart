@@ -71,22 +71,25 @@ void main() {
         expect((result as Error<String>).failure, isA<ProcessingFailure>());
       });
 
-      test('calls onLog with error and stacktrace when action throws', () async {
-        Object? capturedError;
-        StackTrace? capturedStack;
+      test(
+        'calls onLog with error and stacktrace when action throws',
+        () async {
+          Object? capturedError;
+          StackTrace? capturedStack;
 
-        await Result.guard<void>(
-          () async => throw StateError('test error'),
-          onError: (_) => const ProcessingFailure(),
-          onLog: (e, st) {
-            capturedError = e;
-            capturedStack = st;
-          },
-        );
+          await Result.guard<void>(
+            () async => throw StateError('test error'),
+            onError: (_) => const ProcessingFailure(),
+            onLog: (e, st) {
+              capturedError = e;
+              capturedStack = st;
+            },
+          );
 
-        expect(capturedError, isA<StateError>());
-        expect(capturedStack, isNotNull);
-      });
+          expect(capturedError, isA<StateError>());
+          expect(capturedStack, isNotNull);
+        },
+      );
 
       test('does not call onLog on success', () async {
         var logCalled = false;

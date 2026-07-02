@@ -34,7 +34,10 @@ class ResultController extends GetxController {
   PdfViewerController resolvePdfViewerController(String pdfPath) {
     return _pdfViewerControllers.putIfAbsent(
       pdfPath,
-      () => PdfViewerController(rasterService: _pdfRasterService, pdfPath: pdfPath),
+      () => PdfViewerController(
+        rasterService: _pdfRasterService,
+        pdfPath: pdfPath,
+      ),
     );
   }
 

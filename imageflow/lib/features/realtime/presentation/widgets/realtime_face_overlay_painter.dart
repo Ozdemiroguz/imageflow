@@ -3,16 +3,14 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_tokens.dart';
 
 class RealtimeFaceOverlayPainter extends CustomPainter {
-  RealtimeFaceOverlayPainter({
-    required this.faces,
-    required AppTokens tokens,
-  })  : _boxStroke = Paint()
-          ..color = tokens.realtimeFaceStroke
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.2,
-        _boxFill = Paint()
-          ..color = tokens.realtimeFaceFill
-          ..style = PaintingStyle.fill;
+  RealtimeFaceOverlayPainter({required this.faces, required AppTokens tokens})
+    : _boxStroke = Paint()
+        ..color = tokens.realtimeFaceStroke
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.2,
+      _boxFill = Paint()
+        ..color = tokens.realtimeFaceFill
+        ..style = PaintingStyle.fill;
 
   final List<Rect> faces;
   final Paint _boxStroke;

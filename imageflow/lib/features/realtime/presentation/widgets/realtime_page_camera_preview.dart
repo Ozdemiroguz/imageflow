@@ -109,4 +109,3 @@ class RealtimeLiveQuarterPreviewOverlay extends StatelessWidget {
     });
   }
 }
-

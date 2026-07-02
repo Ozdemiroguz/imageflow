@@ -8,7 +8,8 @@ import 'package:imageflow/features/processing/domain/services/image_processing_s
 import 'package:imageflow/features/processing/domain/usecases/process_image.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _MockImageProcessingService extends Mock implements ImageProcessingService {}
+class _MockImageProcessingService extends Mock
+    implements ImageProcessingService {}
 
 ProcessingResult _fakeResult() => ProcessingResult(
   id: 'test-id',
@@ -30,30 +31,27 @@ void main() {
   });
 
   group('ProcessImage', () {
-    test(
-      'delegates to service.processImage with required imagePath',
-      () async {
-        when(
-          () => service.processImage(
-            imagePath: '/test.jpg',
-            preferredType: null,
-            onProgress: null,
-            capturedWithFrontCamera: null,
-          ),
-        ).thenAnswer((_) async => Result.ok(_fakeResult()));
+    test('delegates to service.processImage with required imagePath', () async {
+      when(
+        () => service.processImage(
+          imagePath: '/test.jpg',
+          preferredType: null,
+          onProgress: null,
+          capturedWithFrontCamera: null,
+        ),
+      ).thenAnswer((_) async => Result.ok(_fakeResult()));
 
-        await useCase(imagePath: '/test.jpg');
+      await useCase(imagePath: '/test.jpg');
 
-        verify(
-          () => service.processImage(
-            imagePath: '/test.jpg',
-            preferredType: null,
-            onProgress: null,
-            capturedWithFrontCamera: null,
-          ),
-        ).called(1);
-      },
-    );
+      verify(
+        () => service.processImage(
+          imagePath: '/test.jpg',
+          preferredType: null,
+          onProgress: null,
+          capturedWithFrontCamera: null,
+        ),
+      ).called(1);
+    });
 
     test('passes preferredType: document to service', () async {
       when(

@@ -79,9 +79,7 @@ class ProcessingHistoryModel extends HiveObject {
           .toList(growable: false),
       faceContours: entity.faceContours
           .map(
-            (contour) => contour
-                .map((p) => [p.x, p.y])
-                .toList(growable: false),
+            (contour) => contour.map((p) => [p.x, p.y]).toList(growable: false),
           )
           .toList(growable: false),
     );

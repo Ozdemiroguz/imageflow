@@ -21,7 +21,9 @@ class BatchActionButtons extends StatelessWidget {
           AppPrimaryButton.filled(
             onPressed: controller.processPending,
             icon: Icons.play_arrow_outlined,
-            label: controller.completedCount == 0 ? 'Start Queue' : 'Resume Queue',
+            label: controller.completedCount == 0
+                ? 'Start Queue'
+                : 'Resume Queue',
             expand: true,
           ),
         if (controller.pendingCount > 0 && controller.failedCount > 0)

@@ -15,11 +15,7 @@ import '../models/batch_item_status.dart';
 class BatchItemStateManager {
   const BatchItemStateManager();
 
-  void toPending(
-    RxList<BatchItemState> items,
-    int index, {
-    String? imagePath,
-  }) {
+  void toPending(RxList<BatchItemState> items, int index, {String? imagePath}) {
     _apply(
       items,
       index,

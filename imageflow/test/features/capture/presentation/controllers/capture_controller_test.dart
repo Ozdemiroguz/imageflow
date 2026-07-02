@@ -150,18 +150,22 @@ void main() {
         controller.onClose();
       });
 
-      test('pickBatchFromGallery delegates to the multi-image gateway', () async {
-        final controller = make();
+      test(
+        'pickBatchFromGallery delegates to the multi-image gateway',
+        () async {
+          final controller = make();
 
-        await controller.pickBatchFromGallery();
+          await controller.pickBatchFromGallery();
 
-        verify(() => imagePicker.pickMultipleFromGallery()).called(1);
-        verify(
-          () => modalService.showLoadingOverlay(message: any(named: 'message')),
-        ).called(1);
-        verify(() => modalService.hideLoadingOverlay()).called(1);
-        controller.onClose();
-      });
+          verify(() => imagePicker.pickMultipleFromGallery()).called(1);
+          verify(
+            () =>
+                modalService.showLoadingOverlay(message: any(named: 'message')),
+          ).called(1);
+          verify(() => modalService.hideLoadingOverlay()).called(1);
+          controller.onClose();
+        },
+      );
     });
   });
 }

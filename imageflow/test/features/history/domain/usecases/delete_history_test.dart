@@ -18,8 +18,9 @@ void main() {
 
   group('DeleteHistory', () {
     test('delegates to repository.delete with the given id', () async {
-      when(() => repository.delete('abc'))
-          .thenAnswer((_) async => Result.ok(null));
+      when(
+        () => repository.delete('abc'),
+      ).thenAnswer((_) async => Result.ok(null));
 
       await useCase('abc');
 
@@ -27,8 +28,9 @@ void main() {
     });
 
     test('returns Ok<void> on successful deletion', () async {
-      when(() => repository.delete('abc'))
-          .thenAnswer((_) async => Result.ok(null));
+      when(
+        () => repository.delete('abc'),
+      ).thenAnswer((_) async => Result.ok(null));
 
       final result = await useCase('abc');
 
@@ -36,8 +38,9 @@ void main() {
     });
 
     test('returns Error when repository returns StorageFailure', () async {
-      when(() => repository.delete('missing'))
-          .thenAnswer((_) async => Result.error(const StorageFailure()));
+      when(
+        () => repository.delete('missing'),
+      ).thenAnswer((_) async => Result.error(const StorageFailure()));
 
       final result = await useCase('missing');
 
@@ -47,8 +50,9 @@ void main() {
 
     test('passes the exact id string to repository', () async {
       const id = 'unique-uuid-1234';
-      when(() => repository.delete(id))
-          .thenAnswer((_) async => Result.ok(null));
+      when(
+        () => repository.delete(id),
+      ).thenAnswer((_) async => Result.ok(null));
 
       await useCase(id);
 

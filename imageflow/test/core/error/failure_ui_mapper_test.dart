@@ -101,13 +101,17 @@ void main() {
 
     group('titles', () {
       test('DetectionFailure → "Nothing Detected"', () {
-        expect(FailureUiMapper.map(const DetectionFailure()).title,
-            'Nothing Detected');
+        expect(
+          FailureUiMapper.map(const DetectionFailure()).title,
+          'Nothing Detected',
+        );
       });
 
       test('ProcessingFailure → "Processing Failed"', () {
-        expect(FailureUiMapper.map(const ProcessingFailure()).title,
-            'Processing Failed');
+        expect(
+          FailureUiMapper.map(const ProcessingFailure()).title,
+          'Processing Failed',
+        );
       });
 
       test('PdfFailure → "PDF Error"', () {
@@ -115,13 +119,17 @@ void main() {
       });
 
       test('PermissionFailure → "Permission Required"', () {
-        expect(FailureUiMapper.map(const PermissionFailure()).title,
-            'Permission Required');
+        expect(
+          FailureUiMapper.map(const PermissionFailure()).title,
+          'Permission Required',
+        );
       });
 
       test('CameraFailure → "Camera Error"', () {
         expect(
-            FailureUiMapper.map(const CameraFailure()).title, 'Camera Error');
+          FailureUiMapper.map(const CameraFailure()).title,
+          'Camera Error',
+        );
       });
 
       test('FileFailure → "Storage Error"', () {
@@ -130,17 +138,23 @@ void main() {
 
       test('StorageFailure → "Storage Error"', () {
         expect(
-            FailureUiMapper.map(const StorageFailure()).title, 'Storage Error');
+          FailureUiMapper.map(const StorageFailure()).title,
+          'Storage Error',
+        );
       });
 
       test('NativeChannelFailure → "Platform Error"', () {
-        expect(FailureUiMapper.map(const NativeChannelFailure()).title,
-            'Platform Error');
+        expect(
+          FailureUiMapper.map(const NativeChannelFailure()).title,
+          'Platform Error',
+        );
       });
 
       test('RouteArgumentFailure → "Navigation Error"', () {
-        expect(FailureUiMapper.map(const RouteArgumentFailure()).title,
-            'Navigation Error');
+        expect(
+          FailureUiMapper.map(const RouteArgumentFailure()).title,
+          'Navigation Error',
+        );
       });
     });
 

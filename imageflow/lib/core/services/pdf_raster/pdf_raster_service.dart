@@ -147,7 +147,8 @@ class PdfRasterService extends GetxService {
           'pdf.raster.total',
           PerfTrace.stopMs(totalWatch),
           tag: _perfTag,
-          details: 'status=ok pages=${value.length} source=${usedNative ? 'native' : 'fallback'}',
+          details:
+              'status=ok pages=${value.length} source=${usedNative ? 'native' : 'fallback'}',
         );
       case Error():
         PerfTrace.warning(

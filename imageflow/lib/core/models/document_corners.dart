@@ -12,6 +12,10 @@ class DocumentCorners {
   final ({double x, double y}) bottomRight;
   final ({double x, double y}) bottomLeft;
 
-  List<({double x, double y})> toList() =>
-      [topLeft, topRight, bottomRight, bottomLeft];
+  List<({double x, double y})> toList() => [
+    topLeft,
+    topRight,
+    bottomRight,
+    bottomLeft,
+  ];
 }

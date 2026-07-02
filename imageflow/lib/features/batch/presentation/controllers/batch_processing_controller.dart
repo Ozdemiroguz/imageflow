@@ -36,8 +36,7 @@ class BatchProcessingController extends GetxController {
        _modalService = modalService,
        _imagePicker = imagePicker,
        _historyMapper =
-           historyMapper ??
-           ProcessingHistoryMapper(fileService: fileService);
+           historyMapper ?? ProcessingHistoryMapper(fileService: fileService);
 
   final ProcessImage _processImage;
   final SaveHistory _saveHistory;

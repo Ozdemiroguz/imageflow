@@ -43,4 +43,3 @@ class _CameraPreview extends StatelessWidget {
     );
   }
 }
-

@@ -12,7 +12,9 @@ void main() {
     late String pdfPath;
 
     setUp(() async {
-      tempDir = await Directory.systemTemp.createTemp('pdf_raster_service_test_');
+      tempDir = await Directory.systemTemp.createTemp(
+        'pdf_raster_service_test_',
+      );
       final file = File('${tempDir.path}/sample.pdf');
       await file.writeAsBytes(const [1, 2, 3, 4, 5]);
       pdfPath = file.path;
@@ -24,26 +26,29 @@ void main() {
       }
     });
 
-    test('uses cache and avoids repeated rasterization for same file', () async {
-      var rasterCalls = 0;
-      final pageA = Uint8List.fromList([10, 20, 30]);
-      final pageB = Uint8List.fromList([40, 50, 60]);
+    test(
+      'uses cache and avoids repeated rasterization for same file',
+      () async {
+        var rasterCalls = 0;
+        final pageA = Uint8List.fromList([10, 20, 30]);
+        final pageB = Uint8List.fromList([40, 50, 60]);
 
-      final service = PdfRasterService(
-        rasterizer: (bytes, dpi) async {
-          rasterCalls++;
-          return [pageA, pageB];
-        },
-      );
+        final service = PdfRasterService(
+          rasterizer: (bytes, dpi) async {
+            rasterCalls++;
+            return [pageA, pageB];
+          },
+        );
 
-      final first = await service.rasterize(pdfPath: pdfPath);
-      final second = await service.rasterize(pdfPath: pdfPath);
+        final first = await service.rasterize(pdfPath: pdfPath);
+        final second = await service.rasterize(pdfPath: pdfPath);
 
-      expect(rasterCalls, 1);
-      expect(_okValue(first).length, 2);
-      expect(_okValue(second).length, 2);
-      expect(_okValue(second)[0], same(_okValue(first)[0]));
-    });
+        expect(rasterCalls, 1);
+        expect(_okValue(first).length, 2);
+        expect(_okValue(second).length, 2);
+        expect(_okValue(second)[0], same(_okValue(first)[0]));
+      },
+    );
 
     test('dedupes concurrent rasterization requests for same file', () async {
       var rasterCalls = 0;
@@ -78,6 +83,8 @@ void main() {
 }
 
 List<Uint8List> _okValue(Result<List<Uint8List>> result) => switch (result) {
-      Ok(:final value) => value,
-      Error(:final failure) => throw StateError('Expected Ok, got ${failure.message}'),
-    };
+  Ok(:final value) => value,
+  Error(:final failure) => throw StateError(
+    'Expected Ok, got ${failure.message}',
+  ),
+};

@@ -93,7 +93,10 @@ void main() {
         ),
       ).thenAnswer((_) async => (hasText: false));
 
-      await pipeline.runOcrGate(frame, rotation: InputImageRotation.rotation0deg);
+      await pipeline.runOcrGate(
+        frame,
+        rotation: InputImageRotation.rotation0deg,
+      );
 
       verify(() => output.setDocumentNoTextState()).called(1);
       verifyNever(() => output.setDocumentSearchingState());
@@ -124,33 +127,36 @@ void main() {
   });
 
   group('runFaceDetection', () {
-    test('no faces -> applyFaceGeometry empty + setFaceNotFoundState', () async {
-      when(
-        () => faceService.detect(
-          frame: any(named: 'frame'),
-          rotation: any(named: 'rotation'),
-          androidNv21Bytes: any(named: 'androidNv21Bytes'),
-          preparedInputImage: any(named: 'preparedInputImage'),
-        ),
-      ).thenAnswer((_) async => const <Face>[]);
+    test(
+      'no faces -> applyFaceGeometry empty + setFaceNotFoundState',
+      () async {
+        when(
+          () => faceService.detect(
+            frame: any(named: 'frame'),
+            rotation: any(named: 'rotation'),
+            androidNv21Bytes: any(named: 'androidNv21Bytes'),
+            preparedInputImage: any(named: 'preparedInputImage'),
+          ),
+        ).thenAnswer((_) async => const <Face>[]);
 
-      await pipeline.runFaceDetection(
-        frame,
-        rotation: InputImageRotation.rotation0deg,
-        nativeRotationDegrees: 0,
-        frameImageRotationDegrees: 0,
-        needsMirrorCompensation: false,
-      );
+        await pipeline.runFaceDetection(
+          frame,
+          rotation: InputImageRotation.rotation0deg,
+          nativeRotationDegrees: 0,
+          frameImageRotationDegrees: 0,
+          needsMirrorCompensation: false,
+        );
 
-      verify(
-        () => output.applyFaceGeometry(
-          nextFaceRects: const [],
-          nextFaceContours: const [],
-        ),
-      ).called(1);
-      verify(() => output.setFaceNotFoundState()).called(1);
-      verifyNever(() => output.setFaceDetectedStatus(any()));
-    });
+        verify(
+          () => output.applyFaceGeometry(
+            nextFaceRects: const [],
+            nextFaceContours: const [],
+          ),
+        ).called(1);
+        verify(() => output.setFaceNotFoundState()).called(1);
+        verifyNever(() => output.setFaceDetectedStatus(any()));
+      },
+    );
   });
 
   group('runDocumentEdgeDetection', () {

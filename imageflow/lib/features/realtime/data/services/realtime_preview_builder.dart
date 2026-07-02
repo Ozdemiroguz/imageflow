@@ -335,11 +335,7 @@ class RealtimePreviewBuilder {
     final sourceLongSide = math.max(sourceWidth, sourceHeight);
     final needsDownscale = sourceLongSide > _maxPreviewLongSide;
     final scale = needsDownscale ? _maxPreviewLongSide / sourceLongSide : 1.0;
-    final targetWidth = clampInt(
-      (sourceWidth * scale).round(),
-      1,
-      sourceWidth,
-    );
+    final targetWidth = clampInt((sourceWidth * scale).round(), 1, sourceWidth);
     final targetHeight = clampInt(
       (sourceHeight * scale).round(),
       1,

@@ -23,7 +23,6 @@ class DetectionResult {
   final int appliedRotation;
 
   bool get hasFaces => faces != null && faces!.isNotEmpty;
-  bool get hasText =>
-      recognizedText != null && recognizedText!.text.isNotEmpty;
+  bool get hasText => recognizedText != null && recognizedText!.text.isNotEmpty;
   bool get hasContent => hasFaces || hasText;
 }

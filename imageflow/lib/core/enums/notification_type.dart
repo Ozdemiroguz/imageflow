@@ -16,15 +16,15 @@ enum NotificationType {
 
   /// Resolves the background color from theme tokens.
   Color resolveBackground(BuildContext context) => switch (this) {
-        success => context.tokens.success,
-        error => context.colors.error,
-        info => context.tokens.info,
-        warning => context.tokens.warning,
-      };
+    success => context.tokens.success,
+    error => context.colors.error,
+    info => context.tokens.info,
+    warning => context.tokens.warning,
+  };
 
   /// Resolves the foreground color matching the background.
   Color resolveForeground(BuildContext context) => switch (this) {
-        error => context.colors.onError,
-        success || info || warning => Colors.white,
-      };
+    error => context.colors.onError,
+    success || info || warning => Colors.white,
+  };
 }

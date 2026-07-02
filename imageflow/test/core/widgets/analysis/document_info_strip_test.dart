@@ -22,8 +22,9 @@ void main() {
     );
   }
 
-  testWidgets('shows "View Content" and char chip when text is present',
-      (tester) async {
+  testWidgets('shows "View Content" and char chip when text is present', (
+    tester,
+  ) async {
     var viewed = false;
     await tester.pumpWidget(
       host(
@@ -41,9 +42,7 @@ void main() {
   });
 
   testWidgets('hides "View Content" when there is no text', (tester) async {
-    await tester.pumpWidget(
-      host(extractedTextLength: 0, extractedText: null),
-    );
+    await tester.pumpWidget(host(extractedTextLength: 0, extractedText: null));
 
     expect(find.text('View Content'), findsNothing);
     // No char chip either when length is 0.
@@ -51,9 +50,7 @@ void main() {
   });
 
   testWidgets('empty string is treated as no text', (tester) async {
-    await tester.pumpWidget(
-      host(extractedTextLength: 0, extractedText: ''),
-    );
+    await tester.pumpWidget(host(extractedTextLength: 0, extractedText: ''));
     expect(find.text('View Content'), findsNothing);
   });
 }

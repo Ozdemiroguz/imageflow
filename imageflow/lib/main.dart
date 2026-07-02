@@ -34,7 +34,12 @@ Future<void> main() async {
       runApp(const App());
     },
     (error, stackTrace) {
-      Log.error('Uncaught zone error', tag: 'App', error: error, stackTrace: stackTrace);
+      Log.error(
+        'Uncaught zone error',
+        tag: 'App',
+        error: error,
+        stackTrace: stackTrace,
+      );
     },
   );
 }
@@ -76,6 +81,11 @@ void _onFlutterError(FlutterErrorDetails details) {
 }
 
 bool _onPlatformError(Object error, StackTrace stackTrace) {
-  Log.error('Uncaught platform error', tag: 'App', error: error, stackTrace: stackTrace);
+  Log.error(
+    'Uncaught platform error',
+    tag: 'App',
+    error: error,
+    stackTrace: stackTrace,
+  );
   return true;
 }

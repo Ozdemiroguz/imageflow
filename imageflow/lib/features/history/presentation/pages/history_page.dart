@@ -30,7 +30,8 @@ class HistoryPage extends GetView<HistoryController> {
               spacing: tokens.spacingLg,
               children: [
                 Text(
-                  controller.failure.value?.message ?? 'An unexpected error occurred.',
+                  controller.failure.value?.message ??
+                      'An unexpected error occurred.',
                   style: context.text.bodyMedium,
                   textAlign: TextAlign.center,
                 ),

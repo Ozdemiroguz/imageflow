@@ -7,16 +7,16 @@ class RealtimeDocumentOverlayPainter extends CustomPainter {
   RealtimeDocumentOverlayPainter({
     required this.corners,
     required AppTokens tokens,
-  })  : _fill = Paint()
-          ..color = tokens.realtimeDocumentFill
-          ..style = PaintingStyle.fill,
-        _stroke = Paint()
-          ..color = tokens.realtimeDocumentStroke
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.6,
-        _corner = Paint()
-          ..color = tokens.realtimeDocumentCorner
-          ..style = PaintingStyle.fill;
+  }) : _fill = Paint()
+         ..color = tokens.realtimeDocumentFill
+         ..style = PaintingStyle.fill,
+       _stroke = Paint()
+         ..color = tokens.realtimeDocumentStroke
+         ..style = PaintingStyle.stroke
+         ..strokeWidth = 2.6,
+       _corner = Paint()
+         ..color = tokens.realtimeDocumentCorner
+         ..style = PaintingStyle.fill;
 
   final NormalizedCorners? corners;
   final Paint _fill;

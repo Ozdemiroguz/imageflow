@@ -194,7 +194,12 @@ class CameraCaptureSessionLifecycleHelper with CameraPermissionGateMixin {
       if (!_isCurrentInitGeneration(initGeneration) || _isClosed()) {
         return;
       }
-      Log.error('Camera initialization failed', error: e, stackTrace: st, tag: _tag);
+      Log.error(
+        'Camera initialization failed',
+        error: e,
+        stackTrace: st,
+        tag: _tag,
+      );
       if (e.code == 'no-camera') {
         _failure.value = const CameraFailure('No camera found on this device.');
       } else {
@@ -206,7 +211,12 @@ class CameraCaptureSessionLifecycleHelper with CameraPermissionGateMixin {
       if (!_isCurrentInitGeneration(initGeneration) || _isClosed()) {
         return;
       }
-      Log.error('Camera initialization failed', error: e, stackTrace: st, tag: _tag);
+      Log.error(
+        'Camera initialization failed',
+        error: e,
+        stackTrace: st,
+        tag: _tag,
+      );
       _failure.value = CameraFailure('Unexpected camera error: $e');
     }
   }
@@ -249,7 +259,6 @@ class CameraCaptureSessionLifecycleHelper with CameraPermissionGateMixin {
     }
     _flashMode.value = cam.value.flashMode;
   }
-
 
   bool _beginCameraLifecycleOp() {
     return _lifecycleGuard.begin();

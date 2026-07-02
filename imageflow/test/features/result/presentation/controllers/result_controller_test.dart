@@ -122,7 +122,9 @@ void main() {
     });
 
     test('showExtractedTextSheet forwards the text', () {
-      when(() => documentActions.showExtractedTextSheet(any())).thenReturn(null);
+      when(
+        () => documentActions.showExtractedTextSheet(any()),
+      ).thenReturn(null);
       final controller = makeAndInit(_result());
 
       controller.showExtractedTextSheet();

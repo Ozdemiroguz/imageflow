@@ -63,10 +63,7 @@ class RealtimeCameraController extends GetxController
         );
     _overlayStateManager =
         overlayStateManager ??
-        RealtimeOverlayStateStore(
-          config: _config,
-          overlayState: _overlayState,
-        );
+        RealtimeOverlayStateStore(config: _config, overlayState: _overlayState);
     _detectionPipeline =
         detectionPipeline ??
         RealtimeDetectionPipeline(
@@ -124,12 +121,10 @@ class RealtimeCameraController extends GetxController
           syncFrameRotation: _syncFrameRotation,
           resetRotationCache: _resetRotationCache,
           stopImageStream: _streamHandler.stopImageStream,
-          resetFrameProcessingState:
-              _streamHandler.resetFrameProcessingState,
+          resetFrameProcessingState: _streamHandler.resetFrameProcessingState,
           scheduleRealtimeStreamStart:
               _streamHandler.scheduleRealtimeStreamStart,
-          cancelRealtimeStreamStart:
-              _streamHandler.cancelRealtimeStreamStart,
+          cancelRealtimeStreamStart: _streamHandler.cancelRealtimeStreamStart,
           enableInitGenerationGuard:
               AppConstants.enableCameraInitGenerationGuard,
         );

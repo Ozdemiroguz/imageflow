@@ -36,9 +36,7 @@ class HistoryListItem extends StatelessWidget {
       direction: DismissDirection.endToStart,
       movementDuration: _dismissMovementDuration,
       resizeDuration: _dismissResizeDuration,
-      dismissThresholds: const {
-        DismissDirection.endToStart: _dismissThreshold,
-      },
+      dismissThresholds: const {DismissDirection.endToStart: _dismissThreshold},
       background: Padding(
         padding: EdgeInsets.symmetric(vertical: tokens.spacingXs),
         child: DecoratedBox(
@@ -50,10 +48,7 @@ class HistoryListItem extends StatelessWidget {
             alignment: .centerRight,
             child: Padding(
               padding: EdgeInsets.only(right: tokens.spacingLg),
-              child: Icon(
-                Icons.delete_outline,
-                color: context.colors.onError,
-              ),
+              child: Icon(Icons.delete_outline, color: context.colors.onError),
             ),
           ),
         ),

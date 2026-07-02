@@ -130,11 +130,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
           Color.lerp(realtimeDocumentFill, other.realtimeDocumentFill, t) ??
           realtimeDocumentFill,
       realtimeDocumentCorner:
-          Color.lerp(
-            realtimeDocumentCorner,
-            other.realtimeDocumentCorner,
-            t,
-          ) ??
+          Color.lerp(realtimeDocumentCorner, other.realtimeDocumentCorner, t) ??
           realtimeDocumentCorner,
       realtimeFaceStroke:
           Color.lerp(realtimeFaceStroke, other.realtimeFaceStroke, t) ??

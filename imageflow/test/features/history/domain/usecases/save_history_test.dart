@@ -10,13 +10,13 @@ import 'package:mocktail/mocktail.dart';
 class _MockHistoryRepository extends Mock implements HistoryRepository {}
 
 ProcessingHistory _fakeHistory() => ProcessingHistory(
-      id: 'save-test-id',
-      originalImagePath: '/originals/save-test.jpg',
-      processedImagePath: '/processed/save-test.jpg',
-      type: ProcessingType.document,
-      createdAt: DateTime(2024),
-      fileSizeBytes: 2048,
-    );
+  id: 'save-test-id',
+  originalImagePath: '/originals/save-test.jpg',
+  processedImagePath: '/processed/save-test.jpg',
+  type: ProcessingType.document,
+  createdAt: DateTime(2024),
+  fileSizeBytes: 2048,
+);
 
 void main() {
   late _MockHistoryRepository repository;
@@ -31,8 +31,9 @@ void main() {
   group('SaveHistory', () {
     test('delegates to repository.save with the given history', () async {
       final history = _fakeHistory();
-      when(() => repository.save(any()))
-          .thenAnswer((_) async => Result.ok(null));
+      when(
+        () => repository.save(any()),
+      ).thenAnswer((_) async => Result.ok(null));
 
       await useCase(history);
 
@@ -40,8 +41,9 @@ void main() {
     });
 
     test('returns Ok<void> on successful save', () async {
-      when(() => repository.save(any()))
-          .thenAnswer((_) async => Result.ok(null));
+      when(
+        () => repository.save(any()),
+      ).thenAnswer((_) async => Result.ok(null));
 
       final result = await useCase(_fakeHistory());
 
@@ -49,8 +51,9 @@ void main() {
     });
 
     test('returns Error when repository returns StorageFailure', () async {
-      when(() => repository.save(any()))
-          .thenAnswer((_) async => Result.error(const StorageFailure()));
+      when(
+        () => repository.save(any()),
+      ).thenAnswer((_) async => Result.error(const StorageFailure()));
 
       final result = await useCase(_fakeHistory());
 
@@ -60,8 +63,9 @@ void main() {
 
     test('passes the exact history object to repository', () async {
       final history = _fakeHistory();
-      when(() => repository.save(history))
-          .thenAnswer((_) async => Result.ok(null));
+      when(
+        () => repository.save(history),
+      ).thenAnswer((_) async => Result.ok(null));
 
       await useCase(history);
 

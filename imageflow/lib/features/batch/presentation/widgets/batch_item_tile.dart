@@ -114,8 +114,7 @@ class BatchItemTile extends StatelessWidget {
                   AppPrimaryButton.outlined(
                     onPressed: isQueueRunning
                         ? null
-                        : () =>
-                            controller.reselectItemFromGallery(item.index),
+                        : () => controller.reselectItemFromGallery(item.index),
                     icon: Icons.photo_library_outlined,
                     label: 'Re-select',
                   ),
@@ -139,12 +138,12 @@ class BatchItemTile extends StatelessWidget {
       BatchItemStatus.running => item.step?.label ?? 'Processing...',
       BatchItemStatus.success => 'Processed successfully',
       BatchItemStatus.failed => () {
-          final code = item.errorCode;
-          if (code == null || code.isEmpty) {
-            return item.errorMessage ?? 'Processing failed';
-          }
-          return '[$code] ${item.errorMessage ?? 'Processing failed'}';
-        }(),
+        final code = item.errorCode;
+        if (code == null || code.isEmpty) {
+          return item.errorMessage ?? 'Processing failed';
+        }
+        return '[$code] ${item.errorMessage ?? 'Processing failed'}';
+      }(),
     };
   }
 

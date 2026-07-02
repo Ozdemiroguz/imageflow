@@ -20,14 +20,14 @@ class _MockSaveHistory extends Mock implements SaveHistory {}
 class _MockFileService extends Mock implements FileService {}
 
 ProcessingResult _fakeResult() => ProcessingResult(
-      id: 'result-id',
-      type: ProcessingType.face,
-      originalImagePath: '/o/test.jpg',
-      processedImagePath: '/p/test.jpg',
-      thumbnailPath: '/t/test_thumb.jpg',
-      fileSizeBytes: 2048,
-      createdAt: DateTime(2024),
-    );
+  id: 'result-id',
+  type: ProcessingType.face,
+  originalImagePath: '/o/test.jpg',
+  processedImagePath: '/p/test.jpg',
+  thumbnailPath: '/t/test_thumb.jpg',
+  fileSizeBytes: 2048,
+  createdAt: DateTime(2024),
+);
 
 void main() {
   late _MockProcessImage processImage;
@@ -120,8 +120,7 @@ void main() {
             onProgress: any(named: 'onProgress'),
           ),
         ).thenAnswer((_) async => Result.ok(_fakeResult()));
-        when(() => saveHistory(any()))
-            .thenAnswer((_) async => Result.ok(null));
+        when(() => saveHistory(any())).thenAnswer((_) async => Result.ok(null));
 
         final controller = await makeAndInit('/test.jpg');
 
@@ -138,8 +137,7 @@ void main() {
             onProgress: any(named: 'onProgress'),
           ),
         ).thenAnswer((_) async => Result.ok(_fakeResult()));
-        when(() => saveHistory(any()))
-            .thenAnswer((_) async => Result.ok(null));
+        when(() => saveHistory(any())).thenAnswer((_) async => Result.ok(null));
 
         final controller = await makeAndInit('/test.jpg');
 
@@ -154,8 +152,9 @@ void main() {
             onProgress: any(named: 'onProgress'),
           ),
         ).thenAnswer((_) async => Result.ok(_fakeResult()));
-        when(() => saveHistory(any()))
-            .thenAnswer((_) async => Result.error(const StorageFailure()));
+        when(
+          () => saveHistory(any()),
+        ).thenAnswer((_) async => Result.error(const StorageFailure()));
 
         final controller = await makeAndInit('/test.jpg');
 
@@ -193,19 +192,22 @@ void main() {
         controller.onClose();
       });
 
-      test('isDetectionError is true when failure is DetectionFailure', () async {
-        when(
-          () => processImage(
-            imagePath: any(named: 'imagePath'),
-            onProgress: any(named: 'onProgress'),
-          ),
-        ).thenAnswer((_) async => Result.error(const DetectionFailure()));
+      test(
+        'isDetectionError is true when failure is DetectionFailure',
+        () async {
+          when(
+            () => processImage(
+              imagePath: any(named: 'imagePath'),
+              onProgress: any(named: 'onProgress'),
+            ),
+          ).thenAnswer((_) async => Result.error(const DetectionFailure()));
 
-        final controller = await makeAndInit('/test.jpg');
+          final controller = await makeAndInit('/test.jpg');
 
-        expect(controller.isDetectionError, isTrue);
-        controller.onClose();
-      });
+          expect(controller.isDetectionError, isTrue);
+          controller.onClose();
+        },
+      );
 
       test('isDetectionError is false for non-DetectionFailure', () async {
         when(
@@ -232,8 +234,9 @@ void main() {
             onProgress: any(named: 'onProgress'),
           ),
         ).thenAnswer((invocation) async {
-          final cb = invocation.namedArguments[#onProgress]
-              as void Function(ProcessingStep)?;
+          final cb =
+              invocation.namedArguments[#onProgress]
+                  as void Function(ProcessingStep)?;
           cb?.call(ProcessingStep.detectingFaces);
           reportedStep = ProcessingStep.detectingFaces;
           return Result.error(const DetectionFailure());

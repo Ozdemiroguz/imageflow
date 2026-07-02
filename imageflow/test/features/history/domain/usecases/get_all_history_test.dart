@@ -10,13 +10,13 @@ import 'package:mocktail/mocktail.dart';
 class _MockHistoryRepository extends Mock implements HistoryRepository {}
 
 ProcessingHistory _fakeHistory({String id = 'id-1'}) => ProcessingHistory(
-      id: id,
-      originalImagePath: '/originals/$id.jpg',
-      processedImagePath: '/processed/$id.jpg',
-      type: ProcessingType.face,
-      createdAt: DateTime(2024),
-      fileSizeBytes: 512,
-    );
+  id: id,
+  originalImagePath: '/originals/$id.jpg',
+  processedImagePath: '/processed/$id.jpg',
+  type: ProcessingType.face,
+  createdAt: DateTime(2024),
+  fileSizeBytes: 512,
+);
 
 void main() {
   late _MockHistoryRepository repository;
@@ -29,8 +29,7 @@ void main() {
 
   group('GetAllHistory', () {
     test('delegates to repository.getAll', () async {
-      when(() => repository.getAll())
-          .thenAnswer((_) async => Result.ok([]));
+      when(() => repository.getAll()).thenAnswer((_) async => Result.ok([]));
 
       await useCase();
 
@@ -38,8 +37,7 @@ void main() {
     });
 
     test('returns Ok with empty list when no history exists', () async {
-      when(() => repository.getAll())
-          .thenAnswer((_) async => Result.ok([]));
+      when(() => repository.getAll()).thenAnswer((_) async => Result.ok([]));
 
       final result = await useCase();
 
@@ -49,8 +47,7 @@ void main() {
 
     test('returns Ok with all history items', () async {
       final items = [_fakeHistory(id: 'a'), _fakeHistory(id: 'b')];
-      when(() => repository.getAll())
-          .thenAnswer((_) async => Result.ok(items));
+      when(() => repository.getAll()).thenAnswer((_) async => Result.ok(items));
 
       final result = await useCase();
 
@@ -59,8 +56,9 @@ void main() {
     });
 
     test('returns Error when repository returns StorageFailure', () async {
-      when(() => repository.getAll())
-          .thenAnswer((_) async => Result.error(const StorageFailure()));
+      when(
+        () => repository.getAll(),
+      ).thenAnswer((_) async => Result.error(const StorageFailure()));
 
       final result = await useCase();
 
