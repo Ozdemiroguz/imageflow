@@ -6,8 +6,8 @@ import 'package:get/get.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/routes/app_route_observer.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/camera_error_view.dart';
 import '../controllers/realtime_camera_controller.dart';
-import '../widgets/realtime_page_camera_error_view.dart';
 import '../widgets/realtime_page_camera_preview.dart';
 import '../widgets/realtime_page_capture_bar.dart';
 
@@ -101,7 +101,7 @@ class _RealtimePageState extends State<RealtimePage> with RouteAware {
         if (!_controller.isInitialized.value) {
           final f = _controller.failure.value;
           if (f != null) {
-            return RealtimeCameraErrorView(
+            return CameraErrorView(
               failure: f,
               onRetry: _controller.retryInit,
               onOpenSettings: f is PermissionFailure

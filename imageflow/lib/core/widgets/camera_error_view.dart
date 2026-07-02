@@ -1,10 +1,22 @@
-part of 'camera_capture_page.dart';
+import 'package:flutter/material.dart';
 
-class _CameraErrorView extends StatelessWidget {
-  const _CameraErrorView({
+import '../error/failure_ui_mapper.dart';
+import '../error/failures.dart';
+import '../theme/app_tokens.dart';
+import 'design_system/app_primary_button.dart';
+
+/// Full-bleed error overlay for camera screens (capture + realtime).
+///
+/// Renders the mapped [Failure] over a dark camera background, with a
+/// permission-specific icon and an optional "Open Settings" action; a "Retry"
+/// action appears when the failure is retryable or a permission issue. Shared
+/// by both camera flows since their error UI is identical.
+class CameraErrorView extends StatelessWidget {
+  const CameraErrorView({
     required this.failure,
     required this.onRetry,
     this.onOpenSettings,
+    super.key,
   });
 
   final Failure failure;

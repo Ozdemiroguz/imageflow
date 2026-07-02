@@ -4,16 +4,14 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../core/error/failure_ui_mapper.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/routes/app_route_observer.dart';
 import '../../../../core/theme/app_tokens.dart';
-import '../../../../core/widgets/design_system/app_primary_button.dart';
+import '../../../../core/widgets/camera_error_view.dart';
 import '../controllers/camera_capture_controller.dart';
 
 part 'camera_capture_page_preview.dart';
 part 'camera_capture_page_capture_bar.dart';
-part 'camera_capture_page_error_view.dart';
 
 class CameraCapturePage extends StatefulWidget {
   const CameraCapturePage({super.key});
@@ -114,7 +112,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> with RouteAware {
         if (!_controller.isInitialized.value) {
           final f = _controller.failure.value;
           if (f != null) {
-            return _CameraErrorView(
+            return CameraErrorView(
               failure: f,
               onRetry: _controller.retryInit,
               onOpenSettings: f is PermissionFailure
