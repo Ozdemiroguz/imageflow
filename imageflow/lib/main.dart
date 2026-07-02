@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 
 import 'app.dart';
 import 'core/platform/image_picker_gateway.dart';
+import 'core/platform/image_picker_gateway_impl.dart';
 import 'core/services/face_thumbnail_cache_service.dart';
 import 'core/services/file_service.dart';
 import 'core/services/image_cache_policy_service.dart';
