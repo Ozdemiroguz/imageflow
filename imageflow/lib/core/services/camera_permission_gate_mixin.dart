@@ -19,7 +19,7 @@ mixin CameraPermissionGateMixin {
   /// Ensures camera permission, updating [cameraPermission] and clearing/setting
   /// a [PermissionFailure]. Returns whether permission is granted.
   Future<bool> ensureCameraPermission({required bool requestIfNeeded}) async {
-    var granted = await permissionService.isCameraGranted;
+    var granted = await permissionService.checkCameraPermission();
     if (!granted && requestIfNeeded) {
       granted = await permissionService.requestCamera();
     }

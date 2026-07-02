@@ -94,6 +94,9 @@ class RealtimeResultPanelCard extends StatelessWidget {
                             bytes!,
                             fit: BoxFit.contain,
                             gaplessPlayback: true,
+                            // Panel preview is small; bound decode so rapid
+                            // realtime updates don't cache full-res bytes.
+                            cacheWidth: 300,
                           ),
                   ),
                 ),

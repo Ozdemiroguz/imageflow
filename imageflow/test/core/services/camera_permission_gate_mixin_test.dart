@@ -30,7 +30,7 @@ void main() {
 
   test('granted: flag true, PermissionFailure cleared', () async {
     host.cameraFailure.value = const PermissionFailure('stale');
-    when(() => permission.isCameraGranted).thenAnswer((_) async => true);
+    when(() => permission.checkCameraPermission()).thenAnswer((_) async => true);
 
     final granted = await host.ensureCameraPermission(requestIfNeeded: true);
 
@@ -40,7 +40,7 @@ void main() {
   });
 
   test('denied: flag false, PermissionFailure set', () async {
-    when(() => permission.isCameraGranted).thenAnswer((_) async => false);
+    when(() => permission.checkCameraPermission()).thenAnswer((_) async => false);
     when(() => permission.requestCamera()).thenAnswer((_) async => false);
 
     final granted = await host.ensureCameraPermission(requestIfNeeded: true);
@@ -51,7 +51,7 @@ void main() {
   });
 
   test('requestIfNeeded=false does not request when not granted', () async {
-    when(() => permission.isCameraGranted).thenAnswer((_) async => false);
+    when(() => permission.checkCameraPermission()).thenAnswer((_) async => false);
 
     final granted = await host.ensureCameraPermission(requestIfNeeded: false);
 
@@ -61,7 +61,7 @@ void main() {
 
   test('does not clobber a non-permission failure when granted', () async {
     host.cameraFailure.value = const CameraFailure('camera broke');
-    when(() => permission.isCameraGranted).thenAnswer((_) async => true);
+    when(() => permission.checkCameraPermission()).thenAnswer((_) async => true);
 
     await host.ensureCameraPermission(requestIfNeeded: false);
 

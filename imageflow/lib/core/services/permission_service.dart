@@ -22,8 +22,8 @@ class PermissionService extends GetxService {
     return result.isGranted || result.isLimited;
   }
 
-  Future<bool> get isCameraGranted => Permission.camera.isGranted;
-  Future<bool> get isPhotosGranted => Permission.photos.isGranted;
+  /// Whether camera permission is currently granted, without prompting.
+  Future<bool> checkCameraPermission() => Permission.camera.isGranted;
 
   Future<bool> openSettings() => openAppSettings();
 }
