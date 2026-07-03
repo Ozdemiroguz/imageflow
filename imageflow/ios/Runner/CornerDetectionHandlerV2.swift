@@ -123,10 +123,15 @@ class CornerDetectionHandlerV2: NSObject, FlutterPlugin {
         let handler = VNImageRequestHandler(cgImage: cgImage, orientation: orientation, options: [:])
 
         DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                try handler.perform([request])
-            } catch {
-                result(FlutterError(code: "HANDLER_ERROR", message: error.localizedDescription, details: nil))
+            // Drain Vision's temporary buffers per call; without this the
+            // autorelease pool only drains when the GCD thread ends, so batch
+            // processing many images bloats memory.
+            autoreleasepool {
+                do {
+                    try handler.perform([request])
+                } catch {
+                    result(FlutterError(code: "HANDLER_ERROR", message: error.localizedDescription, details: nil))
+                }
             }
         }
     }

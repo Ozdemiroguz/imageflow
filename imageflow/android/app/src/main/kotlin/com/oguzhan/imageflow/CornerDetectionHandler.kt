@@ -8,6 +8,7 @@ import android.graphics.YuvImage
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.exifinterface.media.ExifInterface
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
@@ -127,6 +128,10 @@ class CornerDetectionHandler : FlutterPlugin, MethodCallHandler {
                         }
                         mainHandler.post { result.success(corners) }
                     } catch (e: Exception) {
+                        // Per-frame hot path: a failure means "drop this frame"
+                        // (null = no rectangle), matching the Dart contract — but
+                        // log it so a real crash (OOM, OpenCV) isn't invisible.
+                        Log.w("CornerDetection", "Frame detection failed", e)
                         mainHandler.post { result.success(null) }
                     } finally {
                         frameBusy = false
