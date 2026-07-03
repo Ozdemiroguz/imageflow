@@ -155,14 +155,18 @@ class CornerDetectionHandler : FlutterPlugin, MethodCallHandler {
             val newW = (origW * scale).toInt()
             val newH = (origH * scale).toInt()
             workBitmap = android.graphics.Bitmap.createScaledBitmap(bitmap, newW, newH, true)
+            // The scaled copy replaces the original; release the full-size
+            // bitmap now instead of waiting for GC (matters on repeated calls).
+            bitmap.recycle()
         } else {
             scale = 1.0
             workBitmap = bitmap
         }
 
-        // Convert to OpenCV Mat
+        // Convert to OpenCV Mat, then release the bitmap's native pixels.
         val src = Mat()
         Utils.bitmapToMat(workBitmap, src)
+        workBitmap.recycle()
 
         // Find contours using proven edge detection pipeline
         val contours = findContours(src)
