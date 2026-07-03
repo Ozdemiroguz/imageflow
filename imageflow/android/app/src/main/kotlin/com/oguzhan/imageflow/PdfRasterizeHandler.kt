@@ -49,7 +49,9 @@ class PdfRasterizeHandler : FlutterPlugin, MethodChannel.MethodCallHandler {
             return
         }
 
-        val dpi = call.argument<Double>("dpi") ?: 144.0
+        // Clamp DPI to a sane range so a bad/hostile value can't request a
+        // negative scale or a huge allocation.
+        val dpi = (call.argument<Double>("dpi") ?: 144.0).coerceIn(72.0, 600.0)
         val scale = (dpi / 72.0).coerceAtLeast(1.0)
 
         ioExecutor.execute {

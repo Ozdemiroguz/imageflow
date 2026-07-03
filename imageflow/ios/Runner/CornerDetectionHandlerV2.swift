@@ -278,8 +278,13 @@ class CornerDetectionHandlerV2: NSObject, FlutterPlugin {
     }
 
     private func releaseFrameSlot() {
-        frameStateQueue.async { [weak self] in
-            self?.frameBusy = false
+        // Release synchronously (mirroring acquireFrameSlot's sync) so the slot
+        // is guaranteed free before the next frame tries to acquire it — an
+        // async release could clear the flag *after* a new frame grabbed it.
+        // Callers run on the main/global queue, never on frameStateQueue, so
+        // this cannot deadlock.
+        frameStateQueue.sync {
+            frameBusy = false
         }
     }
 
