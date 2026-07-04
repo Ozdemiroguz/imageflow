@@ -1,0 +1,61 @@
+{
+  // ImageFlow launch configurations.
+  // The Flutter app lives in the imageflow/ subdirectory, hence "cwd" on every config.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // Day-to-day development: hot reload, DevTools, assertions.
+      "name": "ImageFlow (debug)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "imageflow",
+      "flutterMode": "debug"
+    },
+    {
+      // Performance validation. Judge animation smoothness / jank HERE —
+      // debug mode's JIT + assertions stutter regardless of app code.
+      "name": "ImageFlow (profile)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "imageflow",
+      "flutterMode": "profile"
+    },
+    {
+      // Final smoke test: exactly what ships (AOT, no debugging).
+      "name": "ImageFlow (release)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "imageflow",
+      "flutterMode": "release"
+    },
+    {
+      // Whole suite — same as the CI test gate.
+      "name": "All tests",
+      "type": "dart",
+      "request": "launch",
+      "program": "test",
+      "cwd": "imageflow"
+    },
+    {
+      // Runs the test file currently open in the editor.
+      "name": "Tests: current file",
+      "type": "dart",
+      "request": "launch",
+      "program": "${file}",
+      "cwd": "imageflow"
+    },
+    {
+      // Suite with coverage output (imageflow/coverage/lcov.info),
+      // matching the CI artifact.
+      "name": "All tests (coverage)",
+      "type": "dart",
+      "request": "launch",
+      "program": "test",
+      "cwd": "imageflow",
+      "toolArgs": ["--coverage"]
+    }
+  ]
+}

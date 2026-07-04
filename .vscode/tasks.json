@@ -1,0 +1,36 @@
+{
+  // Local mirrors of the CI gates (.github/workflows/ci.yml) so a push never
+  // fails on something you could have caught in the editor.
+  // Run via: Terminal > Run Task…  (or "ci: all gates" before pushing).
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dart: format check",
+      "type": "shell",
+      "command": "dart format --output=none --set-exit-if-changed .",
+      "options": { "cwd": "${workspaceFolder}/imageflow" },
+      "problemMatcher": []
+    },
+    {
+      "label": "flutter: analyze",
+      "type": "shell",
+      "command": "flutter analyze --fatal-infos --fatal-warnings",
+      "options": { "cwd": "${workspaceFolder}/imageflow" },
+      "problemMatcher": []
+    },
+    {
+      "label": "flutter: test",
+      "type": "shell",
+      "command": "flutter test",
+      "options": { "cwd": "${workspaceFolder}/imageflow" },
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "ci: all gates",
+      "dependsOrder": "sequence",
+      "dependsOn": ["dart: format check", "flutter: analyze", "flutter: test"],
+      "problemMatcher": []
+    }
+  ]
+}
