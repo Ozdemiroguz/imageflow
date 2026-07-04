@@ -149,6 +149,12 @@ class BatchProcessingController extends GetxController {
   }
 
   Future<void> goHome() async {
+    // Navigating while a snackbar overlay is active (e.g. the batch-completed
+    // snack the user taps Done through) corrupts GetX's navigator state —
+    // close it before rebuilding the stack.
+    if (Get.isSnackbarOpen) {
+      Get.closeAllSnackbars();
+    }
     await Get.offAllNamed(AppRoutes.home);
   }
 

@@ -115,6 +115,11 @@ class ProcessingController extends GetxController {
   }
 
   void chooseNewImage() {
+    // Close any active snackbar before rebuilding the stack — navigating over
+    // an open snackbar corrupts GetX's navigator state.
+    if (Get.isSnackbarOpen) {
+      Get.closeAllSnackbars();
+    }
     Get.offAllNamed(AppRoutes.home);
   }
 
