@@ -47,55 +47,49 @@ class RealtimeCameraPreview extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
+                // Only the camera image is mirrored on the front camera (so the
+                // user sees themselves as in a mirror). Detection overlays are
+                // NOT inside this flip: their coordinates come from the
+                // un-mirrored frame, so flipping them too would put the boxes on
+                // the wrong side. They are drawn in the un-flipped space below.
                 Transform.flip(
                   flipX: controller.isFrontCamera,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      CameraPreview(cameraController),
-                      Obx(() {
-                        final faces = controller.faceRects.toList(
-                          growable: false,
-                        );
-                        final tokens = context.tokens;
-                        return RepaintBoundary(
-                          child: CustomPaint(
-                            painter: RealtimeFaceOverlayPainter(
-                              faces: faces,
-                              tokens: tokens,
-                            ),
-                          ),
-                        );
-                      }),
-                      Obx(
-                        () => RepaintBoundary(
-                          child: CustomPaint(
-                            painter: RealtimeDocumentOverlayPainter(
-                              corners: controller.documentCorners.value,
-                              tokens: context.tokens,
-                            ),
-                          ),
-                        ),
+                  child: CameraPreview(cameraController),
+                ),
+                Obx(() {
+                  final faces = controller.faceRects.toList(growable: false);
+                  return RepaintBoundary(
+                    child: CustomPaint(
+                      painter: RealtimeFaceOverlayPainter(
+                        faces: faces,
+                        tokens: context.tokens,
                       ),
-                      Obx(() {
-                        final objects = controller.detectedObjects.toList(
-                          growable: false,
-                        );
-                        return RepaintBoundary(
-                          child: CustomPaint(
-                            painter: RealtimeObjectOverlayPainter(
-                              objects: objects,
-                              // Front camera flips the whole preview; undo it
-                              // for the label text so it reads left-to-right.
-                              mirrorLabels: controller.isFrontCamera,
-                              tokens: context.tokens,
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
+                    ),
+                  );
+                }),
+                Obx(
+                  () => RepaintBoundary(
+                    child: CustomPaint(
+                      painter: RealtimeDocumentOverlayPainter(
+                        corners: controller.documentCorners.value,
+                        tokens: context.tokens,
+                      ),
+                    ),
                   ),
                 ),
+                Obx(() {
+                  final objects = controller.detectedObjects.toList(
+                    growable: false,
+                  );
+                  return RepaintBoundary(
+                    child: CustomPaint(
+                      painter: RealtimeObjectOverlayPainter(
+                        objects: objects,
+                        tokens: context.tokens,
+                      ),
+                    ),
+                  );
+                }),
                 RealtimeLiveQuarterPreviewOverlay(controller: controller),
               ],
             ),

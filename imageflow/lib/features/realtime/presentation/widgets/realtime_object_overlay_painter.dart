@@ -11,7 +11,6 @@ class RealtimeObjectOverlayPainter extends CustomPainter {
   RealtimeObjectOverlayPainter({
     required this.objects,
     required AppTokens tokens,
-    this.mirrorLabels = false,
   }) : _labelBg = tokens.realtimeObjectLabelBg,
        _boxStroke = Paint()
          ..color = tokens.realtimeObjectStroke
@@ -25,11 +24,6 @@ class RealtimeObjectOverlayPainter extends CustomPainter {
          ..style = PaintingStyle.fill;
 
   final List<DetectedObjectInfo> objects;
-
-  /// When the preview is horizontally flipped (front camera), the label text
-  /// would render mirrored. Setting this re-flips just the label glyphs so the
-  /// text stays readable while the boxes keep their (already-flipped) positions.
-  final bool mirrorLabels;
   final Color _labelBg;
   final Paint _boxStroke;
   final Paint _boxFill;
@@ -85,29 +79,15 @@ class RealtimeObjectOverlayPainter extends CustomPainter {
     if (chipLeft < 0) chipLeft = 0;
 
     final chipRect = Rect.fromLTWH(chipLeft, chipTop, chipWidth, chipHeight);
-
-    if (mirrorLabels) {
-      // Re-flip only this chip around its own center so, once the parent's
-      // front-camera flip is applied, the text reads left-to-right again.
-      canvas.save();
-      canvas.translate(chipRect.center.dx, 0);
-      canvas.scale(-1, 1);
-      canvas.translate(-chipRect.center.dx, 0);
-    }
-
     canvas.drawRRect(
       RRect.fromRectAndRadius(chipRect, const Radius.circular(6)),
       _labelBgPaint,
     );
     painter.paint(canvas, Offset(chipLeft + _labelPadH, chipTop + _labelPadV));
-
-    if (mirrorLabels) canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant RealtimeObjectOverlayPainter oldDelegate) {
-    return oldDelegate.objects != objects ||
-        oldDelegate.mirrorLabels != mirrorLabels ||
-        oldDelegate._labelBg != _labelBg;
+    return oldDelegate.objects != objects || oldDelegate._labelBg != _labelBg;
   }
 }
