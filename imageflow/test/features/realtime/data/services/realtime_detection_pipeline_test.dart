@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:camera/camera.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
@@ -35,6 +37,21 @@ class _MockPreviewBuilder extends Mock implements RealtimePreviewBuilder {}
 class _FakeCameraImage extends Mock implements CameraImage {}
 
 class _FallbackCameraImage extends Fake implements CameraImage {}
+
+class _FakePlane extends Mock implements Plane {}
+
+/// A high-variance Y plane so the scene gate treats the frame as interesting
+/// (detection runs). Values swing 0/255 so stddev is far above the threshold.
+Plane _interestingYPlane() {
+  final plane = _FakePlane();
+  final bytes = Uint8List.fromList(
+    List<int>.generate(4096, (i) => i.isEven ? 0 : 255),
+  );
+  when(() => plane.bytes).thenReturn(bytes);
+  when(() => plane.bytesPerRow).thenReturn(64);
+  when(() => plane.bytesPerPixel).thenReturn(1);
+  return plane;
+}
 
 void main() {
   setUpAll(() {
@@ -245,5 +262,59 @@ void main() {
         isTrue,
       );
     });
+  });
+
+  group('processFrame mode gating', () {
+    // An interesting frame so the scene gate does not short-circuit; 3 planes so
+    // both the YUV object/edge paths and the shared conversion have data.
+    void stubInterestingYuvFrame() {
+      final y = _interestingYPlane();
+      final u = _interestingYPlane();
+      final v = _interestingYPlane();
+      when(() => frame.planes).thenReturn([y, u, v]);
+      when(() => frame.width).thenReturn(64);
+      when(() => frame.height).thenReturn(64);
+    }
+
+    test(
+      'object mode OFF -> object detector never called, boxes cleared',
+      () async {
+        stubInterestingYuvFrame();
+
+        // Disable face + document too so this test isolates the object path and
+        // needs no OCR/face/edge stubs.
+        await pipeline.processFrame(
+          frame,
+          rotation: InputImageRotation.rotation0deg,
+          nativeRotationDegrees: 0,
+          frameImageRotationDegrees: 0,
+          isFrontCamera: false,
+          needsMirrorCompensation: false,
+          faceEnabled: false,
+          documentEnabled: false,
+          objectEnabled: false,
+        );
+
+        // The disabled detector must not be invoked...
+        verifyNever(
+          () => objectDetector.detectObjectsFromFrame(
+            width: any(named: 'width'),
+            height: any(named: 'height'),
+            rotation: any(named: 'rotation'),
+            bytes: any(named: 'bytes'),
+            bytesPerRow: any(named: 'bytesPerRow'),
+            yBytes: any(named: 'yBytes'),
+            uBytes: any(named: 'uBytes'),
+            vBytes: any(named: 'vBytes'),
+            yRowStride: any(named: 'yRowStride'),
+            uvRowStride: any(named: 'uvRowStride'),
+            uvPixelStride: any(named: 'uvPixelStride'),
+            format: any(named: 'format'),
+          ),
+        );
+        // ...and its overlay is cleared so no stale boxes linger.
+        verify(() => output.setDetectedObjects(const [])).called(1);
+      },
+    );
   });
 }

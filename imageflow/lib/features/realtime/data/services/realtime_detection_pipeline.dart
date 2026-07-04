@@ -371,6 +371,11 @@ class RealtimeDetectionPipeline {
     required int frameImageRotationDegrees,
     required bool isFrontCamera,
     required bool needsMirrorCompensation,
+    // Per-detector enable flags (mode toggles). A disabled detector is skipped
+    // for the frame and its overlay cleared. "Document" gates OCR + edge.
+    bool faceEnabled = true,
+    bool documentEnabled = true,
+    bool objectEnabled = true,
   }) async {
     final frameWatch = PerfTrace.start();
     final now = DateTime.now();
@@ -398,9 +403,27 @@ class RealtimeDetectionPipeline {
       return;
     }
 
-    final shouldRunOcr = _scheduler.tryBeginOcrDetection(now);
-    final shouldRunFace = _scheduler.tryBeginFaceDetection(now);
-    final shouldRunObject = _scheduler.tryBeginObjectDetection(now);
+    // Disabled detectors are skipped and their overlays cleared so no stale
+    // boxes linger after a mode is turned off. "Document" gates both OCR (text)
+    // and the edge detector below.
+    if (!faceEnabled) {
+      _output.applyFaceGeometry(
+        nextFaceRects: const [],
+        nextFaceContours: const [],
+      );
+    }
+    if (!objectEnabled) {
+      _output.setDetectedObjects(const []);
+    }
+    if (!documentEnabled) {
+      _output.setDocumentCorners(null);
+    }
+
+    final shouldRunOcr =
+        documentEnabled && _scheduler.tryBeginOcrDetection(now);
+    final shouldRunFace = faceEnabled && _scheduler.tryBeginFaceDetection(now);
+    final shouldRunObject =
+        objectEnabled && _scheduler.tryBeginObjectDetection(now);
 
     Uint8List? resolveAndroidNv21() {
       if (imageFormatGroup != ImageFormatGroup.yuv420) return null;
@@ -492,7 +515,7 @@ class RealtimeDetectionPipeline {
       if (objectFuture != null) objectMs = results[i++];
     }
 
-    if (_scheduler.tryBeginEdgeDetection(now)) {
+    if (documentEnabled && _scheduler.tryBeginEdgeDetection(now)) {
       final edgeWatch = PerfTrace.start();
       await runDocumentEdgeDetection(
         frame,

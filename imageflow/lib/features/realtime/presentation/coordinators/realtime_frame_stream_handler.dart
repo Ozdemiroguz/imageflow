@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/services/camera_session_service.dart';
 import '../models/capture_realtime_config.dart';
+import '../models/realtime_detection_modes.dart';
 import '../../data/services/realtime_detection_pipeline.dart';
 import 'realtime_frame_geometry_source.dart';
 
@@ -26,6 +27,7 @@ class RealtimeFrameStreamHandler {
     required bool Function() isPausedByRoute,
     required AppLifecycleState Function() appLifecycleState,
     required RealtimeFrameGeometrySource frameGeometry,
+    required RealtimeDetectionModes Function() detectionModes,
   }) : _config = config,
        _cameraSessionService = cameraSessionService,
        _detectionPipeline = detectionPipeline,
@@ -37,7 +39,8 @@ class RealtimeFrameStreamHandler {
        _isCameraLifecycleBusy = isCameraLifecycleBusy,
        _isPausedByRoute = isPausedByRoute,
        _appLifecycleState = appLifecycleState,
-       _frameGeometry = frameGeometry;
+       _frameGeometry = frameGeometry,
+       _detectionModes = detectionModes;
 
   final CaptureRealtimeConfig _config;
   final CameraSessionService _cameraSessionService;
@@ -51,6 +54,7 @@ class RealtimeFrameStreamHandler {
   final bool Function() _isPausedByRoute;
   final AppLifecycleState Function() _appLifecycleState;
   final RealtimeFrameGeometrySource _frameGeometry;
+  final RealtimeDetectionModes Function() _detectionModes;
 
   Timer? _realtimeStartTimer;
   var _isFrameProcessing = false;
@@ -117,6 +121,7 @@ class RealtimeFrameStreamHandler {
     _isFrameProcessing = true;
     try {
       _frameGeometry.sync();
+      final modes = _detectionModes();
       await _detectionPipeline.processFrame(
         frame,
         rotation: _frameGeometry.mlKitRotation,
@@ -124,6 +129,9 @@ class RealtimeFrameStreamHandler {
         frameImageRotationDegrees: _frameGeometry.frameImageRotationDegrees,
         isFrontCamera: _frameGeometry.isFrontCamera,
         needsMirrorCompensation: _frameGeometry.needsMirrorCompensation,
+        faceEnabled: modes.face,
+        documentEnabled: modes.document,
+        objectEnabled: modes.object,
       );
     } finally {
       _isFrameProcessing = false;

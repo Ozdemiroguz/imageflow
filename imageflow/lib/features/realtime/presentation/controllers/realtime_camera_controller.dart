@@ -28,6 +28,7 @@ import '../coordinators/realtime_frame_stream_handler.dart';
 import '../models/realtime_native_rotation_strategy.dart';
 import '../enums/realtime_preview_target.dart';
 import '../models/capture_realtime_config.dart';
+import '../models/realtime_detection_modes.dart';
 import '../models/realtime_overlay_state.dart';
 import '../../data/services/realtime_detection_scheduler.dart';
 
@@ -107,6 +108,7 @@ class RealtimeCameraController extends GetxController
             isFrontCamera: () => isFrontCamera,
             needsMirrorCompensation: () => _needsMirrorCompensation,
           ),
+          detectionModes: () => detectionModes.value,
         );
 
     _sessionManager =
@@ -181,6 +183,20 @@ class RealtimeCameraController extends GetxController
   final isSwitchingCamera = false.obs;
   final canSwitchCamera = false.obs;
   final failure = Rxn<Failure>();
+
+  /// Which detectors are active. All on by default; the user toggles each
+  /// independently. The frame stream handler reads this each frame.
+  final detectionModes = const RealtimeDetectionModes().obs;
+
+  void toggleFaceMode() => detectionModes.value = detectionModes.value.copyWith(
+    face: !detectionModes.value.face,
+  );
+
+  void toggleDocumentMode() => detectionModes.value = detectionModes.value
+      .copyWith(document: !detectionModes.value.document);
+
+  void toggleObjectMode() => detectionModes.value = detectionModes.value
+      .copyWith(object: !detectionModes.value.object);
 
   RxList<Rect> get faceRects => _overlayStateManager.faceRects;
   RxList<List<Offset>> get faceContours => _overlayStateManager.faceContours;

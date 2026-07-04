@@ -15,9 +15,8 @@ void main() {
   // A 1px checkerboard (period 2). The gate's odd stride must still see both
   // phases and report high variance — a power-of-two stride would lock to one
   // phase and wrongly read zero.
-  Uint8List checkerboard({int length = 4096}) => Uint8List.fromList(
-    List<int>.generate(length, (i) => i.isEven ? 0 : 255),
-  );
+  Uint8List checkerboard({int length = 4096}) =>
+      Uint8List.fromList(List<int>.generate(length, (i) => i.isEven ? 0 : 255));
 
   Uint8List gradient({int length = 4096}) =>
       Uint8List.fromList(List<int>.generate(length, (i) => i % 256));

@@ -13,10 +13,7 @@ import 'dart:typed_data';
 ///
 /// Data layer, framework-free.
 class RealtimeSceneGate {
-  RealtimeSceneGate({
-    this.minStdDev = 12.0,
-    this.sampleCount = 256,
-  });
+  RealtimeSceneGate({this.minStdDev = 12.0, this.sampleCount = 256});
 
   /// Minimum luminance standard deviation for a frame to be "interesting".
   /// A flat surface sits near 0; a scene with objects/faces/text is well above.

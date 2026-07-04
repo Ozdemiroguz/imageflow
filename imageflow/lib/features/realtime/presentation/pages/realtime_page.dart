@@ -8,6 +8,7 @@ import '../../../../core/routes/app_route_observer.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/camera_error_view.dart';
 import '../controllers/realtime_camera_controller.dart';
+import '../widgets/realtime_mode_toggle_bar.dart';
 import '../widgets/realtime_page_camera_preview.dart';
 import '../widgets/realtime_page_capture_bar.dart';
 
@@ -118,7 +119,25 @@ class _RealtimePageState extends State<RealtimePage> with RouteAware {
           children: [
             Expanded(
               flex: 3,
-              child: RealtimeCameraPreview(controller: _controller),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: RealtimeCameraPreview(controller: _controller),
+                  ),
+                  Positioned(
+                    top: 0,
+                    left: 12,
+                    right: 12,
+                    child: SafeArea(
+                      bottom: false,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: RealtimeModeToggleBar(controller: _controller),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             Expanded(
               flex: 1,
