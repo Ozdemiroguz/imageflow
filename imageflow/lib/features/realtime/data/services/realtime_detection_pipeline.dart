@@ -419,8 +419,11 @@ class RealtimeDetectionPipeline {
       _output.setDocumentCorners(null);
     }
 
-    final shouldRunOcr =
-        documentEnabled && _scheduler.tryBeginOcrDetection(now);
+    // OCR is intentionally NOT run in realtime anymore. It used to gate edge
+    // detection ("is there text?"), but a document is a rectangle whether or not
+    // it has text, so edge now runs on its own (scene-gated). OCR's future role
+    // is text extraction from a captured document, not a realtime gate — so it
+    // stays wired (service + binding) but is not invoked per frame here.
     final shouldRunFace = faceEnabled && _scheduler.tryBeginFaceDetection(now);
     final shouldRunObject =
         objectEnabled && _scheduler.tryBeginObjectDetection(now);
@@ -446,36 +449,17 @@ class RealtimeDetectionPipeline {
       return sharedInputImage;
     }
 
-    // OCR, face, and object detection all run concurrently for this frame.
-    // OCR/face share the NV21/InputImage conversion; object detection sends the
-    // raw camera planes straight to native, so it needs no shared conversion and
-    // is scheduled here purely to overlap its native round-trip with the others.
-    if (shouldRunOcr || shouldRunFace || shouldRunObject) {
-      // Only resolve the shared conversion when OCR/face actually need it —
+    // Face and object detection run concurrently for this frame. Face needs the
+    // NV21/InputImage conversion; object detection sends the raw camera planes
+    // straight to native, so it needs no shared conversion and is scheduled
+    // here purely to overlap its native round-trip with face.
+    if (shouldRunFace || shouldRunObject) {
+      // Only resolve the shared conversion when face actually needs it —
       // object detection alone must not pay for NV21/InputImage.
-      final needsSharedConversion = shouldRunOcr || shouldRunFace;
-      final androidNv21Bytes = needsSharedConversion
-          ? resolveAndroidNv21()
-          : null;
-      final preparedInputImage = needsSharedConversion
-          ? resolveInputImage()
-          : null;
-      Future<int?>? ocrFuture;
+      final androidNv21Bytes = shouldRunFace ? resolveAndroidNv21() : null;
+      final preparedInputImage = shouldRunFace ? resolveInputImage() : null;
       Future<int?>? faceFuture;
       Future<int?>? objectFuture;
-
-      if (shouldRunOcr) {
-        ocrFuture = () async {
-          final ocrWatch = PerfTrace.start();
-          await runOcrGate(
-            frame,
-            rotation: rotation,
-            androidNv21Bytes: androidNv21Bytes,
-            preparedInputImage: preparedInputImage,
-          );
-          return PerfTrace.stopMs(ocrWatch);
-        }();
-      }
 
       if (shouldRunFace) {
         faceFuture = () async {
@@ -504,13 +488,8 @@ class RealtimeDetectionPipeline {
         }();
       }
 
-      final results = await Future.wait<int?>([
-        ?ocrFuture,
-        ?faceFuture,
-        ?objectFuture,
-      ]);
+      final results = await Future.wait<int?>([?faceFuture, ?objectFuture]);
       var i = 0;
-      if (ocrFuture != null) ocrMs = results[i++];
       if (faceFuture != null) faceMs = results[i++];
       if (objectFuture != null) objectMs = results[i++];
     }
@@ -534,10 +513,6 @@ class RealtimeDetectionPipeline {
         objectMs: objectMs,
       );
       return;
-    }
-
-    if (!_scheduler.hasOcrText) {
-      _output.setDocumentNoTextState();
     }
 
     _perfTracker.recordSample(

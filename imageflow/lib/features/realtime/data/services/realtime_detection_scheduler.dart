@@ -83,8 +83,13 @@ class RealtimeDetectionScheduler {
     }
   }
 
+  // Edge (document corner) detection is NO LONGER gated on OCR text. A document
+  // is always a rectangle but does not always contain text, so requiring text
+  // first missed text-less documents (blank pages, drawings, forms). The scene
+  // gate at the top of the pipeline already skips blank frames, so edge just
+  // needs its own busy/interval guard here.
   bool tryBeginEdgeDetection(DateTime now) {
-    if (!_hasOcrText || _isEdgeBusy) return false;
+    if (_isEdgeBusy) return false;
     if (_lastEdgeRunAt != null &&
         now.difference(_lastEdgeRunAt!) < _edgeInterval) {
       return false;

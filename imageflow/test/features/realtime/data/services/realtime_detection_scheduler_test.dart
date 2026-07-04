@@ -56,22 +56,35 @@ void main() {
     });
   });
 
-  group('edge detection gated on OCR text', () {
-    test('edge is blocked until OCR reports text', () {
+  group('edge detection is independent of OCR text', () {
+    test('edge can begin with no OCR text (text-less documents)', () {
       final s = makeScheduler();
-      // No OCR text yet → edge cannot begin.
-      expect(s.tryBeginEdgeDetection(t0), isFalse);
-
-      s.endOcrDetection(hasText: true);
-      expect(s.hasOcrText, isTrue);
+      // A document is a rectangle whether or not it has text, so edge must run
+      // without waiting for OCR — the scene gate (upstream) handles blank frames.
       expect(s.tryBeginEdgeDetection(t0), isTrue);
     });
 
-    test('OCR reporting no text keeps edge blocked', () {
+    test('OCR reporting no text does NOT block edge', () {
       final s = makeScheduler();
       s.endOcrDetection(hasText: false);
-      expect(s.hasOcrText, isFalse);
+      expect(s.tryBeginEdgeDetection(t0), isTrue);
+    });
+
+    test('edge honors its own busy lock + interval', () {
+      final s = makeScheduler(edge: const Duration(milliseconds: 100));
+      expect(s.tryBeginEdgeDetection(t0), isTrue);
+      // Busy until released.
       expect(s.tryBeginEdgeDetection(t0), isFalse);
+      s.endEdgeDetection();
+      // Released but throttled until the interval elapses.
+      expect(
+        s.tryBeginEdgeDetection(t0.add(const Duration(milliseconds: 50))),
+        isFalse,
+      );
+      expect(
+        s.tryBeginEdgeDetection(t0.add(const Duration(milliseconds: 100))),
+        isTrue,
+      );
     });
   });
 
@@ -108,10 +121,11 @@ void main() {
       expect(s.tryBeginObjectDetection(t0), isTrue);
     });
 
-    test('object detection is NOT gated on OCR text (unlike edge)', () {
+    test('neither object nor edge is gated on OCR text', () {
       final s = makeScheduler();
-      // No OCR text — edge is blocked but object is free.
-      expect(s.tryBeginEdgeDetection(t0), isFalse);
+      // With no OCR text, both edge and object are free to begin — OCR is no
+      // longer a gate for anything.
+      expect(s.tryBeginEdgeDetection(t0), isTrue);
       expect(s.tryBeginObjectDetection(t0), isTrue);
     });
   });
