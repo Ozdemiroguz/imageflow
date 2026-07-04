@@ -10,6 +10,7 @@ import UIKit
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
     CornerDetectionHandlerV2.register(with: self.registrar(forPlugin: "CornerDetectionHandlerV2")!)
+    ObjectDetectionHandler.register(with: self.registrar(forPlugin: "ObjectDetectionHandler")!)
     PdfExternalOpenHandler.register(with: self.registrar(forPlugin: "PdfExternalOpenHandler")!)
     PdfRasterizeHandler.register(with: self.registrar(forPlugin: "PdfRasterizeHandler")!)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)

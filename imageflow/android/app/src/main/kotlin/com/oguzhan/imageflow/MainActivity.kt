@@ -7,6 +7,7 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         flutterEngine.plugins.add(CornerDetectionHandler())
+        flutterEngine.plugins.add(ObjectDetectionHandler())
         flutterEngine.plugins.add(PdfExternalOpenHandler())
         flutterEngine.plugins.add(PdfRasterizeHandler())
     }

@@ -132,21 +132,26 @@ the architecture), then add the native handlers, which the developer compiles
 and validates on-device (profile mode).
 
 ### Phase 1 — realtime objects
-- **1a — Dart skeleton (testable):** `ObjectDetector` interface
+- **1a — Dart skeleton (testable) ✅:** `ObjectDetector` interface
   (`core/platform/`), `DetectedObjectInfo` model (`core/models/`, plugin-free:
   label, confidence, normalized rect, trackingId?), `NativeObjectDetectionService`
   (channel impl), scheduler object slot (`tryBeginObjectDetection`/`endObjectDetection`
   + `objectInterval` in config).
-- **1b — wire-in:** `DetectionOutputPort` object methods + overlay store fields
-  + a box+label painter under `RepaintBoundary` with a `shouldRepaint` diff;
-  pipeline calls the object slot with the already-shared per-frame conversion;
-  `PerfTrace` gains `objectMs`.
-- **1c — Dart tests:** scheduler object slot, service contract (mocked channel),
-  pipeline characterization extension.
-- **1d — native handlers:** iOS Core ML handler (reuse VNCoreMLRequest +
-  VNSequenceRequestHandler; Apple gallery model bundled) + Android MediaPipe
-  ObjectDetector handler (EfficientDet-Lite0 asset) + channel case
-  `detectObjectsFromFrame`. *Compiled & validated on-device by the developer.*
+- **1b — wire-in ✅:** `DetectionOutputPort.setDetectedObjects` + overlay store
+  reactive field with sub-threshold jitter suppression + a box+label painter
+  under `RepaintBoundary` with a `shouldRepaint` diff (front-camera label
+  re-flip); pipeline runs the object slot concurrently with OCR/face, sending
+  the raw camera planes straight to native (no extra conversion); `PerfTrace`
+  gains an `objectMs` bucket.
+- **1c — Dart tests ✅:** scheduler object slot, service contract (mocked
+  channel), pipeline object characterization, overlay object-diff. 281 green.
+- **1d — native handlers ✅ (code) / ⏳ (on-device):** iOS Core ML handler
+  (`ObjectDetectionHandler.swift`, reused `VNCoreMLRequest`, `.all` compute
+  units, graceful no-op if model absent) + Android MediaPipe handler
+  (`ObjectDetectionHandler.kt`, `tasks-vision` EfficientDet-Lite0, IMAGE+VIDEO
+  detectors, graceful no-op if asset absent) + both registered on their channel.
+  **Remaining (developer, on-device):** drop in the model binaries per each
+  platform's `MODEL_README.md`, then compile & validate in profile mode.
 
 ### Phase 2 — still-image objects
 `detectObjects(imagePath)` + processing integration (third mode or standalone

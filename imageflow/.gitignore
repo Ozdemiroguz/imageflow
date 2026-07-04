@@ -72,3 +72,9 @@ app.*.map.json
 *.env
 *.jks
 *.keystore
+
+# ML model binaries (fetched per each platform's MODEL_README, not committed)
+*.tflite
+*.mlmodel
+*.mlmodelc
+*.mlpackage
