@@ -8,8 +8,10 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/models/detected_object_info.dart';
 import '../../../../core/models/normalized_corners.dart';
 import '../../../../core/platform/corner_detector.dart';
+import '../../../../core/platform/object_detector.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/coordinators/camera_route_lifecycle_controller.dart';
 import '../../../../core/services/camera_session_service.dart';
@@ -35,6 +37,7 @@ class RealtimeCameraController extends GetxController
     required PermissionService permissionService,
     required CameraSessionService cameraSessionService,
     required CornerDetector cornerDetectionService,
+    required ObjectDetector objectDetectionService,
     required RealtimeFaceDetectionService faceDetectionService,
     required RealtimeOcrGateService ocrGateService,
     required RealtimePreviewBuilder previewBuilder,
@@ -60,6 +63,7 @@ class RealtimeCameraController extends GetxController
           faceInterval: _config.faceInterval,
           ocrInterval: _config.ocrInterval,
           edgeInterval: _config.edgeInterval,
+          objectInterval: _config.objectInterval,
           facePanelInterval: _config.facePanelInterval,
           documentPanelInterval: _config.documentPanelInterval,
         );
@@ -76,6 +80,7 @@ class RealtimeCameraController extends GetxController
           scheduler: _scheduler,
           output: _overlayStateManager,
           cornerDetectionService: cornerDetectionService,
+          objectDetectionService: objectDetectionService,
           faceDetectionService: faceDetectionService,
           ocrGateService: ocrGateService,
           previewBuilder: previewBuilder,
@@ -179,6 +184,8 @@ class RealtimeCameraController extends GetxController
 
   RxList<Rect> get faceRects => _overlayStateManager.faceRects;
   RxList<List<Offset>> get faceContours => _overlayStateManager.faceContours;
+  RxList<DetectedObjectInfo> get detectedObjects =>
+      _overlayStateManager.detectedObjects;
   Rxn<NormalizedCorners> get documentCorners =>
       _overlayStateManager.documentCorners;
   Rxn<Uint8List> get facePreviewBytes => _overlayStateManager.facePreviewBytes;

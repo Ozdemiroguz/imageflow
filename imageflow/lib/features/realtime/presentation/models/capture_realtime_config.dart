@@ -16,11 +16,13 @@ class CaptureRealtimeConfig {
     this.faceInterval = const Duration(milliseconds: 180),
     this.ocrInterval = const Duration(milliseconds: 850),
     this.edgeInterval = const Duration(milliseconds: 260),
+    this.objectInterval = const Duration(milliseconds: 300),
     this.facePanelInterval = const Duration(milliseconds: 700),
     this.documentPanelInterval = const Duration(milliseconds: 800),
     this.minFaceRectDelta = 0.015,
     this.minFaceContourDelta = 0.02,
     this.minDocumentCornerDelta = 0.015,
+    this.minObjectRectDelta = 0.02,
     this.faceScanningStatus = 'Scanning for faces...',
     this.faceNotFoundStatus = 'No face detected',
     this.faceFoundStatusTemplate = 'Face found ({count})',
@@ -35,12 +37,14 @@ class CaptureRealtimeConfig {
   final Duration faceInterval;
   final Duration ocrInterval;
   final Duration edgeInterval;
+  final Duration objectInterval;
   final Duration facePanelInterval;
   final Duration documentPanelInterval;
 
   final double minFaceRectDelta;
   final double minFaceContourDelta;
   final double minDocumentCornerDelta;
+  final double minObjectRectDelta;
 
   final String faceScanningStatus;
   final String faceNotFoundStatus;

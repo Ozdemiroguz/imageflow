@@ -8,6 +8,7 @@ import '../controllers/realtime_camera_controller.dart';
 import '../enums/realtime_preview_target.dart';
 import 'realtime_document_overlay_painter.dart';
 import 'realtime_face_overlay_painter.dart';
+import 'realtime_object_overlay_painter.dart';
 
 part 'realtime_page_camera_preview_expanded_panel.dart';
 
@@ -76,6 +77,22 @@ class RealtimeCameraPreview extends StatelessWidget {
                           ),
                         ),
                       ),
+                      Obx(() {
+                        final objects = controller.detectedObjects.toList(
+                          growable: false,
+                        );
+                        return RepaintBoundary(
+                          child: CustomPaint(
+                            painter: RealtimeObjectOverlayPainter(
+                              objects: objects,
+                              // Front camera flips the whole preview; undo it
+                              // for the label text so it reads left-to-right.
+                              mirrorLabels: controller.isFrontCamera,
+                              tokens: context.tokens,
+                            ),
+                          ),
+                        );
+                      }),
                     ],
                   ),
                 ),

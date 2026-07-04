@@ -2,6 +2,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:imageflow/core/platform/corner_detector.dart';
+import 'package:imageflow/core/platform/object_detector.dart';
 import 'package:imageflow/features/realtime/data/datasources/realtime_face_detection_service.dart';
 import 'package:imageflow/features/realtime/data/datasources/realtime_ocr_gate_service.dart';
 import 'package:imageflow/features/realtime/data/services/realtime_detection_pipeline.dart';
@@ -22,6 +23,8 @@ class _MockOutputPort extends Mock implements DetectionOutputPort {}
 
 class _MockCornerDetector extends Mock implements CornerDetector {}
 
+class _MockObjectDetector extends Mock implements ObjectDetector {}
+
 class _MockFaceDetectionService extends Mock
     implements RealtimeFaceDetectionService {}
 
@@ -41,6 +44,7 @@ void main() {
 
   late _MockOutputPort output;
   late _MockCornerDetector cornerDetector;
+  late _MockObjectDetector objectDetector;
   late _MockFaceDetectionService faceService;
   late _MockOcrGateService ocrService;
   late _MockPreviewBuilder previewBuilder;
@@ -54,6 +58,7 @@ void main() {
   setUp(() {
     output = _MockOutputPort();
     cornerDetector = _MockCornerDetector();
+    objectDetector = _MockObjectDetector();
     faceService = _MockFaceDetectionService();
     ocrService = _MockOcrGateService();
     previewBuilder = _MockPreviewBuilder();
@@ -64,6 +69,7 @@ void main() {
       faceInterval: Duration.zero,
       ocrInterval: Duration.zero,
       edgeInterval: Duration.zero,
+      objectInterval: Duration.zero,
       facePanelInterval: Duration.zero,
       documentPanelInterval: Duration.zero,
     );
@@ -76,6 +82,7 @@ void main() {
       scheduler: scheduler,
       output: output,
       cornerDetectionService: cornerDetector,
+      objectDetectionService: objectDetector,
       faceDetectionService: faceService,
       ocrGateService: ocrService,
       previewBuilder: previewBuilder,
@@ -193,6 +200,50 @@ void main() {
       verify(() => output.resetDocumentPreviewMotionState()).called(1);
       verify(() => output.setDocumentSearchingState()).called(1);
       verifyNever(() => output.setDocumentFoundState());
+    });
+  });
+
+  group('runObjectDetection', () {
+    test('empty frame -> publishes empty list, never calls native', () async {
+      // No planes: object detection short-circuits to [] without a channel hop.
+      when(() => frame.planes).thenReturn(const []);
+
+      await pipeline.runObjectDetection(frame, nativeRotationDegrees: 0);
+
+      verify(() => output.setDetectedObjects(const [])).called(1);
+      verifyNever(
+        () => objectDetector.detectObjectsFromFrame(
+          width: any(named: 'width'),
+          height: any(named: 'height'),
+          rotation: any(named: 'rotation'),
+          bytes: any(named: 'bytes'),
+          bytesPerRow: any(named: 'bytesPerRow'),
+          yBytes: any(named: 'yBytes'),
+          uBytes: any(named: 'uBytes'),
+          vBytes: any(named: 'vBytes'),
+          yRowStride: any(named: 'yRowStride'),
+          uvRowStride: any(named: 'uvRowStride'),
+          uvPixelStride: any(named: 'uvPixelStride'),
+          format: any(named: 'format'),
+        ),
+      );
+    });
+
+    test('native error still releases the scheduler slot', () async {
+      // Guarded: even if reading the frame throws, the object slot must be
+      // released so the next frame is not permanently blocked.
+      final t0 = DateTime(2026, 1, 1, 12);
+      when(() => frame.planes).thenThrow(StateError('boom'));
+
+      // Occupy the slot the way processFrame would before delegating.
+      expect(scheduler.tryBeginObjectDetection(t0), isTrue);
+      await pipeline.runObjectDetection(frame, nativeRotationDegrees: 0);
+
+      // Slot was released by runObjectDetection's endObjectDetection().
+      expect(
+        scheduler.tryBeginObjectDetection(t0.add(const Duration(seconds: 1))),
+        isTrue,
+      );
     });
   });
 }

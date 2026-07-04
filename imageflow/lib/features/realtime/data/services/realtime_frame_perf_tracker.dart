@@ -16,6 +16,8 @@ class RealtimeFramePerfTracker {
   var _faceTotalMs = 0;
   var _edgeCount = 0;
   var _edgeTotalMs = 0;
+  var _objectCount = 0;
+  var _objectTotalMs = 0;
 
   void recordSample({
     required DateTime now,
@@ -23,6 +25,7 @@ class RealtimeFramePerfTracker {
     int? ocrMs,
     int? faceMs,
     int? edgeMs,
+    int? objectMs,
   }) {
     if (!PerfTrace.isEnabled || frameMs < 0) return;
 
@@ -45,6 +48,10 @@ class RealtimeFramePerfTracker {
       _edgeCount += 1;
       _edgeTotalMs += edgeMs;
     }
+    if (objectMs != null && objectMs >= 0) {
+      _objectCount += 1;
+      _objectTotalMs += objectMs;
+    }
 
     final elapsedMs = now.difference(_windowStartedAt!).inMilliseconds;
     if (elapsedMs < windowMs) return;
@@ -53,6 +60,9 @@ class RealtimeFramePerfTracker {
     final avgOcrMs = _ocrCount == 0 ? 0 : (_ocrTotalMs / _ocrCount).round();
     final avgFaceMs = _faceCount == 0 ? 0 : (_faceTotalMs / _faceCount).round();
     final avgEdgeMs = _edgeCount == 0 ? 0 : (_edgeTotalMs / _edgeCount).round();
+    final avgObjectMs = _objectCount == 0
+        ? 0
+        : (_objectTotalMs / _objectCount).round();
 
     final details =
         'window=${elapsedMs}ms'
@@ -60,7 +70,8 @@ class RealtimeFramePerfTracker {
         ' maxFrame=${_frameMaxMs}ms'
         ' ocr=$_ocrCount/$avgOcrMs'
         ' face=$_faceCount/$avgFaceMs'
-        ' edge=$_edgeCount/$avgEdgeMs';
+        ' edge=$_edgeCount/$avgEdgeMs'
+        ' object=$_objectCount/$avgObjectMs';
 
     if (_frameMaxMs >= 32) {
       PerfTrace.warning(
@@ -92,5 +103,7 @@ class RealtimeFramePerfTracker {
     _faceTotalMs = 0;
     _edgeCount = 0;
     _edgeTotalMs = 0;
+    _objectCount = 0;
+    _objectTotalMs = 0;
   }
 }

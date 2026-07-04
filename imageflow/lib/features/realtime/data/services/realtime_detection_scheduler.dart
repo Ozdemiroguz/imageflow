@@ -11,27 +11,32 @@ class RealtimeDetectionScheduler {
     required Duration edgeInterval,
     required Duration facePanelInterval,
     required Duration documentPanelInterval,
+    required Duration objectInterval,
   }) : _faceInterval = faceInterval,
        _ocrInterval = ocrInterval,
        _edgeInterval = edgeInterval,
        _facePanelInterval = facePanelInterval,
-       _documentPanelInterval = documentPanelInterval;
+       _documentPanelInterval = documentPanelInterval,
+       _objectInterval = objectInterval;
 
   final Duration _faceInterval;
   final Duration _ocrInterval;
   final Duration _edgeInterval;
   final Duration _facePanelInterval;
   final Duration _documentPanelInterval;
+  final Duration _objectInterval;
 
   DateTime? _lastFaceRunAt;
   DateTime? _lastOcrRunAt;
   DateTime? _lastEdgeRunAt;
   DateTime? _lastFacePanelAt;
   DateTime? _lastDocumentPanelAt;
+  DateTime? _lastObjectRunAt;
 
   var _isFaceBusy = false;
   var _isOcrBusy = false;
   var _isEdgeBusy = false;
+  var _isObjectBusy = false;
   var _hasOcrText = false;
 
   bool get hasOcrText => _hasOcrText;
@@ -93,6 +98,21 @@ class RealtimeDetectionScheduler {
     _isEdgeBusy = false;
   }
 
+  bool tryBeginObjectDetection(DateTime now) {
+    if (_isObjectBusy) return false;
+    if (_lastObjectRunAt != null &&
+        now.difference(_lastObjectRunAt!) < _objectInterval) {
+      return false;
+    }
+    _isObjectBusy = true;
+    _lastObjectRunAt = now;
+    return true;
+  }
+
+  void endObjectDetection() {
+    _isObjectBusy = false;
+  }
+
   // --- Preview-panel throttle slots -----------------------------------------
   //
   // `tryTake*PanelSlot` is a pure throttle: it returns true and marks "now" as
@@ -123,9 +143,11 @@ class RealtimeDetectionScheduler {
     _lastEdgeRunAt = null;
     _lastFacePanelAt = null;
     _lastDocumentPanelAt = null;
+    _lastObjectRunAt = null;
     _isFaceBusy = false;
     _isOcrBusy = false;
     _isEdgeBusy = false;
+    _isObjectBusy = false;
     _hasOcrText = false;
   }
 }

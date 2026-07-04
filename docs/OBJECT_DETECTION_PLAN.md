@@ -33,17 +33,39 @@ gain we don't need.
 realtime overlay draws tracked, labeled boxes; later, still-image scans
 (camera/gallery) get an "objects" mode.
 
-## 2. Native tech options per platform
+## 2. Native tech — DECISION: labeled COCO-80 on both platforms
 
-| | Option A — models with labels | Option B — built-in, zero model files |
+Chosen after per-platform research (see below). The whole showcase value is in
+**labeled, tracked boxes that read the same on both platforms** ("person 0.91",
+"cup 0.87"). The built-in zero-model paths were rejected because they produce
+inconsistent, weak labels (iOS Vision saliency = boxes with **no** labels;
+Android ML Kit base classifier = only 5 coarse buckets Fashion/Food/Home/Place/
+Plant). An asymmetric, unlabeled demo reads worse in review than one consistent
+labeled model per platform.
+
+| | Chosen (labeled, COCO-80) | Rejected (built-in, zero model) |
 |---|---|---|
-| **iOS** | Core ML detection model (e.g. YOLOv8n / MobileNet-SSD, ~5-10MB) via `VNCoreMLRequest`; runs on the Neural Engine | Vision saliency (`VNGenerateObjectnessBasedSaliencyImageRequest`): up to N salient-object boxes, **no labels** |
-| **Android** | TFLite (`tensorflow-lite-task-vision`) with EfficientDet-Lite0 (~5MB, COCO 80 classes), optional GPU delegate | ML Kit **Android SDK natively in Kotlin** (`com.google.mlkit:object-detection`): STREAM_MODE, tracking IDs, coarse 5-category labels |
-| **Demo value** | High — "cup 0.87" labeled boxes | Lower — boxes without (or with weak) labels |
-| **Cost** | +~10-15MB app size, more native code, model licensing check | Minimal code, no assets |
+| **iOS** | **Core ML via `VNCoreMLRequest`** — a license-clean COCO detector from **Apple's model gallery** (YOLOv3-Tiny or MobileNetV2-SSDLite). Emits `VNRecognizedObjectObservation` (box + label + confidence). ~10-25ms/frame on ANE. **NOT** Ultralytics YOLOv8/11 — those are AGPL-3.0 (viral license, wrong for a portfolio). | Vision saliency (`VNGenerateObjectnessBasedSaliencyImageRequest`) → boxes, **no labels** |
+| **Android** | **EfficientDet-Lite0** (~4.5MB, COCO-80, Apache-2.0) via **MediaPipe Tasks `ObjectDetector`** (`com.google.mediapipe:tasks-vision` — the LiteRT-era successor to the now-frozen `tensorflow-lite-task-vision`). Real COCO names. | ML Kit object-detection SDK — zero model but only 5 coarse categories |
 
-Both options keep everything **on-device** and **native** (Swift/Kotlin behind
-a MethodChannel), consistent with the existing corner/PDF handlers.
+**Performance notes that shaped the design:**
+- **iOS:** reuse ONE `VNCoreMLRequest` + a `VNSequenceRequestHandler` across
+  frames (not per-frame allocation like the corner path); `MLModelConfiguration
+  .computeUnits = .all` (ANE); Vision downscales to the model input internally
+  (no pre-shrink); keep the existing `autoreleasepool` + `frameBusy` + BGRA
+  `CVPixelBuffer` path unchanged.
+- **Android:** EfficientDet-Lite0 wants 320×320, so a per-frame resize is
+  unavoidable; feed from the frame with minimal Bitmap churn (reuse one Bitmap,
+  recycle only on teardown — respecting the leak fix we just landed). Detector
+  created once, closed on teardown, CPU+XNNPACK (GPU delegate overhead isn't
+  worth it at this model size).
+- **Both:** the object slot runs on the realtime scheduler at its own interval
+  (~300ms), so it is throttled far below per-frame — the model's per-call cost
+  is amortized and never competes for the 33ms frame budget. This is why the
+  "labeled but slightly heavier" choice costs nothing perceptible in realtime.
+
+Everything stays **on-device** and **native** (Swift/Kotlin behind a
+MethodChannel), consistent with the existing corner/PDF handlers.
 
 ## 3. Architecture fit — the hardened structure makes this cheap
 
@@ -102,15 +124,36 @@ proof: adding an entire detection mode touches a bounded, predictable set of
 files (interface + service + slot + port methods + painter) with zero layer
 violations.
 
-## 6. Phased plan
+## 6. Phased plan & build order
 
-1. **Phase 1 — realtime objects:** native handlers (iOS + Android) + channel +
-   Dart gateway + scheduler slot + port/overlay/painter + config + PerfTrace +
-   Dart-side tests (scheduler slot, pipeline characterization extension,
-   service contract with mocked channel). *Native code can't be compiled here —
-   on-device validation by the developer (profile mode).*
-2. **Phase 2 — still-image objects:** `detectObjects(imagePath)` + processing
-   integration (third mode or standalone flow), result UI with boxes/labels,
-   history persistence + mapper + tests.
-3. **Phase 3 (optional, measured):** object/saliency pre-gate for OCR — only
-   if profile traces justify it.
+**Build order rationale:** native code can't be compiled/run in this
+environment, so build the **testable Dart skeleton first** (green tests prove
+the architecture), then add the native handlers, which the developer compiles
+and validates on-device (profile mode).
+
+### Phase 1 — realtime objects
+- **1a — Dart skeleton (testable):** `ObjectDetector` interface
+  (`core/platform/`), `DetectedObjectInfo` model (`core/models/`, plugin-free:
+  label, confidence, normalized rect, trackingId?), `NativeObjectDetectionService`
+  (channel impl), scheduler object slot (`tryBeginObjectDetection`/`endObjectDetection`
+  + `objectInterval` in config).
+- **1b — wire-in:** `DetectionOutputPort` object methods + overlay store fields
+  + a box+label painter under `RepaintBoundary` with a `shouldRepaint` diff;
+  pipeline calls the object slot with the already-shared per-frame conversion;
+  `PerfTrace` gains `objectMs`.
+- **1c — Dart tests:** scheduler object slot, service contract (mocked channel),
+  pipeline characterization extension.
+- **1d — native handlers:** iOS Core ML handler (reuse VNCoreMLRequest +
+  VNSequenceRequestHandler; Apple gallery model bundled) + Android MediaPipe
+  ObjectDetector handler (EfficientDet-Lite0 asset) + channel case
+  `detectObjectsFromFrame`. *Compiled & validated on-device by the developer.*
+
+### Phase 2 — still-image objects
+`detectObjects(imagePath)` + processing integration (third mode or standalone
+flow), result UI with boxes/labels, history persistence + mapper + tests.
+
+### Phase 3 (optional, measured)
+The object slot as a selectable **document-scan gate strategy**: abstract the
+edge gate (`DetectionGate`) into `TextPresenceGate` (current OCR) +
+`ObjectPresenceGate` (new), chosen by realtime mode — keeps BOTH gates, user
+picks per scan. Only if profile traces + product value justify it.

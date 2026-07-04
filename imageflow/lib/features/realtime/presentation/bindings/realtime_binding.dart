@@ -1,8 +1,10 @@
 import 'package:get/get.dart';
 
 import '../../../../core/platform/corner_detector.dart';
+import '../../../../core/platform/object_detector.dart';
 import '../../../../core/services/camera_session_service.dart';
 import '../../../../core/services/native_corner_detection_service.dart';
+import '../../../../core/services/native_object_detection_service.dart';
 import '../../../../core/services/permission_service.dart';
 import '../../data/datasources/realtime_face_detection_service.dart';
 import '../../data/datasources/realtime_ocr_gate_service.dart';
@@ -17,6 +19,7 @@ class RealtimeBinding implements Bindings {
       Get.lazyPut<CameraSessionService>(CameraSessionService.new);
     }
     Get.lazyPut<CornerDetector>(NativeCornerDetectionService.new);
+    Get.lazyPut<ObjectDetector>(NativeObjectDetectionService.new);
     Get.lazyPut<RealtimePreviewBuilder>(RealtimePreviewBuilder.new);
 
     Get.lazyPut<RealtimeCameraController>(
@@ -24,6 +27,7 @@ class RealtimeBinding implements Bindings {
         permissionService: Get.find<PermissionService>(),
         cameraSessionService: Get.find<CameraSessionService>(),
         cornerDetectionService: Get.find<CornerDetector>(),
+        objectDetectionService: Get.find<ObjectDetector>(),
         faceDetectionService: RealtimeFaceDetectionService(),
         ocrGateService: RealtimeOcrGateService(),
         previewBuilder: Get.find<RealtimePreviewBuilder>(),

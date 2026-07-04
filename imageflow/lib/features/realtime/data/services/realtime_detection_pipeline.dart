@@ -4,8 +4,10 @@ import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
+import '../../../../core/models/detected_object_info.dart';
 import '../../../../core/models/normalized_corners.dart';
 import '../../../../core/platform/corner_detector.dart';
+import '../../../../core/platform/object_detector.dart';
 import '../../../../core/platform/camera_nv21_converter.dart';
 import '../../../../core/utils/log.dart';
 import '../../../../core/utils/perf_trace.dart';
@@ -31,6 +33,7 @@ class RealtimeDetectionPipeline {
     required RealtimeDetectionScheduler scheduler,
     required DetectionOutputPort output,
     required CornerDetector cornerDetectionService,
+    required ObjectDetector objectDetectionService,
     required RealtimeFaceDetectionService faceDetectionService,
     required RealtimeOcrGateService ocrGateService,
     required RealtimePreviewBuilder previewBuilder,
@@ -39,6 +42,7 @@ class RealtimeDetectionPipeline {
   }) : _scheduler = scheduler,
        _output = output,
        _cornerDetectionService = cornerDetectionService,
+       _objectDetectionService = objectDetectionService,
        _faceDetectionService = faceDetectionService,
        _ocrGateService = ocrGateService,
        _previewBuilder = previewBuilder,
@@ -69,6 +73,7 @@ class RealtimeDetectionPipeline {
   final RealtimeDetectionScheduler _scheduler;
   final DetectionOutputPort _output;
   final CornerDetector _cornerDetectionService;
+  final ObjectDetector _objectDetectionService;
   final RealtimeFaceDetectionService _faceDetectionService;
   final RealtimeOcrGateService _ocrGateService;
   final RealtimePreviewBuilder _previewBuilder;
@@ -245,6 +250,23 @@ class RealtimeDetectionPipeline {
     _scheduler.endEdgeDetection();
   }
 
+  Future<void> runObjectDetection(
+    CameraImage frame, {
+    required int nativeRotationDegrees,
+  }) async {
+    await _runGuarded<void>(
+      errorMessage: 'Realtime object detection failed',
+      action: () async {
+        final objects = await _detectObjects(
+          frame,
+          nativeRotationDegrees: nativeRotationDegrees,
+        );
+        _output.setDetectedObjects(objects);
+      },
+    );
+    _scheduler.endObjectDetection();
+  }
+
   Future<T?> _runGuarded<T>({
     required String errorMessage,
     required Future<T> Function() action,
@@ -296,6 +318,45 @@ class RealtimeDetectionPipeline {
     );
   }
 
+  Future<List<DetectedObjectInfo>> _detectObjects(
+    CameraImage frame, {
+    required int nativeRotationDegrees,
+  }) {
+    if (frame.planes.isEmpty) return Future.value(const []);
+
+    if (imageFormatGroup == ImageFormatGroup.bgra8888) {
+      final plane = frame.planes.first;
+      return _objectDetectionService.detectObjectsFromFrame(
+        width: frame.width,
+        height: frame.height,
+        // If frame image is already preview-oriented, keep rotation at 0.
+        rotation: frameImageUsesNativeRotation ? nativeRotationDegrees : 0,
+        bytes: plane.bytes,
+        bytesPerRow: plane.bytesPerRow,
+        format: 'bgra',
+      );
+    }
+
+    if (frame.planes.length < 3) return Future.value(const []);
+
+    final yPlane = frame.planes[0];
+    final uPlane = frame.planes[1];
+    final vPlane = frame.planes[2];
+
+    return _objectDetectionService.detectObjectsFromFrame(
+      width: frame.width,
+      height: frame.height,
+      rotation: nativeRotationDegrees,
+      yBytes: yPlane.bytes,
+      uBytes: uPlane.bytes,
+      vBytes: vPlane.bytes,
+      yRowStride: yPlane.bytesPerRow,
+      uvRowStride: uPlane.bytesPerRow,
+      uvPixelStride: uPlane.bytesPerPixel ?? 1,
+      format: 'yuv420',
+    );
+  }
+
   /// Runs the full per-frame pipeline: schedules OCR/face/edge detection for
   /// this frame, shares the NV21/InputImage conversion across them, runs OCR +
   /// face concurrently, and records perf samples.
@@ -316,8 +377,10 @@ class RealtimeDetectionPipeline {
     int? ocrMs;
     int? faceMs;
     int? edgeMs;
+    int? objectMs;
     final shouldRunOcr = _scheduler.tryBeginOcrDetection(now);
     final shouldRunFace = _scheduler.tryBeginFaceDetection(now);
+    final shouldRunObject = _scheduler.tryBeginObjectDetection(now);
 
     Uint8List? resolveAndroidNv21() {
       if (imageFormatGroup != ImageFormatGroup.yuv420) return null;
@@ -340,11 +403,23 @@ class RealtimeDetectionPipeline {
       return sharedInputImage;
     }
 
-    if (shouldRunOcr || shouldRunFace) {
-      final androidNv21Bytes = resolveAndroidNv21();
-      final preparedInputImage = resolveInputImage();
+    // OCR, face, and object detection all run concurrently for this frame.
+    // OCR/face share the NV21/InputImage conversion; object detection sends the
+    // raw camera planes straight to native, so it needs no shared conversion and
+    // is scheduled here purely to overlap its native round-trip with the others.
+    if (shouldRunOcr || shouldRunFace || shouldRunObject) {
+      // Only resolve the shared conversion when OCR/face actually need it —
+      // object detection alone must not pay for NV21/InputImage.
+      final needsSharedConversion = shouldRunOcr || shouldRunFace;
+      final androidNv21Bytes = needsSharedConversion
+          ? resolveAndroidNv21()
+          : null;
+      final preparedInputImage = needsSharedConversion
+          ? resolveInputImage()
+          : null;
       Future<int?>? ocrFuture;
       Future<int?>? faceFuture;
+      Future<int?>? objectFuture;
 
       if (shouldRunOcr) {
         ocrFuture = () async {
@@ -375,15 +450,26 @@ class RealtimeDetectionPipeline {
         }();
       }
 
-      if (ocrFuture != null && faceFuture != null) {
-        final results = await Future.wait<int?>([ocrFuture, faceFuture]);
-        ocrMs = results[0];
-        faceMs = results[1];
-      } else if (ocrFuture != null) {
-        ocrMs = await ocrFuture;
-      } else if (faceFuture != null) {
-        faceMs = await faceFuture;
+      if (shouldRunObject) {
+        objectFuture = () async {
+          final objectWatch = PerfTrace.start();
+          await runObjectDetection(
+            frame,
+            nativeRotationDegrees: nativeRotationDegrees,
+          );
+          return PerfTrace.stopMs(objectWatch);
+        }();
       }
+
+      final results = await Future.wait<int?>([
+        ?ocrFuture,
+        ?faceFuture,
+        ?objectFuture,
+      ]);
+      var i = 0;
+      if (ocrFuture != null) ocrMs = results[i++];
+      if (faceFuture != null) faceMs = results[i++];
+      if (objectFuture != null) objectMs = results[i++];
     }
 
     if (_scheduler.tryBeginEdgeDetection(now)) {
@@ -402,6 +488,7 @@ class RealtimeDetectionPipeline {
         ocrMs: ocrMs,
         faceMs: faceMs,
         edgeMs: edgeMs,
+        objectMs: objectMs,
       );
       return;
     }
@@ -416,6 +503,7 @@ class RealtimeDetectionPipeline {
       ocrMs: ocrMs,
       faceMs: faceMs,
       edgeMs: edgeMs,
+      objectMs: objectMs,
     );
   }
 }

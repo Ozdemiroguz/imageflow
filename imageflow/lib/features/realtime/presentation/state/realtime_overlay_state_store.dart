@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:get/get.dart';
 
+import '../../../../core/models/detected_object_info.dart';
 import '../../../../core/models/normalized_corners.dart';
 import '../../../../core/utils/num_utils.dart';
 import '../../data/services/detection_output_port.dart';
@@ -32,6 +33,7 @@ class RealtimeOverlayStateStore implements DetectionOutputPort {
 
   final faceRects = <Rect>[].obs;
   final faceContours = <List<Offset>>[].obs;
+  final detectedObjects = <DetectedObjectInfo>[].obs;
   final documentCorners = Rxn<NormalizedCorners>();
   final facePreviewBytes = Rxn<Uint8List>();
   final documentPreviewBytes = Rxn<Uint8List>();
@@ -212,10 +214,18 @@ class RealtimeOverlayStateStore implements DetectionOutputPort {
     _overlayState.resetDocumentPreviewMotionState();
   }
 
+  @override
+  void setDetectedObjects(List<DetectedObjectInfo> objects) {
+    if (_overlayState.hasDetectedObjectsChanged(detectedObjects, objects)) {
+      detectedObjects.assignAll(objects);
+    }
+  }
+
   void resetAll() {
     _overlayState.resetAll();
     faceRects.clear();
     faceContours.clear();
+    detectedObjects.clear();
     documentCorners.value = null;
     facePreviewBytes.value = null;
     documentPreviewBytes.value = null;

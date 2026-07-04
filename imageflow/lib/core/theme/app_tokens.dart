@@ -28,6 +28,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
     this.realtimeDocumentCorner = const Color(0xFFFFEE58),
     this.realtimeFaceStroke = const Color(0xDC00E676),
     this.realtimeFaceFill = const Color(0x2200E676),
+    this.realtimeObjectStroke = const Color(0xDC29B6F6),
+    this.realtimeObjectFill = const Color(0x2229B6F6),
+    this.realtimeObjectLabelBg = const Color(0xD40288D1),
   });
 
   final double radiusSm;
@@ -51,6 +54,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
   final Color realtimeDocumentCorner;
   final Color realtimeFaceStroke;
   final Color realtimeFaceFill;
+  final Color realtimeObjectStroke;
+  final Color realtimeObjectFill;
+  final Color realtimeObjectLabelBg;
 
   @override
   AppTokens copyWith({
@@ -75,6 +81,9 @@ class AppTokens extends ThemeExtension<AppTokens> {
     Color? realtimeDocumentCorner,
     Color? realtimeFaceStroke,
     Color? realtimeFaceFill,
+    Color? realtimeObjectStroke,
+    Color? realtimeObjectFill,
+    Color? realtimeObjectLabelBg,
   }) {
     return AppTokens(
       radiusSm: radiusSm ?? this.radiusSm,
@@ -100,6 +109,10 @@ class AppTokens extends ThemeExtension<AppTokens> {
           realtimeDocumentCorner ?? this.realtimeDocumentCorner,
       realtimeFaceStroke: realtimeFaceStroke ?? this.realtimeFaceStroke,
       realtimeFaceFill: realtimeFaceFill ?? this.realtimeFaceFill,
+      realtimeObjectStroke: realtimeObjectStroke ?? this.realtimeObjectStroke,
+      realtimeObjectFill: realtimeObjectFill ?? this.realtimeObjectFill,
+      realtimeObjectLabelBg:
+          realtimeObjectLabelBg ?? this.realtimeObjectLabelBg,
     );
   }
 
@@ -138,6 +151,15 @@ class AppTokens extends ThemeExtension<AppTokens> {
       realtimeFaceFill:
           Color.lerp(realtimeFaceFill, other.realtimeFaceFill, t) ??
           realtimeFaceFill,
+      realtimeObjectStroke:
+          Color.lerp(realtimeObjectStroke, other.realtimeObjectStroke, t) ??
+          realtimeObjectStroke,
+      realtimeObjectFill:
+          Color.lerp(realtimeObjectFill, other.realtimeObjectFill, t) ??
+          realtimeObjectFill,
+      realtimeObjectLabelBg:
+          Color.lerp(realtimeObjectLabelBg, other.realtimeObjectLabelBg, t) ??
+          realtimeObjectLabelBg,
     );
   }
 }

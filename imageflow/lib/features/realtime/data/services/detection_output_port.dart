@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'dart:ui';
 
+import '../../../../core/models/detected_object_info.dart';
 import '../../../../core/models/normalized_corners.dart';
 
 /// Output boundary for the realtime detection pipeline.
@@ -70,4 +71,10 @@ abstract interface class DetectionOutputPort {
   });
 
   void resetDocumentPreviewMotionState();
+
+  // --- Objects ---
+
+  /// Publishes the latest detected objects (normalized 0-1 boxes with COCO
+  /// labels) for the realtime overlay. Passing an empty list clears the boxes.
+  void setDetectedObjects(List<DetectedObjectInfo> objects);
 }

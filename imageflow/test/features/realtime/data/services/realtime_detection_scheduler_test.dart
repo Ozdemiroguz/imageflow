@@ -10,12 +10,14 @@ void main() {
     Duration face = const Duration(milliseconds: 100),
     Duration ocr = const Duration(milliseconds: 100),
     Duration edge = const Duration(milliseconds: 100),
+    Duration object = const Duration(milliseconds: 100),
     Duration facePanel = const Duration(milliseconds: 100),
     Duration docPanel = const Duration(milliseconds: 100),
   }) => RealtimeDetectionScheduler(
     faceInterval: face,
     ocrInterval: ocr,
     edgeInterval: edge,
+    objectInterval: object,
     facePanelInterval: facePanel,
     documentPanelInterval: docPanel,
   );
@@ -70,6 +72,47 @@ void main() {
       s.endOcrDetection(hasText: false);
       expect(s.hasOcrText, isFalse);
       expect(s.tryBeginEdgeDetection(t0), isFalse);
+    });
+  });
+
+  group('object detection slot (acquire/release)', () {
+    test('first acquire succeeds; second while busy fails', () {
+      final s = makeScheduler();
+      expect(s.tryBeginObjectDetection(t0), isTrue);
+      expect(
+        s.tryBeginObjectDetection(t0.add(const Duration(seconds: 10))),
+        isFalse,
+        reason: 'still busy until endObjectDetection',
+      );
+    });
+
+    test('after release, throttled until the interval elapses', () {
+      final s = makeScheduler(object: const Duration(milliseconds: 100));
+      s.tryBeginObjectDetection(t0);
+      s.endObjectDetection();
+
+      expect(
+        s.tryBeginObjectDetection(t0.add(const Duration(milliseconds: 50))),
+        isFalse,
+      );
+      expect(
+        s.tryBeginObjectDetection(t0.add(const Duration(milliseconds: 100))),
+        isTrue,
+      );
+    });
+
+    test('object slot is independent from the face slot', () {
+      final s = makeScheduler();
+      expect(s.tryBeginFaceDetection(t0), isTrue);
+      // Face being busy must not block object detection.
+      expect(s.tryBeginObjectDetection(t0), isTrue);
+    });
+
+    test('object detection is NOT gated on OCR text (unlike edge)', () {
+      final s = makeScheduler();
+      // No OCR text — edge is blocked but object is free.
+      expect(s.tryBeginEdgeDetection(t0), isFalse);
+      expect(s.tryBeginObjectDetection(t0), isTrue);
     });
   });
 

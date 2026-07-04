@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import '../../../../core/models/detected_object_info.dart';
 import '../../../../core/models/normalized_corners.dart';
 import 'capture_realtime_config.dart';
 
@@ -60,6 +61,30 @@ class RealtimeOverlayState {
         !_pointAlmostEqual(current.topRight, next.topRight) ||
         !_pointAlmostEqual(current.bottomRight, next.bottomRight) ||
         !_pointAlmostEqual(current.bottomLeft, next.bottomLeft);
+  }
+
+  /// Whether the detected-object set changed enough to be worth repainting.
+  /// Repaints on a count change, any label/order change, or a box that moved
+  /// past [CaptureRealtimeConfig.minObjectRectDelta] — jitter below that is
+  /// ignored so the overlay does not thrash on sub-pixel noise.
+  bool hasDetectedObjectsChanged(
+    List<DetectedObjectInfo> current,
+    List<DetectedObjectInfo> next,
+  ) {
+    if (current.length != next.length) return true;
+    for (var i = 0; i < current.length; i++) {
+      final a = current[i];
+      final b = next[i];
+      if (a.label != b.label) return true;
+      final r = _config.minObjectRectDelta;
+      if ((a.rect.left - b.rect.left).abs() > r ||
+          (a.rect.top - b.rect.top).abs() > r ||
+          (a.rect.right - b.rect.right).abs() > r ||
+          (a.rect.bottom - b.rect.bottom).abs() > r) {
+        return true;
+      }
+    }
+    return false;
   }
 
   bool shouldBuildFacePanelPreview({
