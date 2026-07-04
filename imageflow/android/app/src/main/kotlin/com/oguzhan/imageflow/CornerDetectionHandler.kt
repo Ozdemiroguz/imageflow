@@ -1,11 +1,7 @@
 package com.oguzhan.imageflow
 
 import android.graphics.BitmapFactory
-import android.graphics.ImageFormat
 import android.graphics.Matrix
-import android.graphics.Rect
-import android.graphics.YuvImage
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -26,7 +22,6 @@ import org.opencv.core.Point
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 import java.io.File
-import java.io.ByteArrayOutputStream
 import java.util.concurrent.Executors
 
 /// Handles Method Channel calls for document corner detection on Android.
@@ -44,7 +39,7 @@ class CornerDetectionHandler : FlutterPlugin, MethodCallHandler {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var opencvReady = false
     @Volatile private var frameBusy = false
-    private val emulatorMode by lazy { isEmulator() }
+    private val emulatorMode by lazy { YuvConverter.isEmulator() }
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(binding.binaryMessenger, "com.oguzhan.imageflow/corner_detection")
@@ -215,56 +210,23 @@ class CornerDetectionHandler : FlutterPlugin, MethodCallHandler {
         uvPixelStride: Int,
         rotation: Int,
     ): Map<String, Double>? {
-        // Build tightly-packed NV21 buffer: Y (w*h) + VU interleaved (w*h/2)
-        val nv21 = ByteArray(width * height + width * (height / 2))
-        var pos = 0
-
-        // Copy Y plane — strip row padding if yRowStride > width
-        if (yRowStride == width) {
-            System.arraycopy(yBytes, 0, nv21, 0, width * height)
-            pos = width * height
-        } else {
-            for (row in 0 until height) {
-                System.arraycopy(yBytes, row * yRowStride, nv21, pos, width)
-                pos += width
-            }
-        }
-
-        // Interleave V,U into NV21 order
-        val uvHeight = height / 2
-        val uvWidth = width / 2
-        for (row in 0 until uvHeight) {
-            for (col in 0 until uvWidth) {
-                val uvIndex = row * uvRowStride + col * uvPixelStride
-                nv21[pos++] = vBytes[uvIndex]
-                nv21[pos++] = uBytes[uvIndex]
-            }
-        }
+        // Shared conversion: repack strided planes into tightly-packed NV21.
+        val nv21 = YuvConverter.toNv21(
+            yBytes, uBytes, vBytes, width, height,
+            yRowStride, uvRowStride, uvPixelStride,
+        )
 
         if (emulatorMode) {
             // Safer path for emulator: avoid OpenCV NV21 -> BGR conversion crash.
-            val yuvImage = YuvImage(nv21, ImageFormat.NV21, width, height, null)
-            val jpegOut = ByteArrayOutputStream()
-            val ok = yuvImage.compressToJpeg(Rect(0, 0, width, height), 82, jpegOut)
-            if (!ok) {
-                jpegOut.close()
-                return null
-            }
-            val jpegBytes = jpegOut.toByteArray()
-            jpegOut.close()
-            val bitmap = BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size) ?: return null
+            val bitmap = YuvConverter.nv21ToBitmap(nv21, width, height, emulatorMode = true)
+                ?: return null
             val mat = Mat()
             Utils.bitmapToMat(bitmap, mat)
             bitmap.recycle()
             return detectAndNormalize(mat, rotation)
         }
 
-        val yuvMat = Mat(height + height / 2, width, CvType.CV_8UC1)
-        yuvMat.put(0, 0, nv21)
-        val bgrMat = Mat()
-        Imgproc.cvtColor(yuvMat, bgrMat, Imgproc.COLOR_YUV2BGR_NV21)
-        yuvMat.release()
-
+        val bgrMat = YuvConverter.nv21ToBgrMat(nv21, width, height)
         return detectAndNormalize(bgrMat, rotation)
     }
 
@@ -437,22 +399,5 @@ class CornerDetectionHandler : FlutterPlugin, MethodCallHandler {
         }
         return if (matrix.isIdentity) bitmap
         else android.graphics.Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-    }
-
-    private fun isEmulator(): Boolean {
-        val fingerprint = Build.FINGERPRINT.lowercase()
-        val model = Build.MODEL.lowercase()
-        val manufacturer = Build.MANUFACTURER.lowercase()
-        val brand = Build.BRAND.lowercase()
-        val device = Build.DEVICE.lowercase()
-        val product = Build.PRODUCT.lowercase()
-        return fingerprint.contains("generic")
-            || fingerprint.contains("emulator")
-            || model.contains("emulator")
-            || model.contains("sdk")
-            || manufacturer.contains("genymotion")
-            || (brand.startsWith("generic") && device.startsWith("generic"))
-            || product.contains("sdk")
-            || product.contains("emulator")
     }
 }

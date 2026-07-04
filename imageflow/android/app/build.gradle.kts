@@ -31,7 +31,16 @@ android {
         release {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
-            isMinifyEnabled = true
+            // R8/minify is DISABLED: MediaPipe Tasks' Graph.<clinit> walks the
+            // call stack to find its initializer, and R8's renaming + inlining
+            // breaks that lookup ("no caller found on the stack"), crashing the
+            // object detector at creation time. Even aggressive keep rules did
+            // not fully preserve the walked frames. Disabling minify is the
+            // reliable fix; the ~10-15 MB size cost is acceptable for a showcase.
+            isMinifyEnabled = false
+            // Resource shrinking requires code shrinking; disable it too since
+            // minify is off (otherwise the build fails).
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

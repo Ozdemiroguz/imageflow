@@ -3,10 +3,7 @@ package com.oguzhan.imageflow
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.ImageFormat
 import android.graphics.Matrix
-import android.graphics.Rect
-import android.graphics.YuvImage
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -21,7 +18,6 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.concurrent.Executors
 
@@ -45,6 +41,7 @@ class ObjectDetectionHandler : FlutterPlugin, MethodCallHandler {
     private val mainHandler = Handler(Looper.getMainLooper())
 
     @Volatile private var frameBusy = false
+    private val emulatorMode by lazy { YuvConverter.isEmulator() }
 
     // Two detectors: one in IMAGE mode for still files, one in VIDEO mode for
     // the camera stream (VIDEO mode enables MediaPipe's cross-frame tracking).
@@ -148,10 +145,13 @@ class ObjectDetectionHandler : FlutterPlugin, MethodCallHandler {
                         if (yBytes == null || uBytes == null || vBytes == null) {
                             null
                         } else {
-                            yuvToBitmap(
+                            // Shared conversion: repack to NV21 then OpenCV
+                            // native YUV->RGBA (no per-frame JPEG encode/decode).
+                            val nv21 = YuvConverter.toNv21(
                                 yBytes, uBytes, vBytes, width, height,
                                 yRowStride, uvRowStride, uvPixelStride,
                             )
+                            YuvConverter.nv21ToBitmap(nv21, width, height, emulatorMode)
                         }
                     }
                     else -> {
@@ -252,49 +252,6 @@ class ObjectDetectionHandler : FlutterPlugin, MethodCallHandler {
     // -------------------------------------------------------------------------
     // Frame → Bitmap conversion
     // -------------------------------------------------------------------------
-
-    private fun yuvToBitmap(
-        yBytes: ByteArray,
-        uBytes: ByteArray,
-        vBytes: ByteArray,
-        width: Int,
-        height: Int,
-        yRowStride: Int,
-        uvRowStride: Int,
-        uvPixelStride: Int,
-    ): Bitmap? {
-        // Repack the planes into tightly-packed NV21, then JPEG-decode to ARGB.
-        val nv21 = ByteArray(width * height + width * (height / 2))
-        var pos = 0
-        if (yRowStride == width) {
-            System.arraycopy(yBytes, 0, nv21, 0, width * height)
-            pos = width * height
-        } else {
-            for (row in 0 until height) {
-                System.arraycopy(yBytes, row * yRowStride, nv21, pos, width)
-                pos += width
-            }
-        }
-        val uvHeight = height / 2
-        val uvWidth = width / 2
-        for (row in 0 until uvHeight) {
-            for (col in 0 until uvWidth) {
-                val uvIndex = row * uvRowStride + col * uvPixelStride
-                nv21[pos++] = vBytes[uvIndex]
-                nv21[pos++] = uBytes[uvIndex]
-            }
-        }
-        val yuvImage = YuvImage(nv21, ImageFormat.NV21, width, height, null)
-        val jpegOut = ByteArrayOutputStream()
-        val ok = yuvImage.compressToJpeg(Rect(0, 0, width, height), 85, jpegOut)
-        if (!ok) {
-            jpegOut.close()
-            return null
-        }
-        val bytes = jpegOut.toByteArray()
-        jpegOut.close()
-        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-    }
 
     private fun bgraToBitmap(
         bytes: ByteArray,
