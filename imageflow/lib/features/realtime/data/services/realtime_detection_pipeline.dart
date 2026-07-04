@@ -14,6 +14,7 @@ import '../../../../core/utils/perf_trace.dart';
 import '../../../../core/platform/camera_input_image_factory.dart';
 import 'detection_output_port.dart';
 import 'realtime_detection_scheduler.dart';
+import 'realtime_scene_gate.dart';
 import '../datasources/realtime_face_detection_service.dart';
 import 'realtime_face_geometry_normalizer.dart';
 import 'realtime_frame_perf_tracker.dart';
@@ -39,6 +40,7 @@ class RealtimeDetectionPipeline {
     required RealtimePreviewBuilder previewBuilder,
     RealtimeFaceGeometryNormalizer? faceGeometryNormalizer,
     RealtimeFramePerfTracker? perfTracker,
+    RealtimeSceneGate? sceneGate,
   }) : _scheduler = scheduler,
        _output = output,
        _cornerDetectionService = cornerDetectionService,
@@ -46,6 +48,7 @@ class RealtimeDetectionPipeline {
        _faceDetectionService = faceDetectionService,
        _ocrGateService = ocrGateService,
        _previewBuilder = previewBuilder,
+       _sceneGate = sceneGate ?? RealtimeSceneGate(),
        _faceGeometryNormalizer =
            faceGeometryNormalizer ??
            RealtimeFaceGeometryNormalizer(
@@ -79,6 +82,7 @@ class RealtimeDetectionPipeline {
   final RealtimePreviewBuilder _previewBuilder;
   final RealtimeFaceGeometryNormalizer _faceGeometryNormalizer;
   final RealtimeFramePerfTracker _perfTracker;
+  final RealtimeSceneGate _sceneGate;
 
   Future<void> runOcrGate(
     CameraImage frame, {
@@ -378,6 +382,22 @@ class RealtimeDetectionPipeline {
     int? faceMs;
     int? edgeMs;
     int? objectMs;
+
+    // Scene gate: skip ALL detection on a blank/flat frame (desk, wall). This
+    // saves the CPU that was dropping the preview to a slideshow AND stops false
+    // positives (e.g. "6 faces" on desk grain). The Y (luminance) plane is the
+    // first plane for both YUV420 and BGRA layouts.
+    if (frame.planes.isNotEmpty &&
+        !_sceneGate.isInteresting(frame.planes.first.bytes)) {
+      // Clear any stale overlays so old boxes don't linger over a blank scene.
+      _output.setDetectedObjects(const []);
+      _perfTracker.recordSample(
+        now: now,
+        frameMs: PerfTrace.stopMs(frameWatch),
+      );
+      return;
+    }
+
     final shouldRunOcr = _scheduler.tryBeginOcrDetection(now);
     final shouldRunFace = _scheduler.tryBeginFaceDetection(now);
     final shouldRunObject = _scheduler.tryBeginObjectDetection(now);

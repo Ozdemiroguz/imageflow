@@ -17,7 +17,11 @@ class RealtimeFaceDetectionService {
               enableLandmarks: false,
               enableClassification: false,
               enableTracking: true,
-              minFaceSize: 0.06,
+              // A face must fill at least 15% of the frame's shorter side.
+              // The previous 0.06 was low enough that texture/shadow on a blank
+              // surface registered as tiny "faces" (the "6 faces on a desk"
+              // false positives). 0.15 keeps real, framed faces and drops noise.
+              minFaceSize: 0.15,
             ),
           );
 
