@@ -7,7 +7,17 @@ class _PdfViewerState extends State<PdfViewer> {
   void initState() {
     super.initState();
     _controller = widget.controller;
-    unawaited(_controller.ensureLoaded());
+    unawaited(_loadAfterTransition());
+  }
+
+  Future<void> _loadAfterTransition() async {
+    // The shimmer skeleton shows immediately; the raster starts once the
+    // entrance transition has settled (see PdfViewer.initialLoadDelay).
+    if (widget.initialLoadDelay > Duration.zero) {
+      await Future<void>.delayed(widget.initialLoadDelay);
+      if (!mounted) return;
+    }
+    await _controller.ensureLoaded();
   }
 
   @override

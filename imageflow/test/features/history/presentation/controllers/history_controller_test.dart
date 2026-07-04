@@ -56,6 +56,7 @@ void main() {
       deleteHistory: deleteHistory,
       modalService: modalService,
       openCaptureDialog: openCaptureDialog,
+      startupDelay: Duration.zero,
     );
     controller.onInit();
     await pumpEventQueue();
@@ -80,6 +81,7 @@ void main() {
           deleteHistory: deleteHistory,
           modalService: modalService,
           openCaptureDialog: openCaptureDialog,
+          startupDelay: Duration.zero,
         );
         controller.onInit();
         await pumpEventQueue();
@@ -97,6 +99,7 @@ void main() {
           deleteHistory: deleteHistory,
           modalService: modalService,
           openCaptureDialog: openCaptureDialog,
+          startupDelay: Duration.zero,
         );
         controller.onInit();
         await pumpEventQueue();
@@ -115,6 +118,7 @@ void main() {
           deleteHistory: deleteHistory,
           modalService: modalService,
           openCaptureDialog: openCaptureDialog,
+          startupDelay: Duration.zero,
         );
         controller.onInit();
         await pumpEventQueue();
@@ -135,6 +139,7 @@ void main() {
           deleteHistory: deleteHistory,
           modalService: modalService,
           openCaptureDialog: openCaptureDialog,
+          startupDelay: Duration.zero,
         );
         controller.onInit();
         await pumpEventQueue();
@@ -159,6 +164,7 @@ void main() {
           deleteHistory: deleteHistory,
           modalService: modalService,
           openCaptureDialog: openCaptureDialog,
+          startupDelay: Duration.zero,
         );
         controller.onInit();
         await pumpEventQueue();
@@ -195,6 +201,7 @@ void main() {
           deleteHistory: deleteHistory,
           modalService: modalService,
           openCaptureDialog: openCaptureDialog,
+          startupDelay: Duration.zero,
         );
         controller.onInit();
         await pumpEventQueue();

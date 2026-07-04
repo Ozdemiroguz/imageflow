@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/routes/app_routes.dart';
@@ -17,15 +18,18 @@ class HistoryController extends GetxController {
     required DeleteHistory deleteHistory,
     required ModalService modalService,
     required Future<void> Function() openCaptureDialog,
+    Duration startupDelay = AppConstants.routeTransitionSettleDelay,
   }) : _getAllHistory = getAllHistory,
        _deleteHistory = deleteHistory,
        _modalService = modalService,
-       _openCaptureDialog = openCaptureDialog;
+       _openCaptureDialog = openCaptureDialog,
+       _startupDelay = startupDelay;
 
   final GetAllHistory _getAllHistory;
   final DeleteHistory _deleteHistory;
   final ModalService _modalService;
   final Future<void> Function() _openCaptureDialog;
+  final Duration _startupDelay;
 
   final historyList = <ProcessingHistory>[].obs;
   final isLoading = false.obs;
@@ -35,7 +39,18 @@ class HistoryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchHistory();
+    // Show the loading state immediately, but defer the Hive read + thumbnail
+    // decodes until the entrance transition settles so the push stays smooth.
+    isLoading.value = true;
+    unawaited(_fetchAfterTransition());
+  }
+
+  Future<void> _fetchAfterTransition() async {
+    if (_startupDelay > Duration.zero) {
+      await Future<void>.delayed(_startupDelay);
+      if (isClosed) return;
+    }
+    await fetchHistory();
   }
 
   Future<void> fetchHistory() async {

@@ -46,11 +46,13 @@ class RealtimeCameraController extends GetxController
     RealtimeFrameStreamHandler? streamHandler,
     RealtimeCameraSessionManager? sessionManager,
     CameraRouteLifecycleController? routeLifecycleController,
+    Duration startupDelay = AppConstants.routeTransitionSettleDelay,
   }) : _permissionService = permissionService,
        _cameraSessionService = cameraSessionService,
        _faceDetectionService = faceDetectionService,
        _ocrGateService = ocrGateService,
-       _config = config {
+       _config = config,
+       _startupDelay = startupDelay {
     _overlayState = overlayState ?? RealtimeOverlayState(config: _config);
     _scheduler =
         scheduler ??
@@ -145,6 +147,7 @@ class RealtimeCameraController extends GetxController
   final RealtimeFaceDetectionService _faceDetectionService;
   final RealtimeOcrGateService _ocrGateService;
   final CaptureRealtimeConfig _config;
+  final Duration _startupDelay;
 
   late final RealtimeOverlayState _overlayState;
   late final RealtimeDetectionScheduler _scheduler;
@@ -195,9 +198,19 @@ class RealtimeCameraController extends GetxController
   }
 
   @override
-  Future<void> onInit() async {
+  void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+    // Defer camera bring-up until the entrance transition settles so the push
+    // animation doesn't stutter (same pattern as CameraCaptureController).
+    unawaited(_initAfterTransition());
+  }
+
+  Future<void> _initAfterTransition() async {
+    if (_startupDelay > Duration.zero) {
+      await Future<void>.delayed(_startupDelay);
+      if (isClosed) return;
+    }
     await _sessionManager.init();
   }
 

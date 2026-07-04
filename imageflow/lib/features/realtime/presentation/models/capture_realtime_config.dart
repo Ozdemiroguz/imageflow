@@ -78,7 +78,8 @@ class CaptureRealtimeConfig {
     realtimeStreamStartDelay: Duration.zero,
     resolutionPreset: ResolutionPreset.medium,
     imageFormatGroup: ImageFormatGroup.yuv420,
-    nativeRotationStrategy: RealtimeNativeRotationStrategy.sensorAndDeviceByLens,
+    nativeRotationStrategy:
+        RealtimeNativeRotationStrategy.sensorAndDeviceByLens,
     frameImageUsesNativeRotation: true,
   );
 }

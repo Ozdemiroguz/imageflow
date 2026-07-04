@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/routes/app_routes.dart';
@@ -13,13 +16,16 @@ class ProcessingController extends GetxController {
     required ProcessImage processImage,
     required SaveHistory saveHistory,
     required ProcessingHistoryMapper historyMapper,
+    Duration startupDelay = AppConstants.routeTransitionSettleDelay,
   }) : _processImage = processImage,
        _saveHistory = saveHistory,
-       _historyMapper = historyMapper;
+       _historyMapper = historyMapper,
+       _startupDelay = startupDelay;
 
   final ProcessImage _processImage;
   final SaveHistory _saveHistory;
   final ProcessingHistoryMapper _historyMapper;
+  final Duration _startupDelay;
 
   final currentStep = ProcessingStep.copying.obs;
   final isProcessing = false.obs;
@@ -51,7 +57,20 @@ class ProcessingController extends GetxController {
       _imagePath = args.toString();
       _capturedWithFrontCamera = null;
     }
-    _startProcessing();
+    // Show the progress state immediately, but defer the pipeline (file copy,
+    // ML Kit model load, isolates) until the entrance transition settles —
+    // 350ms is imperceptible against a multi-second pipeline, and the push
+    // animation stays smooth.
+    isProcessing.value = true;
+    unawaited(_startAfterTransition());
+  }
+
+  Future<void> _startAfterTransition() async {
+    if (_startupDelay > Duration.zero) {
+      await Future<void>.delayed(_startupDelay);
+      if (isClosed) return;
+    }
+    await _startProcessing();
   }
 
   Future<void> _startProcessing() async {

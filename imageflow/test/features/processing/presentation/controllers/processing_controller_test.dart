@@ -71,6 +71,7 @@ void main() {
       processImage: processImage,
       saveHistory: saveHistory,
       historyMapper: mapper,
+      startupDelay: Duration.zero,
     );
     controller.onInit();
     await pumpEventQueue();

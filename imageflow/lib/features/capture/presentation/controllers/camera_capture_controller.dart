@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
@@ -20,9 +22,11 @@ class CameraCaptureController extends GetxController
     CameraCaptureConfig config = CameraCaptureConfig.defaults,
     CameraCaptureSessionLifecycleHelper? sessionLifecycleHelper,
     CameraRouteLifecycleController? routeLifecycleHelper,
+    Duration startupDelay = AppConstants.routeTransitionSettleDelay,
   }) : _permissionService = permissionService,
        _cameraSessionService = cameraSessionService,
-       _config = config {
+       _config = config,
+       _startupDelay = startupDelay {
     _sessionLifecycleHelper =
         sessionLifecycleHelper ??
         CameraCaptureSessionLifecycleHelper(
@@ -54,6 +58,7 @@ class CameraCaptureController extends GetxController
   final PermissionService _permissionService;
   final CameraSessionService _cameraSessionService;
   final CameraCaptureConfig _config;
+  final Duration _startupDelay;
 
   late final CameraCaptureSessionLifecycleHelper _sessionLifecycleHelper;
   late final CameraRouteLifecycleController _routeLifecycleHelper;
@@ -73,9 +78,21 @@ class CameraCaptureController extends GetxController
       CameraLensDirection.front;
 
   @override
-  Future<void> onInit() async {
+  void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+    // Camera bring-up (native session + texture attach) is the heaviest
+    // startup work in the app; defer it until the entrance transition settles
+    // so the push animation doesn't stutter. The page already renders its
+    // not-yet-initialized placeholder in the meantime.
+    unawaited(_initAfterTransition());
+  }
+
+  Future<void> _initAfterTransition() async {
+    if (_startupDelay > Duration.zero) {
+      await Future<void>.delayed(_startupDelay);
+      if (isClosed) return;
+    }
     await _sessionLifecycleHelper.init();
   }
 
