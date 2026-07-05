@@ -18,6 +18,15 @@ class CornerDetectionHandlerV2: NSObject, FlutterPlugin {
         qos: .userInitiated
     )
 
+    // Downscales the incoming 1080p frame before Vision runs. Rectangle results
+    // are normalized (0..1), so a smaller input doesn't change the corners — it
+    // just avoids an ~8 MB full-res buffer + full-res detection every frame.
+    // Only touched from frameProcessingQueue (serial), so no extra locking.
+    private let downscaler = PixelBufferDownscaler()
+    // Long side fed to Vision. Document edges are easily found at 720px; the
+    // per-frame buffer and detection both shrink from 1080p.
+    private let frameMaxLongSide = 720
+
     static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(
             name: "com.oguzhan.imageflow/corner_detection",
@@ -162,43 +171,24 @@ class CornerDetectionHandlerV2: NSObject, FlutterPlugin {
 
         frameProcessingQueue.async { [weak self] in
             autoreleasepool {
-                defer { self?.releaseFrameSlot() }
+                guard let self = self else { return }
+                defer { self.releaseFrameSlot() }
 
-                // Create CVPixelBuffer from raw bytes
-                var pixelBuffer: CVPixelBuffer?
-                let attrs: [String: Any] = [
-                    kCVPixelBufferIOSurfacePropertiesKey as String: [:] as [String: Any],
-                ]
-                let status = CVPixelBufferCreate(
-                    kCFAllocatorDefault,
-                    width,
-                    height,
-                    kCVPixelFormatType_32BGRA,
-                    attrs as CFDictionary,
-                    &pixelBuffer
-                )
-
-                guard status == kCVReturnSuccess, let buffer = pixelBuffer else {
+                // Downscale the frame before Vision: rectangle corners are
+                // normalized, so a smaller input gives the same result while
+                // avoiding a full-res per-frame buffer + full-res detection.
+                guard let buffer = self.downscaler.downscale(
+                    bytes: bytes,
+                    width: width,
+                    height: height,
+                    bytesPerRow: bytesPerRow,
+                    maxLongSide: self.frameMaxLongSide
+                ) else {
                     DispatchQueue.main.async {
                         result(FlutterError(code: "BUFFER_ERROR", message: "Failed to create pixel buffer", details: nil))
                     }
                     return
                 }
-
-                CVPixelBufferLockBaseAddress(buffer, [])
-                let dest = CVPixelBufferGetBaseAddress(buffer)
-                let destBytesPerRow = CVPixelBufferGetBytesPerRow(buffer)
-
-                bytes.withUnsafeBytes { srcPtr in
-                    guard let srcBase = srcPtr.baseAddress else { return }
-                    // Copy row by row in case bytesPerRow differs
-                    for row in 0..<height {
-                        let srcRow = srcBase.advanced(by: row * bytesPerRow)
-                        let destRow = dest!.advanced(by: row * destBytesPerRow)
-                        memcpy(destRow, srcRow, min(bytesPerRow, destBytesPerRow))
-                    }
-                }
-                CVPixelBufferUnlockBaseAddress(buffer, [])
 
                 // Map rotation degrees to CGImagePropertyOrientation
                 let orientation: CGImagePropertyOrientation

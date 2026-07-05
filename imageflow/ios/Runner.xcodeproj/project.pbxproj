@@ -15,6 +15,7 @@
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
 		7884E86C2EC3CE0200C636F2 /* CornerDetectionHandlerV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E86B2EC3CE0200C636F2 /* CornerDetectionHandlerV2.swift */; };
 		7884E8722ED0A00100C636F2 /* ObjectDetectionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8712ED0A00100C636F2 /* ObjectDetectionHandler.swift */; };
+		C06D162BB81A37AD013A6CEF /* PixelBufferDownscaler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BD8F841A8BDC010276AA9CF /* PixelBufferDownscaler.swift */; };
 		7884E8742ED0A10100C636F2 /* ObjectDetector.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8732ED0A10100C636F2 /* ObjectDetector.mlmodel */; };
 		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
@@ -62,6 +63,7 @@
 		7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		7884E86B2EC3CE0200C636F2 /* CornerDetectionHandlerV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CornerDetectionHandlerV2.swift; sourceTree = "<group>"; };
 		7884E8712ED0A00100C636F2 /* ObjectDetectionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectDetectionHandler.swift; sourceTree = "<group>"; };
+		4BD8F841A8BDC010276AA9CF /* PixelBufferDownscaler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelBufferDownscaler.swift; sourceTree = "<group>"; };
 		7884E8732ED0A10100C636F2 /* ObjectDetector.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = ObjectDetector.mlmodel; sourceTree = "<group>"; };
 		78E0A7A72DC9AD7400C4905E /* FlutterGeneratedPluginSwiftPackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FlutterGeneratedPluginSwiftPackage; path = Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
@@ -166,6 +168,7 @@
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				7884E86B2EC3CE0200C636F2 /* CornerDetectionHandlerV2.swift */,
 				7884E8712ED0A00100C636F2 /* ObjectDetectionHandler.swift */,
+				4BD8F841A8BDC010276AA9CF /* PixelBufferDownscaler.swift */,
 				7884E8732ED0A10100C636F2 /* ObjectDetector.mlmodel */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
@@ -422,6 +425,7 @@
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
 				7884E86C2EC3CE0200C636F2 /* CornerDetectionHandlerV2.swift in Sources */,
 				7884E8722ED0A00100C636F2 /* ObjectDetectionHandler.swift in Sources */,
+				C06D162BB81A37AD013A6CEF /* PixelBufferDownscaler.swift in Sources */,
 				7884E8742ED0A10100C636F2 /* ObjectDetector.mlmodel in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

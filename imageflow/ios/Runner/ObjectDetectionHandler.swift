@@ -31,6 +31,15 @@ class ObjectDetectionHandler: NSObject, FlutterPlugin {
     // all `perform` calls are serialized on frameProcessingQueue.
     private lazy var request: VNCoreMLRequest? = Self.makeRequest()
 
+    // Downscales the incoming 1080p frame before Vision runs, mainly to drop the
+    // ~8 MB per-frame full-res buffer allocation. The request itself `.scaleFill`s
+    // down to the model input, so this is a *light* pre-scale: kept close to
+    // 1080p (960 long side) so it doesn't stack a second lossy downscale on top
+    // of Vision's own and soften detection. A tighter cap (640) measurably hurt
+    // object crispness on-device. Only touched from frameProcessingQueue (serial).
+    private let downscaler = PixelBufferDownscaler()
+    private let frameMaxLongSide = 960
+
     static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(
             name: "com.oguzhan.imageflow/object_detection",
@@ -134,10 +143,15 @@ class ObjectDetectionHandler: NSObject, FlutterPlugin {
 
         frameProcessingQueue.async { [weak self] in
             autoreleasepool {
-                defer { self?.releaseFrameSlot() }
+                guard let self = self else { return }
+                defer { self.releaseFrameSlot() }
 
-                guard let buffer = Self.makePixelBuffer(
-                    bytes: bytes, width: width, height: height, bytesPerRow: bytesPerRow
+                guard let buffer = self.downscaler.downscale(
+                    bytes: bytes,
+                    width: width,
+                    height: height,
+                    bytesPerRow: bytesPerRow,
+                    maxLongSide: self.frameMaxLongSide
                 ) else {
                     DispatchQueue.main.async { result([[String: Any]]()) }
                     return
@@ -221,34 +235,6 @@ class ObjectDetectionHandler: NSObject, FlutterPlugin {
     }
 
     // MARK: - Helpers
-
-    private static func makePixelBuffer(
-        bytes: Data, width: Int, height: Int, bytesPerRow: Int
-    ) -> CVPixelBuffer? {
-        var pixelBuffer: CVPixelBuffer?
-        let attrs: [String: Any] = [
-            kCVPixelBufferIOSurfacePropertiesKey as String: [:] as [String: Any],
-        ]
-        let status = CVPixelBufferCreate(
-            kCFAllocatorDefault, width, height, kCVPixelFormatType_32BGRA,
-            attrs as CFDictionary, &pixelBuffer
-        )
-        guard status == kCVReturnSuccess, let buffer = pixelBuffer else { return nil }
-
-        CVPixelBufferLockBaseAddress(buffer, [])
-        defer { CVPixelBufferUnlockBaseAddress(buffer, []) }
-        guard let dest = CVPixelBufferGetBaseAddress(buffer) else { return nil }
-        let destBytesPerRow = CVPixelBufferGetBytesPerRow(buffer)
-        bytes.withUnsafeBytes { srcPtr in
-            guard let srcBase = srcPtr.baseAddress else { return }
-            for row in 0..<height {
-                let srcRow = srcBase.advanced(by: row * bytesPerRow)
-                let destRow = dest.advanced(by: row * destBytesPerRow)
-                memcpy(destRow, srcRow, min(bytesPerRow, destBytesPerRow))
-            }
-        }
-        return buffer
-    }
 
     private static func readOrientation(source: CGImageSource) -> CGImagePropertyOrientation {
         guard let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
