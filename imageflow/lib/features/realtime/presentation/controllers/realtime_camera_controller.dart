@@ -30,6 +30,7 @@ import '../enums/realtime_preview_target.dart';
 import '../models/capture_realtime_config.dart';
 import '../models/realtime_detection_modes.dart';
 import '../models/realtime_overlay_state.dart';
+import '../models/realtime_scan_budget.dart';
 import '../../data/services/realtime_detection_scheduler.dart';
 
 class RealtimeCameraController extends GetxController
@@ -188,15 +189,72 @@ class RealtimeCameraController extends GetxController
   /// independently. The frame stream handler reads this each frame.
   final detectionModes = const RealtimeDetectionModes().obs;
 
-  void toggleFaceMode() => detectionModes.value = detectionModes.value.copyWith(
-    face: !detectionModes.value.face,
+  /// Per-detector priority weights the user controls via the scan-speed panel.
+  /// Higher weight → a larger share of the device scan budget → a faster scan
+  /// rate for that detector. Seeded from the config's budget defaults so the
+  /// initial split matches the presets. Only the weights of *enabled* detectors
+  /// take a share (see [_recomputeDetectorIntervals]).
+  late final scanWeights = Rx<Map<ScanDetector, double>>(
+    Map.of(_config.scanBudget.weights),
   );
 
-  void toggleDocumentMode() => detectionModes.value = detectionModes.value
-      .copyWith(document: !detectionModes.value.document);
+  /// The scan interval derived for each *enabled* detector at the current
+  /// weights — what the scheduler is actually running. Exposed reactively so the
+  /// scan-speed panel can show a live "N.N scans/sec" readout per detector and
+  /// the combined total. Recomputed by [_recomputeDetectorIntervals].
+  late final derivedIntervals = Rx<Map<ScanDetector, Duration>>(
+    _config.scanBudget.intervalsFor(detectionModes.value),
+  );
 
-  void toggleObjectMode() => detectionModes.value = detectionModes.value
-      .copyWith(object: !detectionModes.value.object);
+  void toggleFaceMode() {
+    detectionModes.value = detectionModes.value.copyWith(
+      face: !detectionModes.value.face,
+    );
+    _recomputeDetectorIntervals();
+  }
+
+  void toggleDocumentMode() {
+    detectionModes.value = detectionModes.value.copyWith(
+      document: !detectionModes.value.document,
+    );
+    _recomputeDetectorIntervals();
+  }
+
+  void toggleObjectMode() {
+    detectionModes.value = detectionModes.value.copyWith(
+      object: !detectionModes.value.object,
+    );
+    _recomputeDetectorIntervals();
+  }
+
+  /// The device scan-budget ceiling (total scans/sec across all detectors) —
+  /// what the scan-speed panel shows the combined rate against.
+  double get scanBudgetCeiling => _config.scanBudget.totalScansPerSecond;
+
+  /// Set one detector's priority weight (from the scan-speed panel) and re-split
+  /// the budget. Raising one detector's weight speeds it up and slows the others
+  /// proportionally, but the combined rate never exceeds the budget ceiling.
+  void updateScanWeight(ScanDetector detector, double weight) {
+    scanWeights.value = {...scanWeights.value, detector: weight};
+    _recomputeDetectorIntervals();
+  }
+
+  /// Re-split the scan budget across the currently-enabled detectors at the
+  /// current weights and push the resulting intervals into the live scheduler.
+  /// Called whenever the enabled set or a weight changes. Disabling a detector
+  /// hands its share to the others; a detector with no derived interval (because
+  /// it's disabled) simply keeps its last value in the scheduler — it isn't run
+  /// anyway, since the pipeline gates each detector on its enable flag.
+  void _recomputeDetectorIntervals() {
+    final intervals = _config.scanBudget.copyWith(weights: scanWeights.value)
+        .intervalsFor(detectionModes.value);
+    derivedIntervals.value = intervals;
+    _scheduler.updateDetectorIntervals(
+      face: intervals[ScanDetector.face],
+      edge: intervals[ScanDetector.document],
+      object: intervals[ScanDetector.object],
+    );
+  }
 
   RxList<Rect> get faceRects => _overlayStateManager.faceRects;
   RxList<List<Offset>> get faceContours => _overlayStateManager.faceContours;

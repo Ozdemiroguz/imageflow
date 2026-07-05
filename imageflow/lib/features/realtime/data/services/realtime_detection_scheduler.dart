@@ -19,12 +19,32 @@ class RealtimeDetectionScheduler {
        _documentPanelInterval = documentPanelInterval,
        _objectInterval = objectInterval;
 
-  final Duration _faceInterval;
+  // The three detector intervals are mutable so the scan-budget engine can
+  // re-split them at runtime when the user re-prioritizes or toggles a detector
+  // (see [updateDetectorIntervals]). The OCR and panel intervals are fixed —
+  // OCR isn't run in realtime and the panels are a UI-refresh throttle, so
+  // neither takes a budget share.
+  Duration _faceInterval;
+  Duration _edgeInterval;
+  Duration _objectInterval;
   final Duration _ocrInterval;
-  final Duration _edgeInterval;
   final Duration _facePanelInterval;
   final Duration _documentPanelInterval;
-  final Duration _objectInterval;
+
+  /// Re-point the detector intervals (e.g. after the scan budget re-splits when
+  /// the enabled set or priority weights change). Only the detectors present in
+  /// each argument change; a null keeps the current value. This does not reset
+  /// the last-run timestamps, so the new cadence takes effect from the next
+  /// eligible frame without forcing an immediate re-run.
+  void updateDetectorIntervals({
+    Duration? face,
+    Duration? edge,
+    Duration? object,
+  }) {
+    if (face != null) _faceInterval = face;
+    if (edge != null) _edgeInterval = edge;
+    if (object != null) _objectInterval = object;
+  }
 
   DateTime? _lastFaceRunAt;
   DateTime? _lastOcrRunAt;

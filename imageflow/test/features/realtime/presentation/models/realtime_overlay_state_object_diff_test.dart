@@ -4,6 +4,7 @@ import 'package:imageflow/core/models/detected_object_info.dart';
 import 'package:imageflow/features/realtime/presentation/models/capture_realtime_config.dart';
 import 'package:imageflow/features/realtime/presentation/models/realtime_native_rotation_strategy.dart';
 import 'package:imageflow/features/realtime/presentation/models/realtime_overlay_state.dart';
+import 'package:imageflow/features/realtime/presentation/models/realtime_scan_budget.dart';
 
 /// Locks the object-overlay change detection: the overlay must repaint on a
 /// meaningful change (count, label, or a box that moved past the threshold) but
@@ -17,6 +18,7 @@ void main() {
     imageFormatGroup: ImageFormatGroup.bgra8888,
     nativeRotationStrategy: RealtimeNativeRotationStrategy.sensorOnly,
     frameImageUsesNativeRotation: false,
+    scanBudget: RealtimeScanBudget(totalScansPerSecond: 9),
     minObjectRectDelta: 0.02,
   );
 
