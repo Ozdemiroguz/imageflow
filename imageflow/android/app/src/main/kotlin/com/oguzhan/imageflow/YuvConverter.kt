@@ -8,6 +8,7 @@ import android.os.Build
 import org.opencv.android.Utils
 import org.opencv.core.CvType
 import org.opencv.core.Mat
+import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 import java.io.ByteArrayOutputStream
 
@@ -75,18 +76,43 @@ object YuvConverter {
     /**
      * NV21 -> OpenCV BGR [Mat] via native color conversion (no JPEG).
      * Caller owns the returned Mat and must release it.
+     *
+     * When [maxLongSide] > 0 the result is downscaled AS A MAT right after the
+     * color conversion, so a full-resolution BGR Mat (e.g. 1080p ~6MB) is never
+     * kept around — the edge-detection pipeline works at ~720px and the corners
+     * come out normalized, so the source scale doesn't change the result. This
+     * is the corner-detector twin of the [nv21ToBitmap] downscale and the main
+     * lever for the per-frame Large-Object-Space churn.
      */
-    fun nv21ToBgrMat(nv21: ByteArray, width: Int, height: Int): Mat {
+    fun nv21ToBgrMat(nv21: ByteArray, width: Int, height: Int, maxLongSide: Int = 0): Mat {
         val yuvMat = Mat(height + height / 2, width, CvType.CV_8UC1)
         yuvMat.put(0, 0, nv21)
-        val bgrMat = Mat()
+        var bgrMat = Mat()
         Imgproc.cvtColor(yuvMat, bgrMat, Imgproc.COLOR_YUV2BGR_NV21)
         yuvMat.release()
+
+        val longSide = maxOf(width, height)
+        if (maxLongSide in 1 until longSide) {
+            val scale = maxLongSide.toDouble() / longSide
+            val small = Mat()
+            Imgproc.resize(
+                bgrMat, small,
+                Size(width * scale, height * scale),
+                0.0, 0.0, Imgproc.INTER_AREA,
+            )
+            bgrMat.release()
+            bgrMat = small
+        }
         return bgrMat
     }
 
     /**
      * NV21 -> RGBA [Bitmap] via OpenCV native color conversion (no JPEG).
+     *
+     * When [maxLongSide] > 0 the image is downscaled AS A MAT (before it ever
+     * becomes a Bitmap), so a full-resolution bitmap is never allocated — this
+     * is the cheap path for detectors that only need a small image (e.g. the
+     * object model works at 320px). The preview elsewhere still uses full res.
      *
      * [emulatorMode] uses a JPEG fallback because OpenCV's NV21 conversion can
      * crash on the emulator; real devices take the fast native path.
@@ -96,17 +122,32 @@ object YuvConverter {
         width: Int,
         height: Int,
         emulatorMode: Boolean,
+        maxLongSide: Int = 0,
     ): Bitmap? {
         if (emulatorMode) {
             return nv21ToBitmapViaJpeg(nv21, width, height)
         }
         val yuvMat = Mat(height + height / 2, width, CvType.CV_8UC1)
         yuvMat.put(0, 0, nv21)
-        val rgbaMat = Mat()
+        var rgbaMat = Mat()
         Imgproc.cvtColor(yuvMat, rgbaMat, Imgproc.COLOR_YUV2RGBA_NV21)
         yuvMat.release()
 
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        // Downscale the Mat first so we never build a full-res bitmap.
+        val longSide = maxOf(width, height)
+        if (maxLongSide in 1 until longSide) {
+            val scale = maxLongSide.toDouble() / longSide
+            val small = Mat()
+            Imgproc.resize(
+                rgbaMat, small,
+                Size(width * scale, height * scale),
+                0.0, 0.0, Imgproc.INTER_AREA,
+            )
+            rgbaMat.release()
+            rgbaMat = small
+        }
+
+        val bitmap = Bitmap.createBitmap(rgbaMat.cols(), rgbaMat.rows(), Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(rgbaMat, bitmap)
         rgbaMat.release()
         return bitmap

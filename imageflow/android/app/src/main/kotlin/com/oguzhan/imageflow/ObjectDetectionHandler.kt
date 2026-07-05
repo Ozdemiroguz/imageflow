@@ -146,12 +146,17 @@ class ObjectDetectionHandler : FlutterPlugin, MethodCallHandler {
                             null
                         } else {
                             // Shared conversion: repack to NV21 then OpenCV
-                            // native YUV->RGBA (no per-frame JPEG encode/decode).
+                            // native YUV->RGBA, downscaled AS A MAT so a full-res
+                            // (e.g. 1080p ~6MB) bitmap is never allocated — the
+                            // model only needs ~640px. This is the main win for
+                            // per-frame GC pressure on Android.
                             val nv21 = YuvConverter.toNv21(
                                 yBytes, uBytes, vBytes, width, height,
                                 yRowStride, uvRowStride, uvPixelStride,
                             )
-                            YuvConverter.nv21ToBitmap(nv21, width, height, emulatorMode)
+                            YuvConverter.nv21ToBitmap(
+                                nv21, width, height, emulatorMode, maxLongSide = 640,
+                            )
                         }
                     }
                     else -> {
@@ -167,6 +172,8 @@ class ObjectDetectionHandler : FlutterPlugin, MethodCallHandler {
                     return@execute
                 }
 
+                // The bitmap is already downscaled (see nv21ToBitmap maxLongSide),
+                // so rotation is cheap and no full-res copy exists.
                 val oriented = rotateBitmap(bitmap, rotation)
                 val mpImage = BitmapImageBuilder(oriented).build()
                 // VIDEO mode requires a monotonically increasing timestamp.

@@ -226,7 +226,14 @@ class CornerDetectionHandler : FlutterPlugin, MethodCallHandler {
             return detectAndNormalize(mat, rotation)
         }
 
-        val bgrMat = YuvConverter.nv21ToBgrMat(nv21, width, height)
+        // Downscale AS A MAT during the YUV->BGR conversion so a full-res
+        // (e.g. 1080p ~6MB) BGR Mat is never allocated per frame — the edge
+        // pipeline runs at ~720px and corners are normalized. detectAndNormalize
+        // still caps at 720 as a safety net for the BGRA/emulator paths, but for
+        // the common YUV path the Mat already arrives small, so that second pass
+        // is a no-op (identity). This is the corner-detector twin of the object
+        // handler's pre-scaled bitmap and the main Large-Object-Space win.
+        val bgrMat = YuvConverter.nv21ToBgrMat(nv21, width, height, maxLongSide = 720)
         return detectAndNormalize(bgrMat, rotation)
     }
 
@@ -279,11 +286,19 @@ class CornerDetectionHandler : FlutterPlugin, MethodCallHandler {
             else -> mat
         }
 
-        val frameW = rotated.cols().toDouble()
-        val frameH = rotated.rows().toDouble()
+        // Downscale before the (expensive) Canny/contour pipeline: at 1080p the
+        // OpenCV pass is far heavier than it needs to be for edge detection, and
+        // it allocates large Mats every frame. Cap the long side at ~720px; the
+        // corners come out normalized (0..1) so the resolution doesn't matter to
+        // the result — only the preview needs to stay full-res.
+        val work = downscaleMat(rotated, 720)
+        if (work != rotated) rotated.release()
 
-        val contours = findContours(rotated)
-        rotated.release()
+        val frameW = work.cols().toDouble()
+        val frameH = work.rows().toDouble()
+
+        val contours = findContours(work)
+        work.release()
 
         if (contours.isEmpty()) return null
 
@@ -306,6 +321,22 @@ class CornerDetectionHandler : FlutterPlugin, MethodCallHandler {
     // Edge detection pipeline (from flutter_edge_detection)
     // grayscale → GaussianBlur → threshold(TRIANGLE) → Canny → dilate → findContours
     // -------------------------------------------------------------------------
+
+    /** Downscale a BGR/BGRA Mat so its long side is at most [maxLongSide].
+     *  Returns the SAME Mat when already small enough (caller checks identity
+     *  before releasing). Corners are normalized, so scale doesn't shift them. */
+    private fun downscaleMat(src: Mat, maxLongSide: Int): Mat {
+        val longSide = maxOf(src.cols(), src.rows())
+        if (longSide <= maxLongSide) return src
+        val scale = maxLongSide.toDouble() / longSide
+        val dst = Mat()
+        Imgproc.resize(
+            src, dst,
+            Size(src.cols() * scale, src.rows() * scale),
+            0.0, 0.0, Imgproc.INTER_AREA,
+        )
+        return dst
+    }
 
     private fun findContours(src: Mat): List<MatOfPoint> {
         val size = Size(src.size().width, src.size().height)
