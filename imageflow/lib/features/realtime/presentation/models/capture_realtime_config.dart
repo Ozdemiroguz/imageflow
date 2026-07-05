@@ -69,18 +69,27 @@ class CaptureRealtimeConfig {
   static const defaults = android;
 
   /// iOS: BGRA frames, sensor-only rotation, a short warm-up delay.
+  ///
+  /// Resolution is `veryHigh` (1080p): on-device profiling showed the iOS
+  /// realtime pipeline with the UI thread near-idle and zero jank at 60fps
+  /// (Vision runs on the ANE), so there's ample frame budget for a crisp preview
+  /// on Retina displays.
   static const ios = CaptureRealtimeConfig(
     realtimeStreamStartDelay: Duration(milliseconds: 500),
-    resolutionPreset: ResolutionPreset.low,
+    resolutionPreset: ResolutionPreset.veryHigh,
     imageFormatGroup: ImageFormatGroup.bgra8888,
     nativeRotationStrategy: RealtimeNativeRotationStrategy.sensorOnly,
     frameImageUsesNativeRotation: false,
   );
 
   /// Android: YUV420 frames, native (sensor+device-by-lens) rotation.
+  ///
+  /// Resolution is `veryHigh` (1080p) for a crisp preview. Android has no ANE,
+  /// so the object/edge detectors run on CPU/GPU — validate on-device that the
+  /// frame budget still holds; drop to `high` if a low-end device janks.
   static const android = CaptureRealtimeConfig(
     realtimeStreamStartDelay: Duration.zero,
-    resolutionPreset: ResolutionPreset.medium,
+    resolutionPreset: ResolutionPreset.veryHigh,
     imageFormatGroup: ImageFormatGroup.yuv420,
     nativeRotationStrategy:
         RealtimeNativeRotationStrategy.sensorAndDeviceByLens,
