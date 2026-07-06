@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:document_scan/document_scan.dart' as ds;
 import 'package:image/image.dart' as img;
 
+import '../../../../core/models/normalized_corners.dart';
 import '../../../../core/utils/log.dart';
 import '../../domain/entities/recognized_text_data.dart';
 import '../../domain/services/document_cropper.dart';
@@ -42,27 +43,40 @@ class DocumentCropService implements DocumentCropper {
     required String sourcePath,
     required String targetPath,
     RecognizedTextData? recognizedText,
+    NormalizedCorners? corners,
   }) async {
-    // Detect the document's corners through the package (normalized 0..1). A
-    // detection/channel error is not fatal — log and fall through to the
-    // text-block crop fallback, matching the app's prior graceful degradation.
-    ds.DocumentCorners? corners;
-    try {
-      corners = await _documentDetector.detect(ds.ScanInput.file(sourcePath));
-    } catch (e) {
-      Log.warning(
-        'Corner detection failed ($e); falling back to text-block crop.',
-        tag: _tag,
-      );
+    // If corners are supplied (e.g. from the manual corner-adjust screen), use
+    // them and skip detection; otherwise detect through the package (normalized
+    // 0..1). A detection/channel error is not fatal — log and fall through to
+    // the text-block crop fallback, matching the app's prior graceful
+    // degradation.
+    ds.DocumentCorners? packageCorners = corners == null
+        ? null
+        : ds.DocumentCorners(
+            topLeft: corners.topLeft,
+            topRight: corners.topRight,
+            bottomRight: corners.bottomRight,
+            bottomLeft: corners.bottomLeft,
+          );
+    if (packageCorners == null) {
+      try {
+        packageCorners =
+            await _documentDetector.detect(ds.ScanInput.file(sourcePath));
+      } catch (e) {
+        Log.warning(
+          'Corner detection failed ($e); falling back to text-block crop.',
+          tag: _tag,
+        );
+      }
     }
 
-    if (corners != null) {
+    if (packageCorners != null) {
       Log.info('Using package corners for perspective correction.', tag: _tag);
       // crop() perspective-corrects + filters and returns encoded bytes; we own
       // writing them to disk (the package is file-system agnostic). Run it in an
       // isolate so the warp + filter + JPEG encode stay off the UI thread, as
       // the app's own warp did.
-      final detected = corners;
+      final detected = packageCorners;
       final scanned = await Isolate.run(
         () => const ds.DocumentProcessor().crop(
           ds.ScanInput.file(sourcePath),

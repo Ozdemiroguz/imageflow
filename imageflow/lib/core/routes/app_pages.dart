@@ -4,7 +4,9 @@ import '../../features/batch/presentation/bindings/batch_binding.dart';
 import '../../features/batch/presentation/pages/batch_processing_page.dart';
 import '../../features/capture/presentation/bindings/camera_capture_binding.dart';
 import '../../features/capture/presentation/bindings/capture_binding.dart';
+import '../../features/capture/presentation/bindings/corner_adjust_binding.dart';
 import '../../features/capture/presentation/pages/camera_capture_page.dart';
+import '../../features/capture/presentation/pages/corner_adjust_page.dart';
 import '../../features/history/presentation/bindings/history_detail_binding.dart';
 import '../../features/history/presentation/bindings/history_binding.dart';
 import '../../features/history/presentation/pages/history_detail_page.dart';
@@ -48,6 +50,13 @@ class AppPages {
       binding: RealtimeBinding(),
       transition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 220),
+    ),
+    GetPage<dynamic>(
+      name: AppRoutes.cornerAdjust,
+      page: () => const CornerAdjustPage(),
+      binding: CornerAdjustBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 300),
     ),
     GetPage<dynamic>(
       name: AppRoutes.processing,

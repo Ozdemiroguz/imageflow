@@ -66,8 +66,8 @@ void main() {
         expect(ProcessingStep.correctingPerspective.documentProgress, 0.3);
       });
 
-      test('enhancingContrast → 0.5', () {
-        expect(ProcessingStep.enhancingContrast.documentProgress, 0.5);
+      test('extractingText → 0.5', () {
+        expect(ProcessingStep.extractingText.documentProgress, 0.5);
       });
 
       test('generatingPdf → 0.65', () {
@@ -95,7 +95,7 @@ void main() {
           ProcessingStep.copying,
           ProcessingStep.detectingText,
           ProcessingStep.correctingPerspective,
-          ProcessingStep.enhancingContrast,
+          ProcessingStep.extractingText,
           ProcessingStep.generatingPdf,
           ProcessingStep.generatingThumbnail,
           ProcessingStep.saving,

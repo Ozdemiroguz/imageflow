@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
+import '../../../../core/models/normalized_corners.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../history/domain/usecases/save_history.dart';
 import '../../domain/entities/processing_step.dart';
@@ -35,6 +36,7 @@ class ProcessingController extends GetxController {
 
   late final String _imagePath;
   bool? _capturedWithFrontCamera;
+  NormalizedCorners? _corners;
 
   String get imagePath => _imagePath;
 
@@ -50,12 +52,17 @@ class ProcessingController extends GetxController {
       _capturedWithFrontCamera = capturedWithFrontCamera is bool
           ? capturedWithFrontCamera
           : null;
+      // Optional manually-adjusted corners from the corner-adjust screen.
+      final corners = args['corners'];
+      _corners = corners is NormalizedCorners ? corners : null;
     } else if (args is String) {
       _imagePath = args;
       _capturedWithFrontCamera = null;
+      _corners = null;
     } else {
       _imagePath = args.toString();
       _capturedWithFrontCamera = null;
+      _corners = null;
     }
     // Show the progress state immediately, but defer the pipeline (file copy,
     // ML Kit model load, isolates) until the entrance transition settles —
@@ -77,13 +84,12 @@ class ProcessingController extends GetxController {
     isProcessing.value = true;
     failure.value = null;
 
-    final outcome = _capturedWithFrontCamera == null
-        ? await _processImage(imagePath: _imagePath, onProgress: _onProgress)
-        : await _processImage(
-            imagePath: _imagePath,
-            onProgress: _onProgress,
-            capturedWithFrontCamera: _capturedWithFrontCamera,
-          );
+    final outcome = await _processImage(
+      imagePath: _imagePath,
+      onProgress: _onProgress,
+      capturedWithFrontCamera: _capturedWithFrontCamera,
+      corners: _corners,
+    );
 
     if (isClosed) return;
 

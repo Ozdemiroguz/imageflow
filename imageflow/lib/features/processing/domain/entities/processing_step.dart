@@ -1,11 +1,14 @@
 enum ProcessingStep {
   // Face flow: copying → detectingFaces → annotating → generatingThumbnail → saving
-  // Doc flow:  copying → detectingText → correctingPerspective → enhancingContrast → generatingPdf → generatingThumbnail → saving
+  // Doc flow:  copying → detectingText → correctingPerspective → extractingText → generatingPdf → generatingThumbnail → saving
   copying('Preparing image...'),
   detectingFaces('Detecting faces...'),
   detectingText('Recognizing text...'),
   correctingPerspective('Correcting perspective...'),
   enhancingContrast('Enhancing contrast...'),
+  // Second OCR pass, run on the cropped + enhanced document so text is read
+  // from the clean, deskewed image rather than the raw (often skewed) photo.
+  extractingText('Extracting text...'),
   annotating('Applying grayscale filter...'),
   generatingPdf('Generating PDF...'),
   generatingThumbnail('Generating thumbnail...'),
@@ -26,12 +29,12 @@ enum ProcessingStep {
     _ => 0.0,
   };
 
-  /// Determinate progress for document flow (7 steps).
+  /// Determinate progress for document flow.
   double get documentProgress => switch (this) {
     copying => 0.0,
     detectingText => 0.1,
     correctingPerspective => 0.3,
-    enhancingContrast => 0.5,
+    extractingText => 0.5,
     generatingPdf => 0.65,
     generatingThumbnail => 0.85,
     saving => 0.95,

@@ -9,6 +9,7 @@ import '../../../../core/enums/processing_type.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/result.dart';
 import '../../../../core/models/face_geometry.dart';
+import '../../../../core/models/normalized_corners.dart';
 import '../../domain/entities/recognized_text_data.dart';
 import '../../../../core/services/file_service.dart';
 import '../utils/image_utils.dart';
@@ -44,6 +45,7 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
     ProcessingType? preferredType,
     ProgressCallback? onProgress,
     bool? capturedWithFrontCamera,
+    NormalizedCorners? corners,
   }) => Result.guard(
     () async {
       final id = _uuid.v4();
@@ -62,9 +64,14 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
       final workingPath = _fileService.processedFilePath('${id}_work');
       await File(originalPath).copy(workingPath);
       try {
+        // If the user confirmed corners on the adjust screen, this is
+        // definitively a document — force document detection so an ID card's
+        // photo doesn't route the whole image into the face flow.
+        final effectivePreferredType =
+            corners != null ? ProcessingType.document : preferredType;
         var detection = await _contentDetector.detect(
           imagePath: workingPath,
-          preferredType: preferredType,
+          preferredType: effectivePreferredType,
         );
 
         if (capturedWithFrontCamera == true &&
@@ -97,8 +104,14 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
           );
         }
 
-        // No content detected at all → throw error
-        if (detection.type == null) {
+        // When the user confirmed corners, treat it as a document no matter what
+        // detection said (an ID card's face must not send it to the face flow,
+        // and a text-less document must still be cropped).
+        final forceDocument = corners != null;
+
+        // No content detected at all → throw error (unless the user gave
+        // corners, in which case we crop it as a document regardless).
+        if (detection.type == null && !forceDocument) {
           throw const DetectionFailure(
             'No face or text detected in this image. '
             'Try a clearer photo with visible faces or text.',
@@ -110,7 +123,7 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
         final faceContours = <List<ContourPoint>>[];
         String? pdfPath;
 
-        if (detection.hasFaces) {
+        if (detection.hasFaces && !forceDocument) {
           // --- Face flow ---
           onProgress?.call(ProcessingStep.annotating);
           for (final face in detection.faces!) {
@@ -129,31 +142,42 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
             rects: faceRects,
             contours: faceContours,
           );
-        } else if (detection.type == ProcessingType.document) {
+        }
+
+        String? refinedText;
+        if ((forceDocument || !detection.hasFaces) &&
+            (forceDocument || detection.type == ProcessingType.document)) {
           // --- Document flow: crop + eco filter + PDF (only if text found) ---
-          pdfPath = await _runDocumentPipeline(
+          final doc = await _runDocumentPipeline(
             id: id,
             workingPath: workingPath,
             processedPath: processedPath,
             recognizedText: detection.recognizedText,
             appliedRotation: detection.appliedRotation,
             generatePdf: (detection.recognizedText?.text ?? '').isNotEmpty,
+            corners: corners,
             onProgress: onProgress,
           );
-        } else {
+          pdfPath = doc.pdfPath;
+          refinedText = doc.refinedText;
+        } else if (!detection.hasFaces) {
           // --- Fallback: no face, no text — just copy working copy ---
           await File(workingPath).copy(processedPath);
         }
 
-        final type = detection.type ?? ProcessingType.document;
+        final type = forceDocument
+            ? ProcessingType.document
+            : (detection.type ?? ProcessingType.document);
         final result = await _buildResult(
           id: id,
           type: type,
           originalPath: originalPath,
           processedPath: processedPath,
           pdfPath: pdfPath,
+          // Prefer the post-crop OCR text (read from the clean, deskewed image);
+          // fall back to the original-image OCR when the second pass was empty.
           extractedText: type == ProcessingType.document
-              ? detection.recognizedText?.text
+              ? (refinedText ?? detection.recognizedText?.text)
               : null,
           faceRects: faceRects,
           faceContours: faceContours,
@@ -210,7 +234,7 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
 
         // Document pipeline: crop + eco filter + orientation + PDF.
         final processedPath = _fileService.processedFilePath(id);
-        final pdfPath = await _runDocumentPipeline(
+        final doc = await _runDocumentPipeline(
           id: id,
           workingPath: workingPath,
           processedPath: processedPath,
@@ -225,8 +249,9 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
           type: ProcessingType.document,
           originalPath: originalPath,
           processedPath: processedPath,
-          pdfPath: pdfPath,
-          extractedText: extractedText,
+          pdfPath: doc.pdfPath,
+          // Prefer post-crop OCR text; fall back to the original-image text.
+          extractedText: doc.refinedText ?? extractedText,
           onProgress: onProgress,
         );
 
@@ -251,13 +276,14 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
   /// Runs the document pipeline shared by both entry points: text-block crop +
   /// eco filter, orientation restore, then PDF generation when [generatePdf] is
   /// requested. Returns the generated PDF path, or null when none was produced.
-  Future<String?> _runDocumentPipeline({
+  Future<({String? pdfPath, String? refinedText})> _runDocumentPipeline({
     required String id,
     required String workingPath,
     required String processedPath,
     required RecognizedTextData? recognizedText,
     required int appliedRotation,
     required bool generatePdf,
+    NormalizedCorners? corners,
     ProgressCallback? onProgress,
   }) async {
     onProgress?.call(ProcessingStep.correctingPerspective);
@@ -265,6 +291,7 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
       sourcePath: workingPath,
       targetPath: processedPath,
       recognizedText: recognizedText,
+      corners: corners,
     );
 
     await _restoreDocumentOrientation(
@@ -272,12 +299,37 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
       appliedRotationDegrees: appliedRotation,
     );
 
-    if (!generatePdf) return null;
+    // Second OCR pass on the cropped + deskewed document: text is far more
+    // legible on the clean image than on the raw (often skewed) photo, so this
+    // gives better extracted text — especially for camera captures. Falls back
+    // to the original-image OCR if this pass finds nothing, so it never loses
+    // text we already had.
+    onProgress?.call(ProcessingStep.extractingText);
+    final refinedText = await _extractTextFromProcessed(processedPath);
+
+    if (!generatePdf) return (pdfPath: null, refinedText: refinedText);
 
     onProgress?.call(ProcessingStep.generatingPdf);
     final pdfPath = _fileService.pdfFilePath(id);
     await _generatePdf(imagePath: processedPath, pdfPath: pdfPath);
-    return pdfPath;
+    return (pdfPath: pdfPath, refinedText: refinedText);
+  }
+
+  /// Runs an OCR-only pass on the cropped document and returns its text, or null
+  /// if none is found (the caller keeps the original-image text in that case).
+  Future<String?> _extractTextFromProcessed(String processedPath) async {
+    try {
+      final detection = await _contentDetector.detect(
+        imagePath: processedPath,
+        preferredType: ProcessingType.document,
+      );
+      final text = detection.recognizedText?.text;
+      return (text != null && text.isNotEmpty) ? text : null;
+    } catch (e) {
+      Log.warning('Post-crop OCR failed ($e); keeping original text.',
+          tag: 'Processing');
+      return null;
+    }
   }
 
   /// Generates the thumbnail, reads the final file size, and assembles the

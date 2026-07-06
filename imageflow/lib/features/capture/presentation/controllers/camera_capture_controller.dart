@@ -163,7 +163,7 @@ class CameraCaptureController extends GetxController
       final file = await cam.takePicture();
       if (isClosed) return;
       await Get.offNamed(
-        AppRoutes.processing,
+        AppRoutes.cornerAdjust,
         arguments: <String, dynamic>{
           'imagePath': file.path,
           'capturedWithFrontCamera': isFrontCamera,

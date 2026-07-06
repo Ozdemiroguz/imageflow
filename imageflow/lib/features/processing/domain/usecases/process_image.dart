@@ -1,5 +1,6 @@
 import '../../../../core/enums/processing_type.dart';
 import '../../../../core/error/result.dart';
+import '../../../../core/models/normalized_corners.dart';
 import '../entities/processing_result.dart';
 import '../services/image_processing_service.dart';
 
@@ -12,12 +13,14 @@ class ProcessImage {
     ProcessingType? preferredType,
     ProgressCallback? onProgress,
     bool? capturedWithFrontCamera,
+    NormalizedCorners? corners,
   }) {
     return _service.processImage(
       imagePath: imagePath,
       preferredType: preferredType,
       onProgress: onProgress,
       capturedWithFrontCamera: capturedWithFrontCamera,
+      corners: corners,
     );
   }
 }

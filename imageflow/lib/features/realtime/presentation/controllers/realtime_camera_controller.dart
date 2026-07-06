@@ -344,7 +344,7 @@ class RealtimeCameraController extends GetxController
       if (isClosed) return;
       Get.back();
       await Get.toNamed(
-        AppRoutes.processing,
+        AppRoutes.cornerAdjust,
         arguments: <String, dynamic>{
           'imagePath': file.path,
           'capturedWithFrontCamera': isFrontCamera,

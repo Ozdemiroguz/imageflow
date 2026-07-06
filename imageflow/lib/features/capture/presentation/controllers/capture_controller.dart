@@ -80,7 +80,10 @@ class CaptureController extends GetxController {
   }
 
   Future<void> _navigateToProcessing(String imagePath) async {
-    await Get.toNamed(AppRoutes.processing, arguments: imagePath);
+    // Route through the corner-adjust screen (it auto-detects and, for a
+    // document, lets the user confirm/fix the corners before cropping; it skips
+    // straight to processing when no document is found).
+    await Get.toNamed(AppRoutes.cornerAdjust, arguments: imagePath);
   }
 
   void _closeSourceDialogIfOpen() {
