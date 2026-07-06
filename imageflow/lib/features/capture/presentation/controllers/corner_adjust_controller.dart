@@ -85,9 +85,6 @@ class CornerAdjustController extends GetxController {
   /// Confirms the current corners and proceeds to processing.
   void confirm() => _goToProcessing(corners: corners.value);
 
-  /// Skips adjustment and lets processing auto-detect (as before).
-  void useAutomatic() => _goToProcessing(corners: null);
-
   void _goToProcessing({required NormalizedCorners? corners}) {
     Get.offNamed(
       AppRoutes.processing,

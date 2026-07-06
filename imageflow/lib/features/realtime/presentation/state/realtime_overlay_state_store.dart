@@ -35,6 +35,13 @@ class RealtimeOverlayStateStore implements DetectionOutputPort {
   final faceContours = <List<Offset>>[].obs;
   final detectedObjects = <DetectedObjectInfo>[].obs;
   final documentCorners = Rxn<NormalizedCorners>();
+
+  /// Called on EVERY document-detection frame with the raw corners (or null),
+  /// regardless of the change-threshold that gates [documentCorners]. Auto-
+  /// capture needs every frame — a perfectly steady document produces no
+  /// [documentCorners] change, so watching that reactive would starve the
+  /// steadiness counter.
+  void Function(NormalizedCorners? corners)? onDocumentCornersFrame;
   final facePreviewBytes = Rxn<Uint8List>();
   final documentPreviewBytes = Rxn<Uint8List>();
   final faceStatus = ''.obs;
@@ -167,6 +174,8 @@ class RealtimeOverlayStateStore implements DetectionOutputPort {
 
   @override
   void setDocumentCorners(NormalizedCorners? corners) {
+    // Auto-capture sees every frame's corners (before the change-threshold gate).
+    onDocumentCornersFrame?.call(corners);
     if (_overlayState.hasDocumentCornersChanged(
       documentCorners.value,
       corners,

@@ -71,7 +71,6 @@ class CaptureDialog extends StatelessWidget {
               label: 'Batch (Gallery)',
               subtitle: 'Select multiple images',
               onTap: onPickBatchFromGallery ?? () {},
-              hasBonusBadge: true,
             ),
           ],
         ),

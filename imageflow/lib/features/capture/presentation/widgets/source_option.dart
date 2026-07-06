@@ -10,14 +10,12 @@ class SourceOption extends StatelessWidget {
     required this.label,
     required this.subtitle,
     required this.onTap,
-    this.hasBonusBadge = false,
   });
 
   final IconData icon;
   final String label;
   final String subtitle;
   final VoidCallback onTap;
-  final bool hasBonusBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -48,23 +46,11 @@ class SourceOption extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      spacing: tokens.spacingXs,
-                      children: [
-                        Text(
-                          label,
-                          style: context.text.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (hasBonusBadge)
-                          Icon(
-                            Icons.star_rounded,
-                            size: 16,
-                            color: tokens.bonusYellow,
-                          ),
-                      ],
+                    Text(
+                      label,
+                      style: context.text.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     Text(
                       subtitle,

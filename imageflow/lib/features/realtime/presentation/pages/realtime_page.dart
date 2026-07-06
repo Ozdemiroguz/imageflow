@@ -153,11 +153,23 @@ class _RealtimePageState extends State<RealtimePage> with RouteAware {
                       bottom: false,
                       child: Padding(
                         padding: const EdgeInsets.only(top: 52),
-                        child: _ScanSpeedToggleButton(
-                          active: _showScanPanel,
-                          onTap: () => setState(
-                            () => _showScanPanel = !_showScanPanel,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            _ScanSpeedToggleButton(
+                              active: _showScanPanel,
+                              onTap: () => setState(
+                                () => _showScanPanel = !_showScanPanel,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Obx(
+                              () => _AutoCaptureToggleButton(
+                                active: _controller.autoCaptureEnabled.value,
+                                onTap: _controller.toggleAutoCapture,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -236,6 +248,60 @@ class _ScanSpeedToggleButton extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 'Speed',
+                style: TextStyle(
+                  color: fg,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Toggles auto-capture: when on, a still is captured automatically once the
+/// live document holds steady. Active state glows in the document accent.
+class _AutoCaptureToggleButton extends StatelessWidget {
+  const _AutoCaptureToggleButton({required this.active, required this.onTap});
+
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = context.tokens.realtimeDocumentStroke;
+    final fg = active ? accent : Colors.white.withValues(alpha: 0.6);
+    final bg = active
+        ? accent.withValues(alpha: 0.18)
+        : Colors.black.withValues(alpha: 0.45);
+    final border = active
+        ? accent.withValues(alpha: 0.9)
+        : Colors.white.withValues(alpha: 0.15);
+
+    return Semantics(
+      button: true,
+      toggled: active,
+      label: 'Auto capture',
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: border, width: 1.2),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.motion_photos_auto_outlined, size: 16, color: fg),
+              const SizedBox(width: 6),
+              Text(
+                'Auto',
                 style: TextStyle(
                   color: fg,
                   fontSize: 12,

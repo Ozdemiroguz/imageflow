@@ -22,7 +22,6 @@ class AppTokens extends ThemeExtension<AppTokens> {
     this.warning = const Color(0xFFE65100),
     this.success = const Color(0xFF2E7D32),
     this.info = const Color(0xFF1565C0),
-    this.bonusYellow = const Color(0xFFFFD54F),
     this.realtimeDocumentStroke = const Color(0xFFF9A825),
     this.realtimeDocumentFill = const Color(0x22FFD54F),
     this.realtimeDocumentCorner = const Color(0xFFFFEE58),
@@ -48,7 +47,6 @@ class AppTokens extends ThemeExtension<AppTokens> {
   final Color warning;
   final Color success;
   final Color info;
-  final Color bonusYellow;
   final Color realtimeDocumentStroke;
   final Color realtimeDocumentFill;
   final Color realtimeDocumentCorner;
@@ -75,7 +73,6 @@ class AppTokens extends ThemeExtension<AppTokens> {
     Color? warning,
     Color? success,
     Color? info,
-    Color? bonusYellow,
     Color? realtimeDocumentStroke,
     Color? realtimeDocumentFill,
     Color? realtimeDocumentCorner,
@@ -101,7 +98,6 @@ class AppTokens extends ThemeExtension<AppTokens> {
       warning: warning ?? this.warning,
       success: success ?? this.success,
       info: info ?? this.info,
-      bonusYellow: bonusYellow ?? this.bonusYellow,
       realtimeDocumentStroke:
           realtimeDocumentStroke ?? this.realtimeDocumentStroke,
       realtimeDocumentFill: realtimeDocumentFill ?? this.realtimeDocumentFill,
@@ -135,7 +131,6 @@ class AppTokens extends ThemeExtension<AppTokens> {
       warning: Color.lerp(warning, other.warning, t) ?? warning,
       success: Color.lerp(success, other.success, t) ?? success,
       info: Color.lerp(info, other.info, t) ?? info,
-      bonusYellow: Color.lerp(bonusYellow, other.bonusYellow, t) ?? bonusYellow,
       realtimeDocumentStroke:
           Color.lerp(realtimeDocumentStroke, other.realtimeDocumentStroke, t) ??
           realtimeDocumentStroke,

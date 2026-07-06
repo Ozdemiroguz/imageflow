@@ -7,7 +7,6 @@ class _QuickActionFab extends StatelessWidget {
     required this.gradient,
     required this.icon,
     required this.tooltip,
-    this.hasBonusBadge = false,
   });
 
   final String heroTag;
@@ -15,43 +14,25 @@ class _QuickActionFab extends StatelessWidget {
   final Gradient gradient;
   final IconData icon;
   final String tooltip;
-  final bool hasBonusBadge;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 56,
       height: 56,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: gradient,
-                shape: BoxShape.circle,
-              ),
-              child: FloatingActionButton(
-                heroTag: heroTag,
-                onPressed: onPressed,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                tooltip: tooltip,
-                child: Icon(icon),
-              ),
-            ),
-          ),
-          if (hasBonusBadge)
-            Positioned(
-              right: 0,
-              child: Icon(
-                Icons.star_rounded,
-                size: 18,
-                color: context.tokens.bonusYellow,
-                shadows: const [Shadow(color: Colors.black45, blurRadius: 3)],
-              ),
-            ),
-        ],
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: gradient,
+          shape: BoxShape.circle,
+        ),
+        child: FloatingActionButton(
+          heroTag: heroTag,
+          onPressed: onPressed,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          tooltip: tooltip,
+          child: Icon(icon),
+        ),
       ),
     );
   }

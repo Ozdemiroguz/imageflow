@@ -49,24 +49,13 @@ class CornerAdjustPage extends GetView<CornerAdjustController> {
                   tokens.spacingLg,
                   tokens.spacingLg,
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: controller.useAutomatic,
-                        child: const Text('Auto'),
-                      ),
-                    ),
-                    SizedBox(width: tokens.spacingMd),
-                    Expanded(
-                      flex: 2,
-                      child: FilledButton.icon(
-                        onPressed: controller.confirm,
-                        icon: const Icon(Icons.check),
-                        label: const Text('Use these corners'),
-                      ),
-                    ),
-                  ],
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: controller.confirm,
+                    icon: const Icon(Icons.check),
+                    label: const Text('Use these corners'),
+                  ),
                 ),
               ),
             ],

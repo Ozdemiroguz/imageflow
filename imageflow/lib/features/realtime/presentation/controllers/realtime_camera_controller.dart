@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:camera/camera.dart';
+import 'package:document_scan/document_scan.dart' as ds;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
@@ -189,6 +190,21 @@ class RealtimeCameraController extends GetxController
   /// independently. The frame stream handler reads this each frame.
   final detectionModes = const RealtimeDetectionModes().obs;
 
+  /// Whether auto-capture is on: when the live document stays steady and
+  /// large enough for a moment, a still is captured automatically. Off by
+  /// default so the manual shutter is the norm.
+  final autoCaptureEnabled = false.obs;
+
+  // The package owns the auto-capture policy (steadiness / area / jitter /
+  // fire-once); the app just feeds it each frame's corners and captures when it
+  // says "ready". Package defaults are already tuned for a live camera.
+  final _autoCapture = ds.AutoCaptureAnalyzer();
+
+  void toggleAutoCapture() {
+    autoCaptureEnabled.value = !autoCaptureEnabled.value;
+    if (!autoCaptureEnabled.value) _autoCapture.reset();
+  }
+
   /// Per-detector priority weights the user controls via the scan-speed panel.
   /// Higher weight → a larger share of the device scan budget → a faster scan
   /// rate for that detector. Seeded from the config's budget defaults so the
@@ -285,6 +301,26 @@ class RealtimeCameraController extends GetxController
     // Defer camera bring-up until the entrance transition settles so the push
     // animation doesn't stutter (same pattern as CameraCaptureController).
     unawaited(_initAfterTransition());
+    // Auto-capture: feed EVERY document-detection frame to the analyzer (not the
+    // change-gated documentCorners reactive — a perfectly steady document emits
+    // no change there, which would starve the steadiness counter).
+    _overlayStateManager.onDocumentCornersFrame =
+        _onDocumentCornersForAutoCapture;
+  }
+
+  void _onDocumentCornersForAutoCapture(NormalizedCorners? corners) {
+    if (!autoCaptureEnabled.value || isCapturing.value) return;
+    final quad = corners == null
+        ? null
+        : ds.DocumentCorners(
+            topLeft: corners.topLeft,
+            topRight: corners.topRight,
+            bottomRight: corners.bottomRight,
+            bottomLeft: corners.bottomLeft,
+          );
+    if (_autoCapture.add(quad).shouldCapture) {
+      unawaited(capture());
+    }
   }
 
   Future<void> _initAfterTransition() async {

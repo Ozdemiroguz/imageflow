@@ -30,7 +30,6 @@ class GradientFab extends StatelessWidget {
           ),
           icon: Icons.center_focus_strong_rounded,
           tooltip: 'Realtime',
-          hasBonusBadge: true,
         ),
         _QuickActionFab(
           heroTag: 'history_capture_fab',
