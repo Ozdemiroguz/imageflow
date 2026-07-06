@@ -21,7 +21,6 @@ import '../../../../core/utils/log.dart';
 import '../coordinators/realtime_camera_session_manager.dart';
 import '../../data/services/realtime_detection_pipeline.dart';
 import '../../data/datasources/realtime_face_detection_service.dart';
-import '../../data/datasources/realtime_ocr_gate_service.dart';
 import '../state/realtime_overlay_state_store.dart';
 import '../../data/services/realtime_preview_builder.dart';
 import '../coordinators/realtime_frame_geometry_source.dart';
@@ -42,7 +41,6 @@ class RealtimeCameraController extends GetxController
     required CornerDetector cornerDetectionService,
     required ObjectDetector objectDetectionService,
     required RealtimeFaceDetectionService faceDetectionService,
-    required RealtimeOcrGateService ocrGateService,
     required RealtimePreviewBuilder previewBuilder,
     CaptureRealtimeConfig config = CaptureRealtimeConfig.defaults,
     RealtimeOverlayState? overlayState,
@@ -56,7 +54,6 @@ class RealtimeCameraController extends GetxController
   }) : _permissionService = permissionService,
        _cameraSessionService = cameraSessionService,
        _faceDetectionService = faceDetectionService,
-       _ocrGateService = ocrGateService,
        _config = config,
        _startupDelay = startupDelay {
     _overlayState = overlayState ?? RealtimeOverlayState(config: _config);
@@ -64,7 +61,6 @@ class RealtimeCameraController extends GetxController
         scheduler ??
         RealtimeDetectionScheduler(
           faceInterval: _config.faceInterval,
-          ocrInterval: _config.ocrInterval,
           edgeInterval: _config.edgeInterval,
           objectInterval: _config.objectInterval,
           facePanelInterval: _config.facePanelInterval,
@@ -78,14 +74,11 @@ class RealtimeCameraController extends GetxController
         RealtimeDetectionPipeline(
           imageFormatGroup: _config.imageFormatGroup,
           frameImageUsesNativeRotation: _config.frameImageUsesNativeRotation,
-          documentNoTextStatus: _config.documentNoTextStatus,
-          documentScanningStatus: _config.documentScanningStatus,
           scheduler: _scheduler,
           output: _overlayStateManager,
           cornerDetectionService: cornerDetectionService,
           objectDetectionService: objectDetectionService,
           faceDetectionService: faceDetectionService,
-          ocrGateService: ocrGateService,
           previewBuilder: previewBuilder,
         );
     _streamHandler =
@@ -154,7 +147,6 @@ class RealtimeCameraController extends GetxController
   final PermissionService _permissionService;
   final CameraSessionService _cameraSessionService;
   final RealtimeFaceDetectionService _faceDetectionService;
-  final RealtimeOcrGateService _ocrGateService;
   final CaptureRealtimeConfig _config;
   final Duration _startupDelay;
 
@@ -425,7 +417,6 @@ class RealtimeCameraController extends GetxController
     _streamHandler.dispose();
     await _sessionManager.shutdownCameraSession(resetRealtime: false);
     await _faceDetectionService.close();
-    await _ocrGateService.close();
     super.onClose();
   }
 

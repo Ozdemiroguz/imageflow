@@ -16,7 +16,6 @@ class CaptureRealtimeConfig {
     required this.nativeRotationStrategy,
     required this.frameImageUsesNativeRotation,
     required this.scanBudget,
-    this.ocrInterval = const Duration(milliseconds: 850),
     this.facePanelInterval = const Duration(milliseconds: 700),
     this.documentPanelInterval = const Duration(milliseconds: 800),
     this.minFaceRectDelta = 0.015,
@@ -29,7 +28,6 @@ class CaptureRealtimeConfig {
     this.facePrimaryPreviewLabel = 'Preview: primary face',
     this.faceDetectedPreviewLabel = 'Preview: detected face',
     this.documentScanningStatus = 'Scanning for document...',
-    this.documentNoTextStatus = 'No document',
     this.documentEdgeSearchingStatus = 'Searching document edges...',
     this.documentFoundStatus = 'Document found',
   });
@@ -52,7 +50,6 @@ class CaptureRealtimeConfig {
   Map<ScanDetector, Duration> get _defaultIntervals =>
       scanBudget.intervalsFor(const RealtimeDetectionModes());
 
-  final Duration ocrInterval;
   final Duration facePanelInterval;
   final Duration documentPanelInterval;
 
@@ -71,7 +68,6 @@ class CaptureRealtimeConfig {
   final String faceDetectedPreviewLabel;
 
   final String documentScanningStatus;
-  final String documentNoTextStatus;
   final String documentEdgeSearchingStatus;
   final String documentFoundStatus;
 

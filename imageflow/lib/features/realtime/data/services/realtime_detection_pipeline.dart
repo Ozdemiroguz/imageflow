@@ -18,10 +18,9 @@ import 'realtime_scene_gate.dart';
 import '../datasources/realtime_face_detection_service.dart';
 import 'realtime_face_geometry_normalizer.dart';
 import 'realtime_frame_perf_tracker.dart';
-import '../datasources/realtime_ocr_gate_service.dart';
 import 'realtime_preview_builder.dart';
 
-/// Per-frame detection pipeline: runs OCR, face, and document-edge detection
+/// Per-frame detection pipeline: runs face, document-edge, and object detection
 /// for a camera frame and writes results through [DetectionOutputPort].
 ///
 /// Data layer, framework-free (plain class, not a GetxService).
@@ -29,14 +28,11 @@ class RealtimeDetectionPipeline {
   RealtimeDetectionPipeline({
     required this.imageFormatGroup,
     required this.frameImageUsesNativeRotation,
-    required this.documentNoTextStatus,
-    required this.documentScanningStatus,
     required RealtimeDetectionScheduler scheduler,
     required DetectionOutputPort output,
     required CornerDetector cornerDetectionService,
     required ObjectDetector objectDetectionService,
     required RealtimeFaceDetectionService faceDetectionService,
-    required RealtimeOcrGateService ocrGateService,
     required RealtimePreviewBuilder previewBuilder,
     RealtimeFaceGeometryNormalizer? faceGeometryNormalizer,
     RealtimeFramePerfTracker? perfTracker,
@@ -46,7 +42,6 @@ class RealtimeDetectionPipeline {
        _cornerDetectionService = cornerDetectionService,
        _objectDetectionService = objectDetectionService,
        _faceDetectionService = faceDetectionService,
-       _ocrGateService = ocrGateService,
        _previewBuilder = previewBuilder,
        _sceneGate = sceneGate ?? RealtimeSceneGate(),
        _faceGeometryNormalizer =
@@ -65,53 +60,15 @@ class RealtimeDetectionPipeline {
   /// Whether frames arrive already preview-oriented (native rotation applied).
   final bool frameImageUsesNativeRotation;
 
-  // NOTE: these two are UI status strings the pipeline currently *reads back*
-  // from the overlay store to decide transitions. That read-back is the
-  // remaining data->presentation coupling; it will be inverted (data returns
-  // results, presentation owns status) after realtime has a test safety net.
-  // See docs/REALTIME_IDEAL_STRUCTURE.md.
-  final String documentNoTextStatus;
-  final String documentScanningStatus;
-
   final RealtimeDetectionScheduler _scheduler;
   final DetectionOutputPort _output;
   final CornerDetector _cornerDetectionService;
   final ObjectDetector _objectDetectionService;
   final RealtimeFaceDetectionService _faceDetectionService;
-  final RealtimeOcrGateService _ocrGateService;
   final RealtimePreviewBuilder _previewBuilder;
   final RealtimeFaceGeometryNormalizer _faceGeometryNormalizer;
   final RealtimeFramePerfTracker _perfTracker;
   final RealtimeSceneGate _sceneGate;
-
-  Future<void> runOcrGate(
-    CameraImage frame, {
-    required InputImageRotation rotation,
-    Uint8List? androidNv21Bytes,
-    InputImage? preparedInputImage,
-  }) async {
-    final hasText = await _runGuarded<bool>(
-      errorMessage: 'Realtime OCR gate failed',
-      action: () async {
-        final result = await _ocrGateService.evaluate(
-          frame: frame,
-          rotation: rotation,
-          androidNv21Bytes: androidNv21Bytes,
-          preparedInputImage: preparedInputImage,
-        );
-        if (result.hasText) {
-          if (_output.documentStatusLabel == documentNoTextStatus ||
-              _output.documentStatusLabel == documentScanningStatus) {
-            _output.setDocumentSearchingState();
-          }
-        } else {
-          _output.setDocumentNoTextState();
-        }
-        return result.hasText;
-      },
-    );
-    _scheduler.endOcrDetection(hasText: hasText);
-  }
 
   Future<void> runFaceDetection(
     CameraImage frame, {
@@ -361,9 +318,9 @@ class RealtimeDetectionPipeline {
     );
   }
 
-  /// Runs the full per-frame pipeline: schedules OCR/face/edge detection for
-  /// this frame, shares the NV21/InputImage conversion across them, runs OCR +
-  /// face concurrently, and records perf samples.
+  /// Runs the full per-frame pipeline: schedules face/edge/object detection for
+  /// this frame, shares the NV21/InputImage conversion across them, runs face +
+  /// object concurrently, and records perf samples.
   Future<void> processFrame(
     CameraImage frame, {
     required InputImageRotation rotation,
@@ -372,7 +329,7 @@ class RealtimeDetectionPipeline {
     required bool isFrontCamera,
     required bool needsMirrorCompensation,
     // Per-detector enable flags (mode toggles). A disabled detector is skipped
-    // for the frame and its overlay cleared. "Document" gates OCR + edge.
+    // for the frame and its overlay cleared. "Document" gates edge detection.
     bool faceEnabled = true,
     bool documentEnabled = true,
     bool objectEnabled = true,
@@ -383,7 +340,6 @@ class RealtimeDetectionPipeline {
     Uint8List? sharedAndroidNv21;
     var inputImageResolved = false;
     InputImage? sharedInputImage;
-    int? ocrMs;
     int? faceMs;
     int? edgeMs;
     int? objectMs;
@@ -404,8 +360,8 @@ class RealtimeDetectionPipeline {
     }
 
     // Disabled detectors are skipped and their overlays cleared so no stale
-    // boxes linger after a mode is turned off. "Document" gates both OCR (text)
-    // and the edge detector below.
+    // boxes linger after a mode is turned off. "Document" gates the edge
+    // detector below.
     if (!faceEnabled) {
       _output.applyFaceGeometry(
         nextFaceRects: const [],
@@ -419,11 +375,10 @@ class RealtimeDetectionPipeline {
       _output.setDocumentCorners(null);
     }
 
-    // OCR is intentionally NOT run in realtime anymore. It used to gate edge
-    // detection ("is there text?"), but a document is a rectangle whether or not
-    // it has text, so edge now runs on its own (scene-gated). OCR's future role
-    // is text extraction from a captured document, not a realtime gate — so it
-    // stays wired (service + binding) but is not invoked per frame here.
+    // OCR is intentionally NOT run in realtime. It used to gate edge detection
+    // ("is there text?"), but a document is a rectangle whether or not it has
+    // text, so edge now runs on its own (scene-gated). OCR's role is text
+    // extraction from a captured document, not a realtime gate.
     final shouldRunFace = faceEnabled && _scheduler.tryBeginFaceDetection(now);
     final shouldRunObject =
         objectEnabled && _scheduler.tryBeginObjectDetection(now);
@@ -507,7 +462,6 @@ class RealtimeDetectionPipeline {
       _perfTracker.recordSample(
         now: now,
         frameMs: PerfTrace.stopMs(frameWatch),
-        ocrMs: ocrMs,
         faceMs: faceMs,
         edgeMs: edgeMs,
         objectMs: objectMs,
@@ -518,7 +472,6 @@ class RealtimeDetectionPipeline {
     _perfTracker.recordSample(
       now: now,
       frameMs: PerfTrace.stopMs(frameWatch),
-      ocrMs: ocrMs,
       faceMs: faceMs,
       edgeMs: edgeMs,
       objectMs: objectMs,

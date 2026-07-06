@@ -52,8 +52,6 @@ abstract interface class DetectionOutputPort {
 
   void setDocumentSearchingState();
 
-  void setDocumentNoTextState();
-
   void setDocumentFoundState();
 
   void setDocumentCorners(NormalizedCorners? corners);

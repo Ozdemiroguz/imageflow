@@ -149,14 +149,6 @@ class RealtimeOverlayStateStore implements DetectionOutputPort {
   }
 
   @override
-  void setDocumentNoTextState() {
-    setDocumentStatus(_config.documentNoTextStatus);
-    setDocumentCorners(null);
-    setDocumentPreviewBytes(null);
-    resetDocumentPreviewMotionState();
-  }
-
-  @override
   void setDocumentSearchingState() {
     setDocumentStatus(_config.documentEdgeSearchingStatus);
   }

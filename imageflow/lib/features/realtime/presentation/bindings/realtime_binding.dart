@@ -7,7 +7,6 @@ import '../../../../core/services/document_scan_corner_detector.dart';
 import '../../../../core/services/native_object_detection_service.dart';
 import '../../../../core/services/permission_service.dart';
 import '../../data/datasources/realtime_face_detection_service.dart';
-import '../../data/datasources/realtime_ocr_gate_service.dart';
 import '../../data/services/realtime_preview_builder.dart';
 import '../controllers/realtime_camera_controller.dart';
 import '../models/capture_realtime_config.dart';
@@ -30,7 +29,6 @@ class RealtimeBinding implements Bindings {
         cornerDetectionService: Get.find<CornerDetector>(),
         objectDetectionService: Get.find<ObjectDetector>(),
         faceDetectionService: RealtimeFaceDetectionService(),
-        ocrGateService: RealtimeOcrGateService(),
         previewBuilder: Get.find<RealtimePreviewBuilder>(),
         config: GetPlatform.isIOS
             ? CaptureRealtimeConfig.ios

@@ -8,14 +8,12 @@ void main() {
 
   RealtimeDetectionScheduler makeScheduler({
     Duration face = const Duration(milliseconds: 100),
-    Duration ocr = const Duration(milliseconds: 100),
     Duration edge = const Duration(milliseconds: 100),
     Duration object = const Duration(milliseconds: 100),
     Duration facePanel = const Duration(milliseconds: 100),
     Duration docPanel = const Duration(milliseconds: 100),
   }) => RealtimeDetectionScheduler(
     faceInterval: face,
-    ocrInterval: ocr,
     edgeInterval: edge,
     objectInterval: object,
     facePanelInterval: facePanel,
@@ -61,12 +59,6 @@ void main() {
       final s = makeScheduler();
       // A document is a rectangle whether or not it has text, so edge must run
       // without waiting for OCR — the scene gate (upstream) handles blank frames.
-      expect(s.tryBeginEdgeDetection(t0), isTrue);
-    });
-
-    test('OCR reporting no text does NOT block edge', () {
-      final s = makeScheduler();
-      s.endOcrDetection(hasText: false);
       expect(s.tryBeginEdgeDetection(t0), isTrue);
     });
 
@@ -155,15 +147,13 @@ void main() {
   });
 
   group('reset', () {
-    test('clears busy flags, timers, and OCR text', () {
+    test('clears busy flags and timers', () {
       final s = makeScheduler();
       s.tryBeginFaceDetection(t0); // busy + last-run set
-      s.endOcrDetection(hasText: true);
       s.tryTakeFacePanelSlot(t0);
 
       s.reset();
 
-      expect(s.hasOcrText, isFalse);
       // Not busy and no throttle history → immediately acquirable at t0.
       expect(s.tryBeginFaceDetection(t0), isTrue);
       expect(s.tryTakeFacePanelSlot(t0), isTrue);

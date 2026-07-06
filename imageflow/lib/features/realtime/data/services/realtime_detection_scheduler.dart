@@ -1,19 +1,17 @@
 /// Frame-scheduling core for the realtime detection pipeline.
 ///
-/// Pure timing/throttle logic: it decides whether a given detector (face, OCR,
-/// edge) or preview panel may run for the current frame, based on per-detector
+/// Pure timing/throttle logic: it decides whether a given detector (face, edge,
+/// object) or preview panel may run for the current frame, based on per-detector
 /// intervals and busy guards. No framework, no camera, no state store — this is
 /// the data-layer scheduler consumed by [RealtimeDetectionPipeline].
 class RealtimeDetectionScheduler {
   RealtimeDetectionScheduler({
     required Duration faceInterval,
-    required Duration ocrInterval,
     required Duration edgeInterval,
     required Duration facePanelInterval,
     required Duration documentPanelInterval,
     required Duration objectInterval,
   }) : _faceInterval = faceInterval,
-       _ocrInterval = ocrInterval,
        _edgeInterval = edgeInterval,
        _facePanelInterval = facePanelInterval,
        _documentPanelInterval = documentPanelInterval,
@@ -21,13 +19,11 @@ class RealtimeDetectionScheduler {
 
   // The three detector intervals are mutable so the scan-budget engine can
   // re-split them at runtime when the user re-prioritizes or toggles a detector
-  // (see [updateDetectorIntervals]). The OCR and panel intervals are fixed —
-  // OCR isn't run in realtime and the panels are a UI-refresh throttle, so
-  // neither takes a budget share.
+  // (see [updateDetectorIntervals]). The panel intervals are fixed — they are a
+  // UI-refresh throttle, so neither takes a budget share.
   Duration _faceInterval;
   Duration _edgeInterval;
   Duration _objectInterval;
-  final Duration _ocrInterval;
   final Duration _facePanelInterval;
   final Duration _documentPanelInterval;
 
@@ -47,19 +43,14 @@ class RealtimeDetectionScheduler {
   }
 
   DateTime? _lastFaceRunAt;
-  DateTime? _lastOcrRunAt;
   DateTime? _lastEdgeRunAt;
   DateTime? _lastFacePanelAt;
   DateTime? _lastDocumentPanelAt;
   DateTime? _lastObjectRunAt;
 
   var _isFaceBusy = false;
-  var _isOcrBusy = false;
   var _isEdgeBusy = false;
   var _isObjectBusy = false;
-  var _hasOcrText = false;
-
-  bool get hasOcrText => _hasOcrText;
 
   // --- Detection slots: acquire/release pairs -------------------------------
   //
@@ -83,24 +74,6 @@ class RealtimeDetectionScheduler {
 
   void endFaceDetection() {
     _isFaceBusy = false;
-  }
-
-  bool tryBeginOcrDetection(DateTime now) {
-    if (_isOcrBusy) return false;
-    if (_lastOcrRunAt != null &&
-        now.difference(_lastOcrRunAt!) < _ocrInterval) {
-      return false;
-    }
-    _isOcrBusy = true;
-    _lastOcrRunAt = now;
-    return true;
-  }
-
-  void endOcrDetection({bool? hasText}) {
-    _isOcrBusy = false;
-    if (hasText != null) {
-      _hasOcrText = hasText;
-    }
   }
 
   // Edge (document corner) detection is NO LONGER gated on OCR text. A document
@@ -164,15 +137,12 @@ class RealtimeDetectionScheduler {
 
   void reset() {
     _lastFaceRunAt = null;
-    _lastOcrRunAt = null;
     _lastEdgeRunAt = null;
     _lastFacePanelAt = null;
     _lastDocumentPanelAt = null;
     _lastObjectRunAt = null;
     _isFaceBusy = false;
-    _isOcrBusy = false;
     _isEdgeBusy = false;
     _isObjectBusy = false;
-    _hasOcrText = false;
   }
 }

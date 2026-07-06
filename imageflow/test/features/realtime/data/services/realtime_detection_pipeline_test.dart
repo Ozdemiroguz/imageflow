@@ -6,7 +6,6 @@ import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:imageflow/core/platform/corner_detector.dart';
 import 'package:imageflow/core/platform/object_detector.dart';
 import 'package:imageflow/features/realtime/data/datasources/realtime_face_detection_service.dart';
-import 'package:imageflow/features/realtime/data/datasources/realtime_ocr_gate_service.dart';
 import 'package:imageflow/features/realtime/data/services/realtime_detection_pipeline.dart';
 import 'package:imageflow/features/realtime/data/services/detection_output_port.dart';
 import 'package:imageflow/features/realtime/data/services/realtime_detection_scheduler.dart';
@@ -29,8 +28,6 @@ class _MockObjectDetector extends Mock implements ObjectDetector {}
 
 class _MockFaceDetectionService extends Mock
     implements RealtimeFaceDetectionService {}
-
-class _MockOcrGateService extends Mock implements RealtimeOcrGateService {}
 
 class _MockPreviewBuilder extends Mock implements RealtimePreviewBuilder {}
 
@@ -63,28 +60,22 @@ void main() {
   late _MockCornerDetector cornerDetector;
   late _MockObjectDetector objectDetector;
   late _MockFaceDetectionService faceService;
-  late _MockOcrGateService ocrService;
   late _MockPreviewBuilder previewBuilder;
   late RealtimeDetectionScheduler scheduler;
   late RealtimeDetectionPipeline pipeline;
   late _FakeCameraImage frame;
-
-  const noTextStatus = 'No document';
-  const scanningStatus = 'Scanning for document...';
 
   setUp(() {
     output = _MockOutputPort();
     cornerDetector = _MockCornerDetector();
     objectDetector = _MockObjectDetector();
     faceService = _MockFaceDetectionService();
-    ocrService = _MockOcrGateService();
     previewBuilder = _MockPreviewBuilder();
     frame = _FakeCameraImage();
 
     // A scheduler whose intervals are all zero so nothing is throttled out.
     scheduler = RealtimeDetectionScheduler(
       faceInterval: Duration.zero,
-      ocrInterval: Duration.zero,
       edgeInterval: Duration.zero,
       objectInterval: Duration.zero,
       facePanelInterval: Duration.zero,
@@ -94,59 +85,12 @@ void main() {
     pipeline = RealtimeDetectionPipeline(
       imageFormatGroup: ImageFormatGroup.yuv420,
       frameImageUsesNativeRotation: true,
-      documentNoTextStatus: noTextStatus,
-      documentScanningStatus: scanningStatus,
       scheduler: scheduler,
       output: output,
       cornerDetectionService: cornerDetector,
       objectDetectionService: objectDetector,
       faceDetectionService: faceService,
-      ocrGateService: ocrService,
       previewBuilder: previewBuilder,
-    );
-  });
-
-  group('runOcrGate', () {
-    test('no text -> setDocumentNoTextState', () async {
-      when(
-        () => ocrService.evaluate(
-          frame: any(named: 'frame'),
-          rotation: any(named: 'rotation'),
-          androidNv21Bytes: any(named: 'androidNv21Bytes'),
-          preparedInputImage: any(named: 'preparedInputImage'),
-        ),
-      ).thenAnswer((_) async => (hasText: false));
-
-      await pipeline.runOcrGate(
-        frame,
-        rotation: InputImageRotation.rotation0deg,
-      );
-
-      verify(() => output.setDocumentNoTextState()).called(1);
-      verifyNever(() => output.setDocumentSearchingState());
-    });
-
-    test(
-      'has text and status is scanning -> setDocumentSearchingState',
-      () async {
-        when(
-          () => ocrService.evaluate(
-            frame: any(named: 'frame'),
-            rotation: any(named: 'rotation'),
-            androidNv21Bytes: any(named: 'androidNv21Bytes'),
-            preparedInputImage: any(named: 'preparedInputImage'),
-          ),
-        ).thenAnswer((_) async => (hasText: true));
-        when(() => output.documentStatusLabel).thenReturn(scanningStatus);
-
-        await pipeline.runOcrGate(
-          frame,
-          rotation: InputImageRotation.rotation0deg,
-        );
-
-        verify(() => output.setDocumentSearchingState()).called(1);
-        verifyNever(() => output.setDocumentNoTextState());
-      },
     );
   });
 
@@ -282,7 +226,7 @@ void main() {
         stubInterestingYuvFrame();
 
         // Disable face + document too so this test isolates the object path and
-        // needs no OCR/face/edge stubs.
+        // needs no face/edge stubs.
         await pipeline.processFrame(
           frame,
           rotation: InputImageRotation.rotation0deg,

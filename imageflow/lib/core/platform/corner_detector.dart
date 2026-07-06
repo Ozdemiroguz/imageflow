@@ -1,21 +1,15 @@
 import 'dart:typed_data';
 
-import '../error/result.dart';
-import '../models/document_corners.dart';
 import '../models/normalized_corners.dart';
 
-/// Detects document corners via a native platform implementation.
+/// Detects document corners from a realtime camera frame via a native platform
+/// implementation.
 ///
 /// Implementations own the [MethodChannel]; callers depend only on this
 /// contract so corner detection can be mocked in tests without a device.
+/// (Still-image corner detection goes directly through the document_scan
+/// package, not this seam.)
 abstract interface class CornerDetector {
-  /// Detects document corners from an image file.
-  ///
-  /// Returns `Ok(null)` when no rectangle is found (a valid outcome) and
-  /// `Error(failure)` on a real detection failure — so callers can tell "no
-  /// document" apart from "detection broke". Coordinates are in pixel space.
-  Future<Result<DocumentCorners?>> detectCorners({required String imagePath});
-
   /// Detects document corners from a raw camera frame (realtime).
   ///
   /// Returns [NormalizedCorners] with 0-1 coordinates, or null if no rectangle
