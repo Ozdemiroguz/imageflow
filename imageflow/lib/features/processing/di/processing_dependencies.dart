@@ -1,8 +1,8 @@
 import 'package:get/get.dart';
 
 import '../../../core/platform/corner_detector.dart';
+import '../../../core/services/document_scan_corner_detector.dart';
 import '../../../core/services/file_service.dart';
-import '../../../core/services/native_corner_detection_service.dart';
 import '../data/services/content_detection_service.dart';
 import '../data/services/document_crop_service.dart';
 import '../data/services/face_annotator_impl.dart';
@@ -21,7 +21,9 @@ void registerProcessingDependencies() {
     Get.lazyPut<ContentDetector>(ContentDetectionService.new);
   }
   if (!Get.isRegistered<CornerDetector>()) {
-    Get.lazyPut<CornerDetector>(NativeCornerDetectionService.new);
+    // Dogfood: corner detection runs through our own document_scan package,
+    // adapted to the CornerDetector seam.
+    Get.lazyPut<CornerDetector>(DocumentScanCornerDetector.new);
   }
   if (!Get.isRegistered<DocumentCropper>()) {
     Get.lazyPut<DocumentCropper>(

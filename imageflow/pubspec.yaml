@@ -40,6 +40,11 @@ dependencies:
   uuid: ^4.5.2
   intl: ^0.20.2
 
+  # Our own document-scanner package, dogfooded here: the app's document corner
+  # detection now runs through document_scan behind the CornerDetector seam.
+  document_scan:
+    path: ../document_scan
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
