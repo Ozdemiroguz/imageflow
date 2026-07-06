@@ -26,9 +26,9 @@ void registerProcessingDependencies() {
     Get.lazyPut<CornerDetector>(DocumentScanCornerDetector.new);
   }
   if (!Get.isRegistered<DocumentCropper>()) {
-    Get.lazyPut<DocumentCropper>(
-      () => DocumentCropService(cornerDetection: Get.find<CornerDetector>()),
-    );
+    // Crop + perspective correction run through the document_scan package
+    // directly (detector + processor), so no CornerDetector is injected here.
+    Get.lazyPut<DocumentCropper>(DocumentCropService.new);
   }
   if (!Get.isRegistered<FaceAnnotator>()) {
     Get.lazyPut<FaceAnnotator>(FaceAnnotatorImpl.new);

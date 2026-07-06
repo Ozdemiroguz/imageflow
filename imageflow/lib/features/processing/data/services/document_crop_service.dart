@@ -1,31 +1,40 @@
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:math' show sqrt;
 import 'dart:typed_data';
 
+import 'package:document_scan/document_scan.dart' as ds;
 import 'package:image/image.dart' as img;
 
-import '../../../../core/error/result.dart';
-import '../../../../core/platform/corner_detector.dart';
 import '../../../../core/utils/log.dart';
 import '../../domain/entities/recognized_text_data.dart';
 import '../../domain/services/document_cropper.dart';
 
-/// Document crop & enhancement service.
+/// Document crop & enhancement service, powered by the document_scan package.
 ///
 /// Pipeline:
-/// 1. Try native corner detection → perspective correction (copyRectify)
-/// 2. Fallback: ML Kit text block bounding boxes → axis-aligned crop
-/// 3. Apply eco filter (grayscale + contrast + normalize)
+/// 1. Detect corners + perspective-correct + filter via document_scan's
+///    [ds.DocumentDetector] + [ds.DocumentProcessor] (the same engine used in
+///    realtime), then write the result to the target path.
+/// 2. Fallback (no document detected): ML Kit text-block bounding boxes →
+///    axis-aligned crop, or a whole-image filter — glue with no package
+///    equivalent, kept for images where the rectangle detector finds nothing.
 class DocumentCropService implements DocumentCropper {
-  const DocumentCropService({required CornerDetector cornerDetection})
-    : _cornerDetection = cornerDetection;
+  const DocumentCropService({ds.DocumentDetector? detector})
+    : _detector = detector;
 
-  final CornerDetector _cornerDetection;
+  final ds.DocumentDetector? _detector;
+
+  ds.DocumentDetector get _documentDetector =>
+      _detector ?? ds.DocumentDetector();
 
   static const _tag = 'DocumentCrop';
 
-  static const _debugCorners = false;
+  // Match the app's prior output exactly: JPEG quality 92, and the enhance
+  // filter (grayscale + contrast + normalize) which is the package equivalent
+  // of the old eco filter — so the corner path and the text-block fallback
+  // produce the same treatment.
+  static const _output = ds.ScanOutputFormat.jpeg(quality: 92);
+  static const _filter = ds.ScanFilter.enhance;
 
   /// Process a document image: detect corners → crop/rectify → filter → save.
   @override
@@ -34,43 +43,44 @@ class DocumentCropService implements DocumentCropper {
     required String targetPath,
     RecognizedTextData? recognizedText,
   }) async {
-    // Try native corner detection first. A detection failure is not fatal here
-    // — we log it and fall through to the text-block crop fallback below.
-    final cornersResult = await _cornerDetection.detectCorners(
-      imagePath: sourcePath,
-    );
-    final corners = switch (cornersResult) {
-      Ok(:final value) => value,
-      Error(:final failure) => () {
-        Log.warning(
-          'Corner detection failed (${failure.message}); '
-          'falling back to text-block crop.',
-          tag: _tag,
-        );
-        return null;
-      }(),
-    };
-
-    if (corners != null) {
-      Log.info('Using native corners for perspective correction.', tag: _tag);
-      final sourceBytes = await File(sourcePath).readAsBytes();
-      final cornerList = corners.toList();
-
-      if (_debugCorners) {
-        await Isolate.run(() {
-          _drawDebugCorners(sourceBytes, cornerList, targetPath);
-        });
-        return;
-      }
-
-      await Isolate.run(() {
-        _perspectiveCorrectAndFilter(sourceBytes, cornerList, targetPath);
-      });
-      return;
+    // Detect the document's corners through the package (normalized 0..1). A
+    // detection/channel error is not fatal — log and fall through to the
+    // text-block crop fallback, matching the app's prior graceful degradation.
+    ds.DocumentCorners? corners;
+    try {
+      corners = await _documentDetector.detect(ds.ScanInput.file(sourcePath));
+    } catch (e) {
+      Log.warning(
+        'Corner detection failed ($e); falling back to text-block crop.',
+        tag: _tag,
+      );
     }
 
-    // Fallback: text block crop + filter
-    Log.info('No native corners. Using text block crop fallback.', tag: _tag);
+    if (corners != null) {
+      Log.info('Using package corners for perspective correction.', tag: _tag);
+      // crop() perspective-corrects + filters and returns encoded bytes; we own
+      // writing them to disk (the package is file-system agnostic). Run it in an
+      // isolate so the warp + filter + JPEG encode stay off the UI thread, as
+      // the app's own warp did.
+      final detected = corners;
+      final scanned = await Isolate.run(
+        () => const ds.DocumentProcessor().crop(
+          ds.ScanInput.file(sourcePath),
+          detected,
+          filter: _filter,
+          output: _output,
+        ),
+      );
+      if (scanned != null) {
+        await File(targetPath).writeAsBytes(scanned.bytes);
+        return;
+      }
+      Log.warning('Package crop returned null; falling back.', tag: _tag);
+    }
+
+    // Fallback: text block crop + filter (no package equivalent — the package
+    // needs corners to warp; here the rectangle detector found none).
+    Log.info('No document corners. Using text block crop fallback.', tag: _tag);
     final sourceBytes = await File(sourcePath).readAsBytes();
 
     if (recognizedText == null || recognizedText.blockBoxes.isEmpty) {
@@ -122,89 +132,6 @@ class DocumentCropService implements DocumentCropper {
 // Top-level helpers for Isolate compatibility
 // ---------------------------------------------------------------------------
 
-/// Debug: draw red dots on corners, no crop/filter. Save original with dots.
-void _drawDebugCorners(
-  Uint8List sourceBytes,
-  List<({double x, double y})> corners,
-  String targetPath,
-) {
-  final src = img.decodeImage(sourceBytes);
-  if (src == null) {
-    File(targetPath).writeAsBytesSync(sourceBytes);
-    return;
-  }
-
-  final red = img.ColorRgba8(255, 0, 0, 255);
-  const radius = 30;
-
-  for (final corner in corners) {
-    final cx = corner.x.round().clamp(0, src.width - 1);
-    final cy = corner.y.round().clamp(0, src.height - 1);
-    img.fillCircle(src, x: cx, y: cy, radius: radius, color: red);
-  }
-
-  // Draw lines between corners: TL→TR→BR→BL→TL
-  final green = img.ColorRgba8(0, 255, 0, 255);
-  for (var i = 0; i < corners.length; i++) {
-    final p1 = corners[i];
-    final p2 = corners[(i + 1) % corners.length];
-    img.drawLine(
-      src,
-      x1: p1.x.round(),
-      y1: p1.y.round(),
-      x2: p2.x.round(),
-      y2: p2.y.round(),
-      color: green,
-      thickness: 5,
-    );
-  }
-
-  File(targetPath).writeAsBytesSync(img.encodeJpg(src, quality: 92));
-}
-
-/// Perspective correct using 4 corners + eco filter, then save.
-void _perspectiveCorrectAndFilter(
-  Uint8List sourceBytes,
-  List<({double x, double y})> corners,
-  String targetPath,
-) {
-  final src = img.decodeImage(sourceBytes);
-  if (src == null) {
-    File(targetPath).writeAsBytesSync(sourceBytes);
-    return;
-  }
-
-  // corners: [topLeft, topRight, bottomRight, bottomLeft]
-  final tl = corners[0];
-  final tr = corners[1];
-  final br = corners[2];
-  final bl = corners[3];
-
-  // Calculate output dimensions from corner distances
-  final topW = _dist(tl, tr);
-  final botW = _dist(bl, br);
-  final leftH = _dist(tl, bl);
-  final rightH = _dist(tr, br);
-  final dstWidth = ((topW + botW) / 2).round().clamp(1, 8000);
-  final dstHeight = ((leftH + rightH) / 2).round().clamp(1, 8000);
-
-  final dst = img.Image(width: dstWidth, height: dstHeight);
-
-  final rectified = img.copyRectify(
-    src,
-    topLeft: img.Point(tl.x, tl.y),
-    topRight: img.Point(tr.x, tr.y),
-    bottomLeft: img.Point(bl.x, bl.y),
-    bottomRight: img.Point(br.x, br.y),
-    interpolation: img.Interpolation.linear,
-    toImage: dst,
-  );
-
-  File(
-    targetPath,
-  ).writeAsBytesSync(img.encodeJpg(_ecoFilter(rectified), quality: 92));
-}
-
 /// Crop to region + eco filter, then save.
 void _cropAndFilter(
   Uint8List sourceBytes,
@@ -249,9 +176,3 @@ img.Image _ecoFilter(img.Image src) {
   return result;
 }
 
-/// Euclidean distance between two points.
-double _dist(({double x, double y}) a, ({double x, double y}) b) {
-  final dx = a.x - b.x;
-  final dy = a.y - b.y;
-  return sqrt(dx * dx + dy * dy);
-}
