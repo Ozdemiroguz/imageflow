@@ -60,13 +60,7 @@ class DocumentScanCornerDetector implements CornerDetector {
     // matching the interface contract.
     try {
       final corners = await _detector.detect(input);
-      if (corners == null) return null;
-      return NormalizedCorners(
-        topLeft: corners.topLeft,
-        topRight: corners.topRight,
-        bottomRight: corners.bottomRight,
-        bottomLeft: corners.bottomLeft,
-      );
+      return corners?.toNormalized();
     } catch (_) {
       return null;
     }

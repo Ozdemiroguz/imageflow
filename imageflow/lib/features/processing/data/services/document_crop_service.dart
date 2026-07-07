@@ -50,14 +50,7 @@ class DocumentCropService implements DocumentCropper {
     // 0..1). A detection/channel error is not fatal — log and fall through to
     // the text-block crop fallback, matching the app's prior graceful
     // degradation.
-    ds.DocumentCorners? packageCorners = corners == null
-        ? null
-        : ds.DocumentCorners(
-            topLeft: corners.topLeft,
-            topRight: corners.topRight,
-            bottomRight: corners.bottomRight,
-            bottomLeft: corners.bottomLeft,
-          );
+    ds.DocumentCorners? packageCorners = corners?.toPackage();
     if (packageCorners == null) {
       try {
         packageCorners =
@@ -95,18 +88,31 @@ class DocumentCropService implements DocumentCropper {
     // Fallback: text block crop + filter (no package equivalent — the package
     // needs corners to warp; here the rectangle detector found none).
     Log.info('No document corners. Using text block crop fallback.', tag: _tag);
-    final sourceBytes = await File(sourcePath).readAsBytes();
 
     if (recognizedText == null || recognizedText.blockBoxes.isEmpty) {
-      // No text blocks either — just apply eco filter to whole image
-      await Isolate.run(() {
-        _filterOnly(sourceBytes, targetPath);
-      });
+      // No text blocks either — apply the same enhance filter to the whole
+      // image. The package's applyFilter decodes → enhances → encodes off the
+      // caller thread; we still wrap it in an isolate so the JPEG encode of a
+      // full-size photo doesn't touch the UI isolate.
+      final filtered = await Isolate.run(
+        () => const ds.DocumentProcessor()
+            .applyFilter(ds.ScanInput.file(sourcePath), _filter, output: _output),
+      );
+      if (filtered != null) {
+        await File(targetPath).writeAsBytes(filtered.bytes);
+      } else {
+        // Undecodable source — preserve the app's prior behaviour of leaving
+        // the original bytes at the target rather than failing the pipeline.
+        await File(sourcePath).copy(targetPath);
+      }
       return;
     }
 
-    // Estimate document bounds from text blocks
+    // Estimate document bounds from text blocks, then axis-aligned crop +
+    // enhance. This stays hand-rolled: the package's only crop is a 4-corner
+    // perspective warp, so a plain rectangle crop has no package entrypoint.
     final crop = _estimateCropFromTextBlocks(recognizedText.blockBoxes);
+    final sourceBytes = await File(sourcePath).readAsBytes();
 
     await Isolate.run(() {
       _cropAndFilter(sourceBytes, crop, targetPath);
@@ -167,23 +173,16 @@ void _cropAndFilter(
 
   File(
     targetPath,
-  ).writeAsBytesSync(img.encodeJpg(_ecoFilter(cropped), quality: 92));
+  ).writeAsBytesSync(img.encodeJpg(_enhance(cropped), quality: 92));
 }
 
-/// Apply eco filter to whole image, then save.
-void _filterOnly(Uint8List sourceBytes, String targetPath) {
-  final src = img.decodeImage(sourceBytes);
-  if (src == null) {
-    File(targetPath).writeAsBytesSync(sourceBytes);
-    return;
-  }
-  File(
-    targetPath,
-  ).writeAsBytesSync(img.encodeJpg(_ecoFilter(src), quality: 92));
-}
-
-/// Eco filter: grayscale → contrast boost → normalize.
-img.Image _ecoFilter(img.Image src) {
+/// The package's [ds.ScanFilter.enhance] (grayscale → contrast → normalize),
+/// inlined here because it runs on an already-`copyCrop`'d [img.Image]. The
+/// package only exposes filtering via a `ScanInput` (bytes/file), which would
+/// force an extra encode→decode round-trip just to reuse the same three ops —
+/// so the whole-image path routes through `applyFilter`, and this axis-aligned
+/// crop path keeps the ops inline. Must stay in lock-step with the package.
+img.Image _enhance(img.Image src) {
   var result = img.grayscale(src);
   result = img.adjustColor(result, contrast: 1.5);
   result = img.normalize(result, min: 0, max: 255);

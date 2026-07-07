@@ -302,14 +302,7 @@ class RealtimeCameraController extends GetxController
 
   void _onDocumentCornersForAutoCapture(NormalizedCorners? corners) {
     if (!autoCaptureEnabled.value || isCapturing.value) return;
-    final quad = corners == null
-        ? null
-        : ds.DocumentCorners(
-            topLeft: corners.topLeft,
-            topRight: corners.topRight,
-            bottomRight: corners.bottomRight,
-            bottomLeft: corners.bottomLeft,
-          );
+    final quad = corners?.toPackage();
     if (_autoCapture.add(quad).shouldCapture) {
       unawaited(capture());
     }

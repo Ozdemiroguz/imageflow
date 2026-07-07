@@ -59,12 +59,7 @@ class CornerAdjustController extends GetxController {
       _goToProcessing(corners: null);
       return;
     }
-    corners.value = NormalizedCorners(
-      topLeft: detected.topLeft,
-      topRight: detected.topRight,
-      bottomRight: detected.bottomRight,
-      bottomLeft: detected.bottomLeft,
-    );
+    corners.value = detected.toNormalized();
     isDetecting.value = false;
   }
 
