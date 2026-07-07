@@ -27,10 +27,13 @@ class ContentDetectionService implements ContentDetector {
   ///
   /// [imagePath] is modified in-place (EXIF baked, possibly rotated).
   /// [preferredType] skips the other detection if set.
+  /// [allowRotationFallback] gates the 90/180/270 rotate-in-place retry; pass
+  /// false when the caller already has upright-space corners (see interface).
   @override
   Future<DetectionResult> detect({
     required String imagePath,
     ProcessingType? preferredType,
+    bool allowRotationFallback = true,
   }) async {
     // Step 1: Bake EXIF orientation into pixels
     await ImageUtils.normalizeOrientation(imagePath);
@@ -57,6 +60,11 @@ class ContentDetectionService implements ContentDetector {
         textRecognizer: textRecognizer,
       );
       if (original.hasContent) return original;
+
+      // The rotation fallback rotates the file in place, which would invalidate
+      // caller-supplied upright-space corners — skip it when disallowed and
+      // return the upright (0°) result so the crop stays aligned.
+      if (!allowRotationFallback) return original;
 
       // Step 3: Rotation fallback — try 90°, 180°, 270°
       Log.debug('No content at 0°. Trying rotation fallback...', tag: _tag);

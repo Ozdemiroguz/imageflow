@@ -55,7 +55,11 @@ const _corners = NormalizedCorners(
 
 /// Unwraps an [Ok] result or fails the test with the underlying failure.
 ProcessingResult _expectOk(Result<ProcessingResult> result) {
-  expect(result, isA<Ok<ProcessingResult>>(), reason: 'expected Ok, got $result');
+  expect(
+    result,
+    isA<Ok<ProcessingResult>>(),
+    reason: 'expected Ok, got $result',
+  );
   return (result as Ok<ProcessingResult>).value;
 }
 
@@ -88,9 +92,9 @@ void main() {
     // A real, decodable tiny JPEG so File.copy, thumbnail generation, rotation
     // and PDF generation all operate on valid bytes.
     inputImagePath = '${tempDir.path}/input.jpg';
-    File(inputImagePath).writeAsBytesSync(
-      img.encodeJpg(img.Image(width: 40, height: 40)),
-    );
+    File(
+      inputImagePath,
+    ).writeAsBytesSync(img.encodeJpg(img.Image(width: 40, height: 40)));
 
     // Every uuid the service mints maps into the temp dir. `_work` copies land
     // in the same dir with distinct names because the uuid string differs.
@@ -156,44 +160,42 @@ void main() {
       () => contentDetector.detect(
         imagePath: any(named: 'imagePath'),
         preferredType: any(named: 'preferredType'),
+        allowRotationFallback: any(named: 'allowRotationFallback'),
       ),
     ).thenAnswer((_) async => result);
   }
 
   group('ImageProcessingServiceImpl.processImage', () {
-    test(
-      'forceDocument routing: corners + face detection routes to DOCUMENT, '
-      'not FACE (the ID-card fix)',
-      () async {
-        // Detection insists this is a face (an ID card carries a photo), but
-        // the user confirmed corners → it must be cropped as a document.
-        stubDetect(_faceDetection());
+    test('forceDocument routing: corners + face detection routes to DOCUMENT, '
+        'not FACE (the ID-card fix)', () async {
+      // Detection insists this is a face (an ID card carries a photo), but
+      // the user confirmed corners → it must be cropped as a document.
+      stubDetect(_faceDetection());
 
-        final result = await service.processImage(
-          imagePath: inputImagePath,
-          corners: _corners,
-        );
+      final result = await service.processImage(
+        imagePath: inputImagePath,
+        corners: _corners,
+      );
 
-        final value = _expectOk(result);
-        expect(value.type, ProcessingType.document);
-        verifyNever(
-          () => faceAnnotator.annotate(
-            sourcePath: any(named: 'sourcePath'),
-            targetPath: any(named: 'targetPath'),
-            rects: any(named: 'rects'),
-            contours: any(named: 'contours'),
-          ),
-        );
-        verify(
-          () => documentCropper.processDocument(
-            sourcePath: any(named: 'sourcePath'),
-            targetPath: any(named: 'targetPath'),
-            recognizedText: any(named: 'recognizedText'),
-            corners: any(named: 'corners'),
-          ),
-        ).called(1);
-      },
-    );
+      final value = _expectOk(result);
+      expect(value.type, ProcessingType.document);
+      verifyNever(
+        () => faceAnnotator.annotate(
+          sourcePath: any(named: 'sourcePath'),
+          targetPath: any(named: 'targetPath'),
+          rects: any(named: 'rects'),
+          contours: any(named: 'contours'),
+        ),
+      );
+      verify(
+        () => documentCropper.processDocument(
+          sourcePath: any(named: 'sourcePath'),
+          targetPath: any(named: 'targetPath'),
+          recognizedText: any(named: 'recognizedText'),
+          corners: any(named: 'corners'),
+        ),
+      ).called(1);
+    });
 
     test(
       'effectivePreferredType: corners force preferredType == document on detect',
@@ -209,6 +211,7 @@ void main() {
           () => contentDetector.detect(
             imagePath: any(named: 'imagePath'),
             preferredType: captureAny(named: 'preferredType'),
+            allowRotationFallback: any(named: 'allowRotationFallback'),
           ),
         ).captured;
         // First detect pass (on the working copy) must be forced to document.
@@ -216,25 +219,72 @@ void main() {
       },
     );
 
-    test('corners are passed through to documentCropper.processDocument',
-        () async {
-      stubDetect(_documentDetection());
+    test(
+      'corners are passed through to documentCropper.processDocument',
+      () async {
+        stubDetect(_documentDetection());
 
-      await service.processImage(
-        imagePath: inputImagePath,
-        corners: _corners,
-      );
+        await service.processImage(
+          imagePath: inputImagePath,
+          corners: _corners,
+        );
 
-      final captured = verify(
-        () => documentCropper.processDocument(
-          sourcePath: any(named: 'sourcePath'),
-          targetPath: any(named: 'targetPath'),
-          recognizedText: any(named: 'recognizedText'),
-          corners: captureAny(named: 'corners'),
-        ),
-      ).captured;
-      expect(captured.single, same(_corners));
-    });
+        final captured = verify(
+          () => documentCropper.processDocument(
+            sourcePath: any(named: 'sourcePath'),
+            targetPath: any(named: 'targetPath'),
+            recognizedText: any(named: 'recognizedText'),
+            corners: captureAny(named: 'corners'),
+          ),
+        ).captured;
+        expect(captured.single, same(_corners));
+      },
+    );
+
+    test(
+      'corners supplied → every detect uses allowRotationFallback: false '
+      '(so a pre-crop rotation cannot invalidate the upright-space corners)',
+      () async {
+        stubDetect(_documentDetection());
+
+        await service.processImage(
+          imagePath: inputImagePath,
+          corners: _corners,
+        );
+
+        final captured = verify(
+          () => contentDetector.detect(
+            imagePath: any(named: 'imagePath'),
+            preferredType: any(named: 'preferredType'),
+            allowRotationFallback: captureAny(named: 'allowRotationFallback'),
+          ),
+        ).captured;
+        // Both the initial detect and the post-crop OCR read must be false.
+        expect(captured, everyElement(isFalse));
+      },
+    );
+
+    test(
+      'no corners → initial detect keeps allowRotationFallback: true, but the '
+      'post-crop OCR read is always false',
+      () async {
+        stubDetect(_documentDetection());
+
+        await service.processImage(imagePath: inputImagePath);
+
+        final captured = verify(
+          () => contentDetector.detect(
+            imagePath: any(named: 'imagePath'),
+            preferredType: any(named: 'preferredType'),
+            allowRotationFallback: captureAny(named: 'allowRotationFallback'),
+          ),
+        ).captured;
+        // First pass (working copy) keeps the fallback enabled for the
+        // automatic flow; the post-crop OCR read never rotates the result.
+        expect(captured.first, isTrue);
+        expect(captured.last, isFalse);
+      },
+    );
 
     test('extractedText fallback: refined post-crop OCR text wins', () async {
       // First detect runs on the *_work copy → ORIGINAL.
@@ -243,6 +293,7 @@ void main() {
         () => contentDetector.detect(
           imagePath: any(named: 'imagePath'),
           preferredType: any(named: 'preferredType'),
+          allowRotationFallback: any(named: 'allowRotationFallback'),
         ),
       ).thenAnswer((inv) async {
         final path = inv.namedArguments[#imagePath] as String;
@@ -268,6 +319,7 @@ void main() {
           () => contentDetector.detect(
             imagePath: any(named: 'imagePath'),
             preferredType: any(named: 'preferredType'),
+            allowRotationFallback: any(named: 'allowRotationFallback'),
           ),
         ).thenAnswer((inv) async {
           final path = inv.namedArguments[#imagePath] as String;
@@ -320,6 +372,7 @@ void main() {
           () => contentDetector.detect(
             imagePath: any(named: 'imagePath'),
             preferredType: any(named: 'preferredType'),
+            allowRotationFallback: any(named: 'allowRotationFallback'),
           ),
         ).called(1);
       },
@@ -348,6 +401,7 @@ void main() {
           () => contentDetector.detect(
             imagePath: any(named: 'imagePath'),
             preferredType: any(named: 'preferredType'),
+            allowRotationFallback: any(named: 'allowRotationFallback'),
           ),
         ).thenAnswer((inv) async {
           final path = inv.namedArguments[#imagePath] as String;
@@ -368,6 +422,7 @@ void main() {
           () => contentDetector.detect(
             imagePath: any(named: 'imagePath'),
             preferredType: any(named: 'preferredType'),
+            allowRotationFallback: any(named: 'allowRotationFallback'),
           ),
         ).called(2);
       },
@@ -379,62 +434,59 @@ void main() {
       final result = await service.processImage(imagePath: inputImagePath);
 
       expect(result, isA<Error<ProcessingResult>>());
-      expect((result as Error<ProcessingResult>).failure, isA<DetectionFailure>());
+      expect(
+        (result as Error<ProcessingResult>).failure,
+        isA<DetectionFailure>(),
+      );
     });
 
-    test(
-      'no content BUT corners given → still succeeds as document '
-      '(forceDocument overrides the throw)',
-      () async {
-        stubDetect(const DetectionResult(type: null));
+    test('no content BUT corners given → still succeeds as document '
+        '(forceDocument overrides the throw)', () async {
+      stubDetect(const DetectionResult(type: null));
 
-        final result = await service.processImage(
-          imagePath: inputImagePath,
-          corners: _corners,
-        );
+      final result = await service.processImage(
+        imagePath: inputImagePath,
+        corners: _corners,
+      );
 
-        final value = _expectOk(result);
-        expect(value.type, ProcessingType.document);
-        verify(
-          () => documentCropper.processDocument(
-            sourcePath: any(named: 'sourcePath'),
-            targetPath: any(named: 'targetPath'),
-            recognizedText: any(named: 'recognizedText'),
-            corners: any(named: 'corners'),
-          ),
-        ).called(1);
-      },
-    );
+      final value = _expectOk(result);
+      expect(value.type, ProcessingType.document);
+      verify(
+        () => documentCropper.processDocument(
+          sourcePath: any(named: 'sourcePath'),
+          targetPath: any(named: 'targetPath'),
+          recognizedText: any(named: 'recognizedText'),
+          corners: any(named: 'corners'),
+        ),
+      ).called(1);
+    });
 
-    test(
-      'face flow: faces present, no corners → annotate called, cropper not, '
-      'type face with null extractedText',
-      () async {
-        stubDetect(_faceDetection());
+    test('face flow: faces present, no corners → annotate called, cropper not, '
+        'type face with null extractedText', () async {
+      stubDetect(_faceDetection());
 
-        final result = await service.processImage(imagePath: inputImagePath);
+      final result = await service.processImage(imagePath: inputImagePath);
 
-        final value = _expectOk(result);
-        expect(value.type, ProcessingType.face);
-        expect(value.extractedText, isNull);
-        expect(value.facesDetected, 1);
-        verify(
-          () => faceAnnotator.annotate(
-            sourcePath: any(named: 'sourcePath'),
-            targetPath: any(named: 'targetPath'),
-            rects: any(named: 'rects'),
-            contours: any(named: 'contours'),
-          ),
-        ).called(1);
-        verifyNever(
-          () => documentCropper.processDocument(
-            sourcePath: any(named: 'sourcePath'),
-            targetPath: any(named: 'targetPath'),
-            recognizedText: any(named: 'recognizedText'),
-            corners: any(named: 'corners'),
-          ),
-        );
-      },
-    );
+      final value = _expectOk(result);
+      expect(value.type, ProcessingType.face);
+      expect(value.extractedText, isNull);
+      expect(value.facesDetected, 1);
+      verify(
+        () => faceAnnotator.annotate(
+          sourcePath: any(named: 'sourcePath'),
+          targetPath: any(named: 'targetPath'),
+          rects: any(named: 'rects'),
+          contours: any(named: 'contours'),
+        ),
+      ).called(1);
+      verifyNever(
+        () => documentCropper.processDocument(
+          sourcePath: any(named: 'sourcePath'),
+          targetPath: any(named: 'targetPath'),
+          recognizedText: any(named: 'recognizedText'),
+          corners: any(named: 'corners'),
+        ),
+      );
+    });
   });
 }

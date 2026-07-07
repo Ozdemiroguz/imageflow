@@ -69,9 +69,15 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
         // photo doesn't route the whole image into the face flow.
         final effectivePreferredType =
             corners != null ? ProcessingType.document : preferredType;
+        // When the user supplied corners, they are in the upright (0°) space of
+        // the working copy. The rotation fallback rotates that file in place to
+        // hunt for text, which would move the pixels out from under those
+        // corners and make the crop warp the wrong region — so disable it here.
+        final allowRotationFallback = corners == null;
         var detection = await _contentDetector.detect(
           imagePath: workingPath,
           preferredType: effectivePreferredType,
+          allowRotationFallback: allowRotationFallback,
         );
 
         if (capturedWithFrontCamera == true &&
@@ -81,6 +87,7 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
           final correctedDetection = await _contentDetector.detect(
             imagePath: workingPath,
             preferredType: ProcessingType.document,
+            allowRotationFallback: allowRotationFallback,
           );
           if (correctedDetection.type == ProcessingType.document) {
             detection = correctedDetection;
@@ -337,6 +344,11 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
       final detection = await _contentDetector.detect(
         imagePath: processedPath,
         preferredType: ProcessingType.document,
+        // This is an OCR-only read of the already-cropped, upright result. The
+        // rotation fallback must stay OFF here: it would rotate processedPath in
+        // place and leave it rotated, corrupting the final image the user sees
+        // when the crop happens to have no OCR-readable text.
+        allowRotationFallback: false,
       );
       final text = detection.recognizedText?.text;
       return (text != null && text.isNotEmpty) ? text : null;
