@@ -119,6 +119,10 @@ void main() {
     ).thenAnswer((inv) async {
       final target = inv.namedArguments[#targetPath] as String;
       await File(inputImagePath).copy(target);
+      // Default: report a real crop so the second OCR pass runs (the tests that
+      // exercise refined text rely on it). The filter-only case is covered by
+      // its own test that overrides this stub.
+      return DocumentCropOutcome.geometryChanged;
     });
 
     // Same contract for the face annotator.
@@ -282,6 +286,90 @@ void main() {
         );
 
         expect(_expectOk(result).extractedText, 'ORIGINAL');
+      },
+    );
+
+    test(
+      'double-OCR gate: filter-only crop + no rotation → post-crop OCR skipped',
+      () async {
+        // The cropper reports it only recolored the image (no warp/crop), and
+        // detection applied no rotation → the processed pixels match what the
+        // first pass already OCR'd, so the second pass must not run.
+        when(
+          () => documentCropper.processDocument(
+            sourcePath: any(named: 'sourcePath'),
+            targetPath: any(named: 'targetPath'),
+            recognizedText: any(named: 'recognizedText'),
+            corners: any(named: 'corners'),
+          ),
+        ).thenAnswer((inv) async {
+          await File(
+            inputImagePath,
+          ).copy(inv.namedArguments[#targetPath] as String);
+          return DocumentCropOutcome.filterOnly;
+        });
+        stubDetect(_documentDetection(text: 'ORIGINAL')); // appliedRotation: 0
+
+        final result = await service.processImage(imagePath: inputImagePath);
+
+        // Text still comes through (from the first pass) ...
+        expect(_expectOk(result).extractedText, 'ORIGINAL');
+        // ... and detection ran exactly once — the working-copy pass only; the
+        // processed-image (non-'_work') pass was skipped.
+        verify(
+          () => contentDetector.detect(
+            imagePath: any(named: 'imagePath'),
+            preferredType: any(named: 'preferredType'),
+          ),
+        ).called(1);
+      },
+    );
+
+    test(
+      'double-OCR gate: filter-only crop BUT rotation applied → post-crop OCR '
+      'still runs',
+      () async {
+        when(
+          () => documentCropper.processDocument(
+            sourcePath: any(named: 'sourcePath'),
+            targetPath: any(named: 'targetPath'),
+            recognizedText: any(named: 'recognizedText'),
+            corners: any(named: 'corners'),
+          ),
+        ).thenAnswer((inv) async {
+          await File(
+            inputImagePath,
+          ).copy(inv.namedArguments[#targetPath] as String);
+          return DocumentCropOutcome.filterOnly;
+        });
+        // Rotation was undone → the processed image differs from the source, so
+        // re-OCR can help even though the crop only filtered.
+        when(
+          () => contentDetector.detect(
+            imagePath: any(named: 'imagePath'),
+            preferredType: any(named: 'preferredType'),
+          ),
+        ).thenAnswer((inv) async {
+          final path = inv.namedArguments[#imagePath] as String;
+          if (path.contains('_work')) {
+            return const DetectionResult(
+              type: ProcessingType.document,
+              recognizedText: RecognizedTextData(text: 'ORIGINAL'),
+              appliedRotation: 90,
+            );
+          }
+          return _documentDetection(text: 'REFINED');
+        });
+
+        final result = await service.processImage(imagePath: inputImagePath);
+
+        expect(_expectOk(result).extractedText, 'REFINED');
+        verify(
+          () => contentDetector.detect(
+            imagePath: any(named: 'imagePath'),
+            preferredType: any(named: 'preferredType'),
+          ),
+        ).called(2);
       },
     );
 

@@ -287,7 +287,7 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
     ProgressCallback? onProgress,
   }) async {
     onProgress?.call(ProcessingStep.correctingPerspective);
-    await _documentCrop.processDocument(
+    final cropOutcome = await _documentCrop.processDocument(
       sourcePath: workingPath,
       targetPath: processedPath,
       recognizedText: recognizedText,
@@ -304,8 +304,23 @@ class ImageProcessingServiceImpl implements ImageProcessingService {
     // gives better extracted text — especially for camera captures. Falls back
     // to the original-image OCR if this pass finds nothing, so it never loses
     // text we already had.
-    onProgress?.call(ProcessingStep.extractingText);
-    final refinedText = await _extractTextFromProcessed(processedPath);
+    //
+    // Skip it when it provably can't help: if the crop only applied a
+    // whole-image filter (no warp, no text-block crop) AND no rotation was
+    // undone, the processed image is spatially identical to the one the first
+    // detection pass already OCR'd — re-OCR would read the exact same layout.
+    // This saves one OCR per such document (notably across a batch) with zero
+    // change to the extracted text. Any real crop or rotation still re-OCRs.
+    final canRefineText =
+        cropOutcome == DocumentCropOutcome.geometryChanged ||
+        appliedRotation % 360 != 0;
+    final String? refinedText;
+    if (canRefineText) {
+      onProgress?.call(ProcessingStep.extractingText);
+      refinedText = await _extractTextFromProcessed(processedPath);
+    } else {
+      refinedText = null;
+    }
 
     if (!generatePdf) return (pdfPath: null, refinedText: refinedText);
 

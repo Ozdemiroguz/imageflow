@@ -6,6 +6,7 @@ import 'package:image/image.dart' as img;
 import 'package:imageflow/core/models/normalized_corners.dart';
 import 'package:imageflow/features/processing/data/services/document_crop_service.dart';
 import 'package:imageflow/features/processing/domain/entities/recognized_text_data.dart';
+import 'package:imageflow/features/processing/domain/services/document_cropper.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockDetector extends Mock implements ds.DocumentDetector {}
@@ -60,7 +61,7 @@ void main() {
     test('corners supplied → skips detection and writes target', () async {
       final sut = DocumentCropService(detector: detector);
 
-      await sut.processDocument(
+      final outcome = await sut.processDocument(
         sourcePath: sourcePath,
         targetPath: targetPath,
         corners: fullCorners,
@@ -69,6 +70,8 @@ void main() {
       // Detection must NOT run when corners are provided.
       verifyNever(() => detector.detect(any()));
       expectTargetWritten();
+      // A 4-corner warp changes geometry, so re-OCR is worthwhile.
+      expect(outcome, DocumentCropOutcome.geometryChanged);
     });
 
     test('corners null, detector finds corners → uses them', () async {
@@ -118,7 +121,7 @@ void main() {
       when(() => detector.detect(any())).thenAnswer((_) async => null);
       final sut = DocumentCropService(detector: detector);
 
-      await sut.processDocument(
+      final outcome = await sut.processDocument(
         sourcePath: sourcePath,
         targetPath: targetPath,
         // recognizedText null → filter-only branch.
@@ -126,6 +129,9 @@ void main() {
 
       verify(() => detector.detect(any())).called(1);
       expectTargetWritten();
+      // Only a whole-image filter ran → geometry unchanged, so the caller can
+      // skip a redundant post-crop OCR pass.
+      expect(outcome, DocumentCropOutcome.filterOnly);
     });
 
     test('text-block fallback produces a cropped (smaller) output', () async {
@@ -142,13 +148,15 @@ void main() {
         ],
       );
 
-      await sut.processDocument(
+      final outcome = await sut.processDocument(
         sourcePath: sourcePath,
         targetPath: targetPath,
         recognizedText: recognized,
       );
 
       expectTargetWritten();
+      // A text-block crop changes geometry → re-OCR is worthwhile.
+      expect(outcome, DocumentCropOutcome.geometryChanged);
 
       final decoded = img.decodeJpg(File(targetPath).readAsBytesSync());
       expect(decoded, isNotNull);

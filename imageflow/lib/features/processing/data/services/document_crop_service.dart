@@ -39,7 +39,7 @@ class DocumentCropService implements DocumentCropper {
 
   /// Process a document image: detect corners → crop/rectify → filter → save.
   @override
-  Future<void> processDocument({
+  Future<DocumentCropOutcome> processDocument({
     required String sourcePath,
     required String targetPath,
     RecognizedTextData? recognizedText,
@@ -80,7 +80,7 @@ class DocumentCropService implements DocumentCropper {
       );
       if (scanned != null) {
         await File(targetPath).writeAsBytes(scanned.bytes);
-        return;
+        return DocumentCropOutcome.geometryChanged;
       }
       Log.warning('Package crop returned null; falling back.', tag: _tag);
     }
@@ -105,7 +105,9 @@ class DocumentCropService implements DocumentCropper {
         // the original bytes at the target rather than failing the pipeline.
         await File(sourcePath).copy(targetPath);
       }
-      return;
+      // Whole-image filter (or a raw passthrough): geometry is unchanged, so a
+      // second OCR pass would read the same layout the source already did.
+      return DocumentCropOutcome.filterOnly;
     }
 
     // Estimate document bounds from text blocks, then axis-aligned crop +
@@ -117,6 +119,7 @@ class DocumentCropService implements DocumentCropper {
     await Isolate.run(() {
       _cropAndFilter(sourceBytes, crop, targetPath);
     });
+    return DocumentCropOutcome.geometryChanged;
   }
 
   /// Estimate crop region from text block bounding boxes with a 10% margin.
