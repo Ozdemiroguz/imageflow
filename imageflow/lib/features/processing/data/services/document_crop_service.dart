@@ -34,7 +34,7 @@ class DocumentCropService implements DocumentCropper {
   // filter (grayscale + contrast + normalize) which is the package equivalent
   // of the old eco filter — so the corner path and the text-block fallback
   // produce the same treatment.
-  static const _output = ds.ScanOutputFormat.jpeg(quality: 92);
+  static const _output = ds.ScanOutputFormat.jpegAt(92);
   static const _filter = ds.ScanFilter.enhance;
 
   /// Process a document image: detect corners → crop/rectify → filter → save.
