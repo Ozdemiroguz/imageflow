@@ -228,9 +228,10 @@ packages:
   document_scan:
     dependency: "direct main"
     description:
-      path: "../document_scan"
-      relative: true
-    source: path
+      name: document_scan
+      sha256: "51daa7f9b559190def79e36827dc8c78675ad73e4c6596c9f2eb641630b0236c"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.1.0"
   fake_async:
     dependency: transitive
