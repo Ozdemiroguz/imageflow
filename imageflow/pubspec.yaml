@@ -43,7 +43,7 @@ dependencies:
   # Our own document-scanner package (published to pub.dev), dogfooded here: the
   # app's document detection + crop run through document_scan behind the
   # CornerDetector / DocumentCropper seams.
-  document_scan: ^0.1.0
+  document_scan: ^0.2.0
 
 dev_dependencies:
   flutter_test:
