@@ -16,12 +16,17 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Dart%20Files-208-blue" />
-  <img src="https://img.shields.io/badge/LOC-~16k-blue" />
-  <img src="https://img.shields.io/badge/Unit%20Tests-18-green" />
+  <img src="https://img.shields.io/badge/Dart%20Files-224-blue" />
+  <img src="https://img.shields.io/badge/LOC-~18k-blue" />
+  <img src="https://img.shields.io/badge/Tests-338-green" />
   <img src="https://img.shields.io/badge/Native%20Channels-3-orange" />
   <img src="https://img.shields.io/badge/Architecture-Clean%20Arch%20%2B%20SOLID-purple" />
   <img src="https://img.shields.io/badge/Platforms-iOS%20%26%20Android-lightgrey" />
+</p>
+
+<p align="center">
+  <a href="https://pub.dev/packages/document_scan"><img src="https://img.shields.io/pub/v/document_scan?label=document_scan&logo=dart&color=0175C2" /></a>
+  <a href="https://pub.dev/packages/document_scan/score"><img src="https://img.shields.io/pub/points/document_scan?label=pub%20points" /></a>
 </p>
 
 ---
@@ -37,6 +42,22 @@ Hi, I'm **Oguzhan** — a Flutter developer focused on building production-grade
 - A **realtime camera overlay** system with sub-200ms face detection, OCR-gated edge detection, and isolate-backed preview generation
 - Full **Clean Architecture** with sealed Result types, typed Failure hierarchies, and constructor-based DI
 - Two distinct processing pipelines (face + document) with step-based progress tracking
+- Its document-detection engine was **extracted into a published pub.dev package** and consumed back here — see below
+
+### 📦 Extracted a published package: [`document_scan`](https://pub.dev/packages/document_scan)
+
+The hardest, most reusable part of this app — native document corner detection
+(Apple Vision + OpenCV) plus pure-Dart perspective correction and filtering — was
+factored out of the app into a standalone, composable, headless Flutter package
+and **[published on pub.dev](https://pub.dev/packages/document_scan)** (160/160
+pub points). ImageFlow then **dogfoods** it: the app depends on the released
+`document_scan` and drives it behind its own `CornerDetector` / `DocumentCropper`
+seams, so the same engine that ships to other developers powers this showcase.
+
+This is the part that turns "an app that uses native detection" into "a reusable
+library, designed for consumers other than myself, with a versioned public API,
+docs, and tests." The package's own repo:
+[github.com/Ozdemiroguz/document_scan](https://github.com/Ozdemiroguz/document_scan).
 
 > Flutter project root is `imageflow/`. Run all Flutter/Dart commands after `cd imageflow`.
 
@@ -187,9 +208,14 @@ This app goes beyond Flutter's plugin ecosystem by implementing custom platform 
 
 | Channel | Methods | Android | iOS | Purpose |
 |---|---|---|---|---|
-| `corner_detection` | `detectCorners`, `detectCornersFromFrame` | OpenCV 4.13.0 contour pipeline | Vision `VNDetectRectanglesRequest` | Document corner detection (static + realtime) |
+| `corner_detection`&nbsp;* | `detectCorners`, `detectCornersFromFrame` | OpenCV 4.13.0 contour pipeline | Vision `VNDetectRectanglesRequest` | Document corner detection (static + realtime) |
 | `pdf_raster` | `rasterizePdf` | `PdfRenderer` | PDFKit `PDFDocument` | Render PDF pages to image bytes for in-app viewer |
 | `pdf_external` | `openPdf` | `ACTION_VIEW` Intent + `FileProvider` | `UIDocumentInteractionController` | Open generated PDF in external app |
+
+> **\*** The corner-detection channel and its OpenCV/Vision pipelines now live in
+> the extracted [`document_scan`](https://pub.dev/packages/document_scan) package
+> (the app depends on the published release). The deep dive below is that engine —
+> documented here because designing it is the core of this project's native work.
 
 ### Document Corner Detection (Native Deep Dive)
 
@@ -360,6 +386,7 @@ Result: fewer unnecessary `Obx` rebuilds, fewer `Image.memory` re-decodes, lower
 | Category | Technology |
 |---|---|
 | Framework | Flutter 3.41+ / Dart 3.11+ |
+| Document Engine | [`document_scan`](https://pub.dev/packages/document_scan) `^0.2.0` — my own published package (extracted from this app) |
 | State Management | GetX 4.7.x (reactive + bindings + routing) |
 | Face Detection | Google ML Kit Face Detection 0.13.2 |
 | Text Recognition | Google ML Kit Text Recognition 0.15.1 |
