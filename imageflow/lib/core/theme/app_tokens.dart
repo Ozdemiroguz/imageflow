@@ -29,7 +29,7 @@ class AppTokens extends ThemeExtension<AppTokens> {
     this.realtimeFaceFill = const Color(0x2200E676),
     this.realtimeObjectStroke = const Color(0xDC29B6F6),
     this.realtimeObjectFill = const Color(0x2229B6F6),
-    this.realtimeObjectLabelBg = const Color(0xD40288D1),
+    this.realtimeObjectLabelBg = const Color(0xF0015A87),
   });
 
   final double radiusSm;

@@ -29,12 +29,13 @@ class RealtimeObjectOverlayPainter extends CustomPainter {
   final Paint _boxFill;
   final Paint _labelBgPaint;
 
-  static const _labelPadH = 6.0;
-  static const _labelPadV = 3.0;
+  static const _labelPadH = 9.0;
+  static const _labelPadV = 5.0;
   static const _labelTextStyle = TextStyle(
     color: Colors.white,
-    fontSize: 12,
-    fontWeight: FontWeight.w600,
+    fontSize: 17,
+    fontWeight: FontWeight.w700,
+    height: 1.0,
   );
 
   @override
